@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react"
+
 import { cn } from "#/lib/utils.ts"
 import type { Commodity } from "#/data/catalog.ts"
 
@@ -9,6 +11,11 @@ type CommodityTabsProps = {
 
 /** Scrollable commodity switcher. */
 export function CommodityTabs({ commodities, value, onChange }: CommodityTabsProps) {
+  const activeRef = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" })
+  }, [value])
   return (
     <div
       role="tablist"
@@ -18,6 +25,7 @@ export function CommodityTabs({ commodities, value, onChange }: CommodityTabsPro
       {commodities.map((c) => (
         <button
           key={c.id}
+          ref={c.id === value ? activeRef : undefined}
           role="tab"
           aria-selected={c.id === value}
           type="button"

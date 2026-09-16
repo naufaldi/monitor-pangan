@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 
-import { formatPrice } from "#/lib/format.ts"
+import { formatDateShort, formatPrice } from "#/lib/format.ts"
 import { cn } from "#/lib/utils.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 
@@ -11,6 +11,8 @@ export type TableRow = {
 }
 
 type PriceTableProps = {
+  commodityName: string
+  date: string
   rows: TableRow[]
   unit: PriceUnit
   average: number
@@ -21,7 +23,15 @@ type PriceTableProps = {
 type SortKey = "price-desc" | "price-asc" | "name"
 
 /** Sortable, searchable province price table synced with the map. */
-export function PriceTable({ rows, unit, average, selectedCode, onSelect }: PriceTableProps) {
+export function PriceTable({
+  commodityName,
+  date,
+  rows,
+  unit,
+  average,
+  selectedCode,
+  onSelect,
+}: PriceTableProps) {
   const [query, setQuery] = useState("")
   const [sort, setSort] = useState<SortKey>("price-desc")
 
@@ -37,9 +47,11 @@ export function PriceTable({ rows, unit, average, selectedCode, onSelect }: Pric
   return (
     <section className="overflow-hidden rounded-xl border border-hairline bg-paper">
       <div className="flex flex-wrap items-center gap-2 border-b border-hairline px-4 py-3">
-        <h2 className="text-base font-bold">Harga per provinsi</h2>
+        <h2 className="text-base font-bold">
+          Harga {commodityName} per provinsi
+        </h2>
         <span className="tabular-nums text-sm text-slate">
-          {visible.length} dari {rows.length}
+          {formatDateShort(date)} · {visible.length} dari {rows.length}
         </span>
         <div className="ml-auto flex gap-2">
           <input

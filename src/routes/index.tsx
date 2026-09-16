@@ -73,6 +73,7 @@ function HomePage() {
             />
           </div>
           <ProvincePanel
+            commodityName={snapshot.commodity.name}
             provinceName={selected?.name ?? null}
             price={selectedPrice}
             average={snapshot.nationalAvg}
@@ -82,6 +83,8 @@ function HomePage() {
         </div>
 
         <PriceTable
+          commodityName={snapshot.commodity.name}
+          date={date}
           rows={snapshot.rows.map((r) => ({
             ...r,
             name: provinces.find((p) => p.code === r.regionCode)?.name ?? r.regionCode,

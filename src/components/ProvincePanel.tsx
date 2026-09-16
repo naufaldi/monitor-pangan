@@ -2,6 +2,7 @@ import { formatDateShort, formatPrice } from "#/lib/format.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 
 type ProvincePanelProps = {
+  commodityName: string
   provinceName: string | null
   price: number | null
   average: number
@@ -11,6 +12,7 @@ type ProvincePanelProps = {
 
 /** Side detail for the selected province, or the national summary. */
 export function ProvincePanel({
+  commodityName,
   provinceName,
   price,
   average,
@@ -20,7 +22,9 @@ export function ProvincePanel({
   if (provinceName == null || price == null) {
     return (
       <aside className="flex flex-col justify-center rounded-xl border border-hairline bg-paper p-5">
-        <p className="text-sm text-slate">Rata-rata nasional</p>
+        <p className="text-sm text-slate">
+          {commodityName} · rata-rata nasional
+        </p>
         <p className="tabular-nums text-3xl font-bold">
           {formatPrice(average, unit)}
         </p>
@@ -37,7 +41,9 @@ export function ProvincePanel({
 
   return (
     <aside className="flex flex-col rounded-xl border border-hairline bg-paper p-5">
-      <p className="text-sm text-slate">{formatDateShort(date)}</p>
+      <p className="text-sm text-slate">
+        {commodityName} · {formatDateShort(date)}
+      </p>
       <h2 className="text-xl font-bold">{provinceName}</h2>
       <p className="tabular-nums mt-2 text-3xl font-bold">
         {formatPrice(price, unit)}
