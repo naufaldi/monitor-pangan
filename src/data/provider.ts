@@ -1,7 +1,8 @@
-import { COMMODITIES, MOCK_DATES, type Commodity } from "./catalog.ts"
+import { COMMODITIES, MOCK_DATES, type Commodity, type PriceUnit } from "./catalog.ts"
 import { loadProvinces } from "./geo.ts"
 import { LIVE_PRICES } from "./prices.gen.ts"
 import { SNAPSHOT_META } from "./snapshot.gen.ts"
+import { trendDirection } from "#/lib/format.ts"
 
 export type PriceRow = {
   regionCode: string
@@ -15,6 +16,31 @@ export type Snapshot = {
   rows: PriceRow[]
 }
 
+export type TrendPoint = {
+  date: string
+  price: number
+}
+
+export type TrendDirection = "up" | "down" | "flat"
+
+export type TrendResolution = "day" | "week" | "month"
+
+export type TrendRange = {
+  from: string
+  to: string
+  resolution: TrendResolution
+}
+
+export type TrendSeries = {
+  commodity: Commodity
+  unit: PriceUnit
+  national: TrendPoint[]
+  selected: TrendPoint[] | null
+  changePct: number
+  direction: TrendDirection
+  range: TrendRange
+}
+
 /**
  * Data contract the UI renders against. The real pipeline (Effect + D1)
  * will implement this same interface, so no UI rework is needed later.
@@ -23,6 +49,11 @@ export interface PriceDataProvider {
   dates(): string[]
   provinces(): { code: string; name: string }[]
   snapshot(date: string, commodityId: string): Snapshot
+  trend(
+    commodityId: string,
+    regionCode?: string | null,
+    range?: Partial<TrendRange>,
+  ): TrendSeries
 }
 
 /** Deterministic 0..1 hash for stable mock values across reloads. */
@@ -64,10 +95,59 @@ function buildSnapshot(date: string, commodityId: string): Snapshot {
   return { date, commodity, nationalAvg, rows }
 }
 
+/**
+ * National vs selected-region price path over a date window. Resolution is
+ * accepted and echoed for the future 2014-2026 backfill, daily in V1.
+ */
+function buildTrend(
+  commodityId: string,
+  regionCode?: string | null,
+  range?: Partial<TrendRange>,
+): TrendSeries {
+  const commodity =
+    COMMODITIES.find((c) => c.id === commodityId) ?? COMMODITIES[0]!
+  const requested: TrendRange = {
+    from: range?.from ?? MOCK_DATES[0],
+    to: range?.to ?? MOCK_DATES[MOCK_DATES.length - 1],
+    resolution: range?.resolution ?? "day",
+  }
+  const dates = MOCK_DATES.filter(
+    (d) => d >= requested.from && d <= requested.to,
+  )
+  const national: TrendPoint[] = []
+  const selectedPoints: TrendPoint[] = []
+  const wantSelected = regionCode != null && regionCode !== ""
+  for (const date of dates) {
+    const snap = buildSnapshot(date, commodity.id)
+    national.push({ date, price: snap.nationalAvg })
+    if (wantSelected) {
+      const row = snap.rows.find((r) => r.regionCode === regionCode)
+      if (row != null) selectedPoints.push({ date, price: row.price })
+    }
+  }
+  const first = national[0]
+  const last = national[national.length - 1]
+  const changePct =
+    first == null || last == null || first.price === 0
+      ? 0
+      : ((last.price - first.price) / first.price) * 100
+  return {
+    commodity,
+    unit: commodity.unit,
+    national,
+    selected: wantSelected ? selectedPoints : null,
+    changePct,
+    direction: trendDirection(changePct),
+    range: requested,
+  }
+}
+
 export const provider: PriceDataProvider = {
   dates: () => [...MOCK_DATES],
   provinces: () => provinces,
   snapshot: (date, commodityId) => buildSnapshot(date, commodityId),
+  trend: (commodityId, regionCode, range) =>
+    buildTrend(commodityId, regionCode, range),
 }
 
 /**

@@ -1,3 +1,5 @@
+import type { TrendDirection } from "#/data/provider.ts"
+
 const MONTHS = [
   "Jan",
   "Feb",
@@ -26,4 +28,18 @@ export function formatPrice(value: number, unit: "kg" | "liter"): string {
     maximumFractionDigits: 0,
   }).format(value)
   return `Rp ${grouped}/${unit}`
+}
+
+/** Format a percent delta as "+1.2%", "-0.8%", or "0.0%". */
+export function formatPct(value: number): string {
+  if (Number(value.toFixed(1)) === 0) return "0.0%"
+  const sign = value > 0 ? "+" : ""
+  return `${sign}${value.toFixed(1)}%`
+}
+
+/** Classify a percent change as up, down, or flat. */
+export function trendDirection(changePct: number): TrendDirection {
+  if (changePct > 0.05) return "up"
+  if (changePct < -0.05) return "down"
+  return "flat"
 }
