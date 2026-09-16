@@ -1,0 +1,36 @@
+{
+  "name": "monitor-pangan",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite dev --port 3001",
+    "generate-routes": "tsr generate",
+    "build": "tsr generate && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "latest",
+    "@tanstack/react-start": "latest",
+    "clsx": "^2.1.1",
+    "indonesia-geodata": "latest",
+    "leaflet": "^1.9.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-leaflet": "^5.0.0",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/router-cli": "^1.132.0",
+    "@types/leaflet": "^1.9.12",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "~5.8.3",
+    "vite": "^8.0.0"
+  }
+}
