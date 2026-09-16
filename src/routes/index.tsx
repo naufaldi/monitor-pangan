@@ -7,7 +7,7 @@ import { MapView } from "#/components/MapView.tsx"
 import { PriceTable } from "#/components/PriceTable.tsx"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { provider } from "#/data/provider.ts"
+import { dataBadge, provider } from "#/data/provider.ts"
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -42,7 +42,7 @@ function HomePage() {
             </p>
           </div>
           <span className="ml-auto rounded-full bg-ember-soft px-3 py-1 text-xs font-semibold text-ember">
-            Data contoh
+            {dataBadge(date)}
           </span>
         </div>
       </header>

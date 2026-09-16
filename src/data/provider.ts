@@ -1,5 +1,7 @@
 import { COMMODITIES, MOCK_DATES, type Commodity } from "./catalog.ts"
 import { loadProvinces } from "./geo.ts"
+import { LIVE_PRICES } from "./prices.gen.ts"
+import { SNAPSHOT_META } from "./snapshot.gen.ts"
 
 export type PriceRow = {
   regionCode: string
@@ -52,7 +54,9 @@ function buildSnapshot(date: string, commodityId: string): Snapshot {
   const dateIndex = Math.max(0, MOCK_DATES.indexOf(date))
   const rows = provinces.map((p) => ({
     regionCode: p.code,
-    price: mockPrice(commodity, p.code, dateIndex),
+    price:
+      LIVE_PRICES[`${date}:${commodity.id}:${p.code}`] ??
+      mockPrice(commodity, p.code, dateIndex),
   }))
   const nationalAvg =
     Math.round(rows.reduce((sum, r) => sum + r.price, 0) / rows.length / 50) *
@@ -64,4 +68,14 @@ export const provider: PriceDataProvider = {
   dates: () => [...MOCK_DATES],
   provinces: () => provinces,
   snapshot: (date, commodityId) => buildSnapshot(date, commodityId),
+}
+
+/**
+ * Badge label for the header. Live when the date has scraped prices,
+ * sample fallback otherwise.
+ */
+export function dataBadge(date: string): string {
+  if (SNAPSHOT_META.pricesLive && SNAPSHOT_META.dates.includes(date))
+    return `Data ${date} · PIHPS eceran`
+  return "Data contoh"
 }
