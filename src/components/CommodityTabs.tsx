@@ -20,7 +20,7 @@ export function CommodityTabs({ commodities, value, onChange }: CommodityTabsPro
     <div
       role="tablist"
       aria-label="Komoditas"
-      className="filmstrip flex snap-x gap-2 overflow-x-auto pb-1 [mask-image:linear-gradient(to_right,black_92%,transparent)]"
+      className="filmstrip flex snap-x gap-2 overflow-x-auto px-1 pb-1 [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]"
     >
       {commodities.map((c) => (
         <button
