@@ -59,7 +59,7 @@ export function MapView({
               fillColor: colorFor(price, average),
               fillOpacity: 0.65,
               color: selected ? "#1a1c16" : "#ffffff",
-              weight: selected ? 3 : 1,
+              weight: selected ? 2 : 1,
             }
           }}
           onEachFeature={(feature, layer: Layer) => {

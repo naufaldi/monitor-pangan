@@ -71,3 +71,8 @@ body {
   font: inherit;
   border-radius: var(--radius-lg);
 }
+
+.leaflet-container .leaflet-interactive:focus,
+.leaflet-container .leaflet-interactive:focus-visible {
+  outline: none;
+}

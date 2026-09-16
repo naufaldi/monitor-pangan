@@ -48,15 +48,19 @@ function HomePage() {
       </header>
 
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4">
-        <CommodityTabs
-          commodities={COMMODITIES}
-          value={commodityId}
-          onChange={(id) => {
-            setCommodityId(id)
-            setSelectedCode(null)
-          }}
-        />
-        <DatePicker dates={dates} value={date} onChange={setDate} />
+        <div className="sticky top-0 z-10 -mx-4 border-b border-hairline bg-canvas/90 px-4 py-2 backdrop-blur">
+          <CommodityTabs
+            commodities={COMMODITIES}
+            value={commodityId}
+            onChange={(id) => {
+              setCommodityId(id)
+              setSelectedCode(null)
+            }}
+          />
+          <div className="pt-2">
+            <DatePicker dates={dates} value={date} onChange={setDate} />
+          </div>
+        </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
