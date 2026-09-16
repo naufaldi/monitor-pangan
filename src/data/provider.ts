@@ -79,10 +79,15 @@ function mockPrice(
 
 const provinces = loadProvinces()
 
+function availableDates(): string[] {
+  if (SNAPSHOT_META.dates.length > 0) return [...SNAPSHOT_META.dates].sort()
+  return [...MOCK_DATES]
+}
+
 function buildSnapshot(date: string, commodityId: string): Snapshot {
   const commodity =
     COMMODITIES.find((c) => c.id === commodityId) ?? COMMODITIES[0]!
-  const dateIndex = Math.max(0, MOCK_DATES.indexOf(date))
+  const dateIndex = Math.max(0, availableDates().indexOf(date))
   const rows = provinces.map((p) => ({
     regionCode: p.code,
     price:
@@ -106,12 +111,13 @@ function buildTrend(
 ): TrendSeries {
   const commodity =
     COMMODITIES.find((c) => c.id === commodityId) ?? COMMODITIES[0]!
+  const allDates = availableDates()
   const requested: TrendRange = {
-    from: range?.from ?? MOCK_DATES[0],
-    to: range?.to ?? MOCK_DATES[MOCK_DATES.length - 1],
+    from: range?.from ?? allDates[0],
+    to: range?.to ?? allDates[allDates.length - 1],
     resolution: range?.resolution ?? "day",
   }
-  const dates = MOCK_DATES.filter(
+  const dates = allDates.filter(
     (d) => d >= requested.from && d <= requested.to,
   )
   const national: TrendPoint[] = []
@@ -143,7 +149,7 @@ function buildTrend(
 }
 
 export const provider: PriceDataProvider = {
-  dates: () => [...MOCK_DATES],
+  dates: () => availableDates(),
   provinces: () => provinces,
   snapshot: (date, commodityId) => buildSnapshot(date, commodityId),
   trend: (commodityId, regionCode, range) =>
