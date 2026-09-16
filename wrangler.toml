@@ -1,0 +1,10 @@
+name = "monitor-pangan"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "monitor-pangan"
+database_id = "local-dev-placeholder"
+
+[vars]
+PRICE_LEVEL = "eceran"

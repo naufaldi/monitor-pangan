@@ -8,7 +8,16 @@
     "generate-routes": "tsr generate",
     "build": "tsr generate && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "scrape": "node scripts/scrape-panelharga.mjs",
+    "scrape:pihps": "node scripts/scrape-pihps.mjs",
+    "opendata": "node scripts/import-opendata.mjs",
+    "normalize": "node scripts/normalize.mjs",
+    "ingest": "npm run scrape && npm run scrape:pihps && npm run opendata && npm run normalize",
+    "seed": "node scripts/seed-d1.mjs",
+    "db:apply": "wrangler d1 execute monitor-pangan --local --file=./db/schema.sql",
+    "db:seed": "wrangler d1 execute monitor-pangan --local --file=./data/seed.sql",
+    "db:setup": "npm run db:apply && npm run db:seed"
   },
   "dependencies": {
     "@tanstack/react-router": "latest",
@@ -31,6 +40,7 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.1",
     "typescript": "~5.8.3",
-    "vite": "^8.0.0"
+    "vite": "^8.0.0",
+    "wrangler": "^4.132.0"
   }
 }
