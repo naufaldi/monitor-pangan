@@ -7,7 +7,7 @@ import { MapView } from "#/components/MapView.tsx"
 import { PriceTable } from "#/components/PriceTable.tsx"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { dataBadge, provider } from "#/data/provider.ts"
+import { provider } from "#/data/provider.ts"
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -32,22 +32,7 @@ function HomePage() {
       : null
 
   return (
-    <div className="min-h-svh bg-canvas text-ink">
-      <header className="border-b border-hairline bg-paper">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-3 px-4 py-4">
-          <div>
-            <h1 className="text-xl font-bold">Monitor Pangan</h1>
-            <p className="text-sm text-slate">
-              Harga pangan strategis Indonesia per provinsi
-            </p>
-          </div>
-          <span className="ml-auto rounded-full bg-ember-soft px-3 py-1 text-xs font-semibold text-ember">
-            {dataBadge(date)}
-          </span>
-        </div>
-      </header>
-
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4">
         <div className="sticky top-0 z-10 -mx-4 border-b border-hairline bg-canvas/90 px-4 py-2 backdrop-blur">
           <CommodityTabs
             commodities={COMMODITIES}
@@ -100,7 +85,6 @@ function HomePage() {
           untuk pengembangan UI — bukan data resmi. Sumber resmi: Panel Harga
           Badan Pangan Nasional dan PIHPS Bank Indonesia.
         </footer>
-      </main>
-    </div>
+    </main>
   )
 }
