@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "scrape": "node scripts/scrape-panelharga.mjs",
     "scrape:pihps": "node scripts/scrape-pihps.mjs",
+    "scrape:pihps:range": "node scripts/scrape-pihps.mjs",
     "opendata": "node scripts/import-opendata.mjs",
     "normalize": "node scripts/normalize.mjs",
     "ingest": "npm run scrape && npm run scrape:pihps && npm run opendata && npm run normalize",

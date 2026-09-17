@@ -16,15 +16,16 @@ type MoversListProps = {
   items: MoverItem[]
   activeId: string
   onSelect: (id: string) => void
+  rangeLabel: string
 }
 
-/** National 14-16 Sep movers, grouped by direction and sorted by changePct. */
-export function MoversList({ items, activeId, onSelect }: MoversListProps) {
+/** National movers over a labeled range, grouped by direction and sorted by changePct. */
+export function MoversList({ items, activeId, onSelect, rangeLabel }: MoversListProps) {
   if (items.length === 0) {
     return (
       <section className="rounded-xl border border-hairline bg-paper">
         <div className="border-b border-hairline px-4 py-3">
-          <h2 className="text-base font-bold">Pergerakan 14-16 Sep</h2>
+          <h2 className="text-base font-bold">Pergerakan {rangeLabel}</h2>
           <p className="text-sm text-slate">Nasional, sorted by changePct</p>
         </div>
         <p className="px-4 py-3 text-sm text-slate">Belum ada data.</p>
@@ -49,7 +50,7 @@ export function MoversList({ items, activeId, onSelect }: MoversListProps) {
   return (
     <section className="rounded-xl border border-hairline bg-paper">
       <div className="border-b border-hairline px-4 py-3">
-        <h2 className="text-base font-bold">Pergerakan 14-16 Sep</h2>
+        <h2 className="text-base font-bold">Pergerakan {rangeLabel}</h2>
         <p className="text-sm text-slate">Nasional, sorted by changePct</p>
       </div>
       {groups.map((group) =>

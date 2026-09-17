@@ -1,7 +1,7 @@
 import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router"
 
 import { Navbar } from "../components/Navbar.tsx"
-import { dataBadge, provider } from "../data/provider.ts"
+import { dataBadge, latestLiveDate } from "../data/provider.ts"
 import appCss from "../styles.css?url"
 
 export const Route = createRootRoute({
@@ -23,7 +23,7 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const latest = provider.dates().at(-1) ?? ""
+  const latest = latestLiveDate()
   return (
     <div className="min-h-svh bg-canvas text-ink">
       <header className="border-b border-hairline bg-paper">

@@ -7,7 +7,7 @@ import { MapView } from "#/components/MapView.tsx"
 import { PriceTable } from "#/components/PriceTable.tsx"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { provider } from "#/data/provider.ts"
+import { latestLiveDate, provider } from "#/data/provider.ts"
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -15,9 +15,12 @@ export const Route = createFileRoute("/")({
 })
 
 function HomePage() {
-  const dates = useMemo(() => provider.dates(), [])
+  const dates = useMemo(() => provider.dates().slice(-30), [])
   const provinces = useMemo(() => provider.provinces(), [])
-  const [date, setDate] = useState(dates[dates.length - 1] ?? "")
+  const [date, setDate] = useState(() => {
+    const live = latestLiveDate()
+    return dates.includes(live) ? live : (dates[dates.length - 1] ?? "")
+  })
   const [commodityId, setCommodityId] = useState(COMMODITIES[0]?.id ?? "")
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
 

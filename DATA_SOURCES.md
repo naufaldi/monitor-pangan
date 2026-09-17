@@ -21,6 +21,17 @@ sites make — rate-limited one-shot, cached to `data/raw/`:
   Empty from source: Kepri, Kalbar, Kaltara (`{"data":[]}`) and the 4
   post-2022 Papua provinces PIHPS does not survey yet — those cells fall back
   to clearly-mixed sample values until covered.
+- History depth (probed 2026-09-17): earliest served date is 2017-03-27.
+  2014 through mid-March 2017 return `{"data":[]}`. Format is stable across
+  years: same ten `level == 1` categories, same `d/m/yyyy` column header.
+  One full 35-scope date takes about 21s, so the 2017-2026 backfill is about
+  2,470 trading days or roughly 14 hours sequential. Run it as year chunks:
+  `node scripts/scrape-pihps.mjs <YYYY>`, resumable via
+  `data/raw/manifest-<YYYY>.json`.
+- Panel catalog API (`api-panelhargav2.badanpangan.go.id`) times out from some
+  networks. When it does, `data/raw/panelharga-*.json` is synthesized from the
+  in-repo 38-province list instead. The join only needs `national_id` values
+  plus eceran commodity ids, so prices are unaffected.
 
 **Panel Harga catalog (metadata)** — `scripts/scrape-panelharga.mjs`
 

@@ -5,3 +5,5 @@ dist/
 *.local
 .DS_Store
 data/raw/
+data/snapshots/2*.json
+data/seed-2*.sql

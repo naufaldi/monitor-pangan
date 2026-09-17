@@ -16,6 +16,24 @@ export const Route = createFileRoute("/tren")({
 
 const TIMEFRAMES = ["3H", "7H", "1B", "1T", "ALL"] as const
 
+type Timeframe = (typeof TIMEFRAMES)[number]
+
+const TIMEFRAME_DAYS: Record<Timeframe, number> = {
+  "3H": 3,
+  "7H": 7,
+  "1B": 31,
+  "1T": 365,
+  ALL: Number.MAX_SAFE_INTEGER,
+}
+
+const TIMEFRAME_RESOLUTION: Record<Timeframe, "day" | "week" | "month"> = {
+  "3H": "day",
+  "7H": "day",
+  "1B": "week",
+  "1T": "week",
+  ALL: "month",
+}
+
 function directionLabel(direction: MoverItem["direction"]): string {
   switch (direction) {
     case "up":
@@ -37,18 +55,30 @@ function TrenPage() {
   const provinces = useMemo(() => provider.provinces(), [])
   const [commodityId, setCommodityId] = useState(COMMODITIES[0]?.id ?? "")
   const [regionCode, setRegionCode] = useState<string | null>(null)
+  const [timeframe, setTimeframe] = useState<Timeframe>("3H")
 
-  const from = dates[0] ?? ""
   const to = dates[dates.length - 1] ?? ""
+  const window = dates.slice(-TIMEFRAME_DAYS[timeframe])
+  const from = window[0] ?? to
   const series = useMemo(
-    () => provider.trend(commodityId, regionCode, { from, to, resolution: "day" }),
-    [commodityId, regionCode, from, to],
+    () =>
+      provider.trend(commodityId, regionCode, {
+        from,
+        to,
+        resolution: TIMEFRAME_RESOLUTION[timeframe],
+      }),
+    [commodityId, regionCode, from, to, timeframe],
   )
+
+  const moverRange = useMemo(() => {
+    const r = provider.trend(COMMODITIES[0]?.id ?? "", null, { resolution: "month" }).range
+    return `${formatDateShort(r.from)} – ${formatDateShort(r.to)}`
+  }, [])
 
   const movers = useMemo<MoverItem[]>(
     () =>
       COMMODITIES.map((c) => {
-        const s = provider.trend(c.id)
+        const s = provider.trend(c.id, null, { resolution: "month" })
         return {
           commodityId: c.id,
           name: c.name,
@@ -98,19 +128,18 @@ function TrenPage() {
         </select>
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Rentang waktu">
           {TIMEFRAMES.map((t) => {
-            const active = t === "3H"
+            const active = t === timeframe
             return (
               <button
                 key={t}
                 type="button"
-                disabled={!active}
+                onClick={() => setTimeframe(t)}
                 aria-pressed={active}
-                title={active ? undefined : "Data 2014-2026 menyusul"}
                 className={cn(
                   "tabular-nums min-h-11 rounded-lg border px-3 py-1.5 text-sm font-semibold",
                   active
                     ? "border-ink bg-ink text-white"
-                    : "cursor-not-allowed border-hairline bg-paper text-slate opacity-60",
+                    : "border-hairline bg-paper text-ink",
                 )}
               >
                 {t}
@@ -148,7 +177,7 @@ function TrenPage() {
         )}
       </section>
 
-      <MoversList items={movers} activeId={commodityId} onSelect={setCommodityId} />
+      <MoversList items={movers} activeId={commodityId} onSelect={setCommodityId} rangeLabel={moverRange} />
 
       <footer className="pb-6 text-xs text-slate">
         Tren dihitung dari rata-rata nasional per tanggal survei. Angka di
