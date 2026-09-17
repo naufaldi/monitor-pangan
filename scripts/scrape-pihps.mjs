@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 const BASE = "https://www.bi.go.id";
 const HEADERS = {
@@ -93,14 +93,30 @@ async function scrapeOneDate(iso) {
   await mkdir("data/raw", { recursive: true });
   await writeFile(`data/raw/pihps-${iso}.json`, JSON.stringify(out, null, 2));
   console.log(`wrote data/raw/pihps-${iso}.json scopes=${out.rows.length}`);
+  const liveCells = out.rows.reduce(
+    (n, r) => n + Object.values(r.prices).filter((v) => v != null).length,
+    0,
+  );
+  return { iso, scopes: out.rows.length, liveCells, fetchedAt: out.fetchedAt };
 }
 
 const rawArgs = process.argv.slice(2).filter((a) => a !== "--force");
 const force = process.argv.includes("--force");
 const dateArgs = rawArgs.filter((a) => /^\d{4}-\d{2}-\d{2}$/.test(a));
+const yearArg = rawArgs.find((a) => /^\d{4}$/.test(a));
 const today = new Date().toISOString().slice(0, 10);
-const startArg = dateArgs[0] ?? today;
-const endArg = dateArgs[1] ?? startArg;
+
+let startArg;
+let endArg;
+let manifestPath = null;
+if (yearArg != null) {
+  startArg = `${yearArg}-01-01`;
+  endArg = yearArg === today.slice(0, 4) ? today : `${yearArg}-12-31`;
+  manifestPath = `data/raw/manifest-${yearArg}.json`;
+} else {
+  startArg = dateArgs[0] ?? today;
+  endArg = dateArgs[1] ?? startArg;
+}
 const ordered = [startArg, endArg].sort();
 const dates = eachDay(ordered[0], ordered[1]).filter(isTradingDay);
 
@@ -109,10 +125,36 @@ if (dates.length === 0) {
   process.exit(0);
 }
 
+let manifest = null;
+if (manifestPath != null) {
+  await mkdir("data/raw", { recursive: true });
+  try {
+    manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  } catch {
+    manifest = { year: yearArg, startedAt: new Date().toISOString(), dates: {} };
+  }
+  manifest.updatedAt = new Date().toISOString();
+}
+
 for (const iso of dates) {
   if (!force && existsSync(`data/raw/pihps-${iso}.json`)) {
     console.log(`skip ${iso}: data/raw/pihps-${iso}.json exists (use --force to re-scrape)`);
+    if (manifest != null && manifest.dates[iso] == null) {
+      manifest.dates[iso] = { skipped: true };
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+    }
     continue;
   }
-  await scrapeOneDate(iso);
+  const summary = await scrapeOneDate(iso);
+  if (manifest != null) {
+    manifest.dates[iso] = summary;
+    manifest.updatedAt = new Date().toISOString();
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+  }
+}
+
+if (manifest != null) {
+  const done = Object.values(manifest.dates).filter((d) => d.liveCells != null);
+  const live = done.reduce((n, d) => n + d.liveCells, 0);
+  console.log(`year ${manifest.year}: dates=${done.length} liveCells=${live} manifest=${manifestPath}`);
 }

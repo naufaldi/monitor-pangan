@@ -32,22 +32,46 @@ const PROVINCES = [
 ];
 
 const esc = (v) => `'${String(v).replaceAll("'", "''")}'`;
-const sql = [];
-for (const [id, name, unit] of COMMODITIES)
-  sql.push(`INSERT OR IGNORE INTO commodities (id, name, unit) VALUES (${esc(id)}, ${esc(name)}, ${esc(unit)});`);
-for (const [code, name] of PROVINCES)
-  sql.push(`INSERT OR IGNORE INTO regions (code, name, level) VALUES (${esc(code)}, ${esc(name)}, 'province');`);
 
-const snap = JSON.parse(await readFile("data/snapshots/latest.json", "utf8"));
-let priced = 0;
-for (const r of snap.rows) {
-  if (r.price == null) continue;
-  priced++;
+const preamble = () => {
+  const sql = [];
+  for (const [id, name, unit] of COMMODITIES)
+    sql.push(`INSERT OR IGNORE INTO commodities (id, name, unit) VALUES (${esc(id)}, ${esc(name)}, ${esc(unit)});`);
+  for (const [code, name] of PROVINCES)
+    sql.push(`INSERT OR IGNORE INTO regions (code, name, level) VALUES (${esc(code)}, ${esc(name)}, 'province');`);
+  return sql;
+};
+
+const priceRow = (r) =>
+  `INSERT OR REPLACE INTO prices_daily (date, commodity_id, region_code, level, price, source_id) VALUES (${esc(r.date)}, ${esc(r.commodity_id)}, ${esc(r.region_code)}, ${esc(r.level)}, ${r.price}, ${esc(r.source_id)});`;
+
+const yearArg = process.argv[2];
+
+if (yearArg != null) {
+  const snap = JSON.parse(await readFile(`data/snapshots/${yearArg}.json`, "utf8"));
+  const sql = preamble();
+  let priced = 0;
+  for (const r of snap.rows) {
+    if (r.price == null) continue;
+    priced++;
+    sql.push(priceRow(r));
+  }
   sql.push(
-    `INSERT OR REPLACE INTO prices_daily (date, commodity_id, region_code, level, price, source_id) VALUES (${esc(r.date)}, ${esc(r.commodity_id)}, ${esc(r.region_code)}, ${esc(r.level)}, ${r.price}, ${esc(r.source_id)});`,
+    `INSERT INTO job_runs (started_at, source_id, status, rows_upserted, note) VALUES (${esc(new Date().toISOString())}, 'pihps', 'complete', ${priced}, ${esc(`seed ${yearArg}: ${snap.dates.length} dates live=${snap.liveRows}`)});`,
   );
+  await writeFile(`data/seed-${yearArg}.sql`, sql.join("\n") + "\n");
+  console.log(`wrote data/seed-${yearArg}.sql statements=${sql.length} pricedRows=${priced}`);
+  console.log(`apply locally: npx wrangler d1 execute monitor-pangan --local --file=./data/seed-${yearArg}.sql`);
+} else {
+  const snap = JSON.parse(await readFile("data/snapshots/latest.json", "utf8"));
+  const sql = preamble();
+  let priced = 0;
+  for (const r of snap.rows) {
+    if (r.price == null) continue;
+    priced++;
+    sql.push(priceRow(r));
+  }
+  await writeFile("data/seed.sql", sql.join("\n") + "\n");
+  console.log(`wrote data/seed.sql statements=${sql.length} pricedRows=${priced}`);
+  console.log("apply locally: npx wrangler d1 execute monitor-pangan --local --file=./db/schema.sql && npx wrangler d1 execute monitor-pangan --local --file=./data/seed.sql");
 }
-
-await writeFile("data/seed.sql", sql.join("\n") + "\n");
-console.log(`wrote data/seed.sql statements=${sql.length} pricedRows=${priced}`);
-console.log("apply locally: npx wrangler d1 execute monitor-pangan --local --file=./db/schema.sql && npx wrangler d1 execute monitor-pangan --local --file=./data/seed.sql");
