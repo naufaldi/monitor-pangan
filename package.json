@@ -3,12 +3,16 @@
   "private": true,
   "type": "module",
   "version": "0.1.0",
+  "imports": {
+    "#/*": "./src/*"
+  },
   "scripts": {
     "dev": "vite dev --port 3001",
     "generate-routes": "tsr generate",
     "build": "tsr generate && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "scrape": "node scripts/scrape-panelharga.mjs",
     "scrape:pihps": "node scripts/scrape-pihps.mjs",
     "scrape:pihps:range": "node scripts/scrape-pihps.mjs",
@@ -34,6 +38,7 @@
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@effect/vitest": "^0.30.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/router-cli": "^1.132.0",
     "@types/leaflet": "^1.9.12",
@@ -43,6 +48,7 @@
     "@vitejs/plugin-react": "^6.0.1",
     "typescript": "~5.8.3",
     "vite": "^8.0.0",
+    "vitest": "^3.2.7",
     "wrangler": "^4.132.0"
   }
 }
