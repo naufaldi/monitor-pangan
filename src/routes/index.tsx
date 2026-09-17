@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
-import { CommodityTabs } from "#/components/CommodityTabs.tsx"
+import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { DatePicker } from "#/components/DatePicker.tsx"
 import { MapView } from "#/components/MapView.tsx"
 import { PriceTable } from "#/components/PriceTable.tsx"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { latestLiveDate, provider } from "#/data/provider.ts"
+import { formatPrice } from "#/lib/format.ts"
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -28,24 +29,46 @@ function HomePage() {
     () => provider.snapshot(date, commodityId),
     [date, commodityId],
   )
+  const hints = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const c of COMMODITIES) {
+      map.set(c.id, formatPrice(provider.snapshot(date, c.id).nationalAvg, c.unit))
+    }
+    return map
+  }, [date])
   const selected = provinces.find((p) => p.code === selectedCode) ?? null
   const selectedPrice =
     selected != null
       ? (snapshot.rows.find((r) => r.regionCode === selected.code)?.price ?? null)
       : null
+  const extremes = useMemo(() => {
+    let min = Number.POSITIVE_INFINITY
+    let max = 0
+    for (const r of snapshot.rows) {
+      if (r.price < min) min = r.price
+      if (r.price > max) max = r.price
+    }
+    return {
+      min: Number.isFinite(min) ? min : snapshot.nationalAvg,
+      max: max > 0 ? max : snapshot.nationalAvg,
+    }
+  }, [snapshot])
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4">
         <div className="sticky top-0 z-10 -mx-4 border-b border-hairline bg-canvas/90 px-4 py-2 backdrop-blur">
-          <CommodityTabs
-            commodities={COMMODITIES}
-            value={commodityId}
-            onChange={(id) => {
-              setCommodityId(id)
-              setSelectedCode(null)
-            }}
-          />
-          <div className="pt-2">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-52 flex-1">
+              <CommoditySelect
+                commodities={COMMODITIES}
+                value={commodityId}
+                onChange={(id) => {
+                  setCommodityId(id)
+                  setSelectedCode(null)
+                }}
+                hintFor={(c) => hints.get(c.id)}
+              />
+            </div>
             <DatePicker dates={dates} value={date} onChange={setDate} />
           </div>
         </div>
@@ -65,6 +88,8 @@ function HomePage() {
             provinceName={selected?.name ?? null}
             price={selectedPrice}
             average={snapshot.nationalAvg}
+            min={extremes.min}
+            max={extremes.max}
             unit={snapshot.commodity.unit}
             date={date}
           />

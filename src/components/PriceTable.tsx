@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 
 import { formatDateShort, formatPrice } from "#/lib/format.ts"
 import { cn } from "#/lib/utils.ts"
+import { ChevronBadge } from "#/components/ChevronBadge.tsx"
 import type { PriceUnit } from "#/data/catalog.ts"
 
 export type TableRow = {
@@ -62,16 +63,21 @@ export function PriceTable({
             aria-label="Cari provinsi"
             className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm"
           />
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
-            aria-label="Urutkan"
-            className="rounded-lg border border-input bg-background px-2 py-1.5 text-sm"
-          >
-            <option value="price-desc">Termahal dulu</option>
-            <option value="price-asc">Termurah dulu</option>
-            <option value="name">Nama A–Z</option>
-          </select>
+          <div className="relative flex items-center">
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              aria-label="Urutkan"
+              className="min-h-11 appearance-none rounded-lg border border-input bg-background py-1.5 pr-11 pl-2 text-sm"
+            >
+              <option value="price-desc">Termahal dulu</option>
+              <option value="price-asc">Termurah dulu</option>
+              <option value="name">Nama A–Z</option>
+            </select>
+            <span className="absolute top-1/2 right-1 -translate-y-1/2">
+              <ChevronBadge />
+            </span>
+          </div>
         </div>
       </div>
       <div className="max-h-[480px] overflow-auto">
@@ -90,10 +96,18 @@ export function PriceTable({
               return (
                 <tr
                   key={r.regionCode}
+                  tabIndex={0}
+                  aria-selected={r.regionCode === selectedCode}
                   onClick={() => onSelect(r.regionCode)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      onSelect(r.regionCode)
+                    }
+                  }}
                   className={cn(
-                    "cursor-pointer border-t border-hairline",
-                    r.regionCode === selectedCode && "bg-ember-soft",
+                    "cursor-pointer border-t border-hairline transition-[background-color] duration-150 ease-out hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink",
+                    r.regionCode === selectedCode && "bg-ember-soft hover:bg-ember-soft",
                   )}
                 >
                   <td className="px-4 py-2 font-medium">{r.name}</td>
