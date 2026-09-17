@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "version": "0.1.0",
+  "imports": {
+    "#/*": "./src/*"
+  },
   "workspaces": [
     "packages/*"
   ],
@@ -12,22 +15,24 @@
     "build": "tsr generate && vite build && node -e \"require('node:fs').copyFileSync('dist/client/_shell.html','dist/client/index.html')\"",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "scrape": "node scripts/scrape-panelharga.mjs",
     "scrape:pihps": "node scripts/scrape-pihps.mjs",
     "scrape:pihps:range": "node scripts/scrape-pihps.mjs",
     "opendata": "node scripts/import-opendata.mjs",
     "normalize": "node scripts/normalize.mjs",
-    "ingest": "npm run scrape && npm run scrape:pihps && npm run opendata && npm run normalize",
+    "ingest": "pnpm run scrape && pnpm run scrape:pihps && pnpm run opendata && pnpm run normalize",
     "seed": "node scripts/seed-d1.mjs",
     "db:apply": "wrangler d1 execute monitor-pangan --local --file=./db/schema.sql",
     "db:seed": "wrangler d1 execute monitor-pangan --local --file=./data/seed.sql",
-    "db:setup": "npm run db:apply && npm run db:seed"
+    "db:setup": "pnpm run db:apply && pnpm run db:seed"
   },
   "dependencies": {
     "@monitor-pangan/ui": "workspace:*",
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
     "clsx": "^2.1.1",
+    "effect": "^3.22.2",
     "indonesia-geodata": "latest",
     "leaflet": "^1.9.4",
     "react": "^19.2.0",
@@ -37,6 +42,7 @@
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@effect/vitest": "^0.30.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/router-cli": "^1.132.0",
     "@types/leaflet": "^1.9.12",
@@ -46,6 +52,7 @@
     "@vitejs/plugin-react": "^6.0.1",
     "typescript": "~5.8.3",
     "vite": "^8.0.0",
+    "vitest": "^3.2.7",
     "wrangler": "^4.132.0"
   }
 }
