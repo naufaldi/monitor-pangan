@@ -1,5 +1,5 @@
+import { Badge, cardClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPrice } from "#/lib/format.ts"
-import { cn } from "#/lib/utils.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 
 type ProvincePanelProps = {
@@ -28,7 +28,7 @@ export function ProvincePanel({
 
   if (provinceName == null || price == null) {
     return (
-      <aside className="flex flex-col justify-center rounded-xl border border-hairline bg-paper p-5">
+      <aside className={cardClass("lg", "flex flex-col justify-center")}>
         <p className="text-sm text-slate">
           {commodityName} · rata-rata nasional
         </p>
@@ -48,7 +48,7 @@ export function ProvincePanel({
   const above = diff >= 0
 
   return (
-    <aside className="flex flex-col rounded-xl border border-hairline bg-paper p-5">
+    <aside className={cardClass("lg", "flex flex-col")}>
       <p className="text-sm text-slate">
         {commodityName} · {formatDateShort(date)}
       </p>
@@ -57,15 +57,10 @@ export function ProvincePanel({
         {formatPrice(price, unit)}
       </p>
       <p className="mt-2 flex flex-wrap items-center gap-2">
-        <span
-          className={cn(
-            "tabular-nums rounded-full px-3 py-1 text-xs font-semibold",
-            above ? "bg-ember-soft text-ember" : "bg-muted text-leaf-deep",
-          )}
-        >
+        <Badge tone={above ? "ember" : "neutral"} className={above ? undefined : "text-leaf-deep"}>
           {above ? "+" : ""}
           {diff.toFixed(1)}% vs nasional
-        </span>
+        </Badge>
         <span className="tabular-nums text-sm text-slate">
           {formatPrice(average, unit)}
         </span>

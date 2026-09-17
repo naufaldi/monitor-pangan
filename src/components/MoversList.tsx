@@ -1,3 +1,4 @@
+import { cardClass } from "@monitor-pangan/ui"
 import { formatPct, formatPrice } from "#/lib/format.ts"
 import { cn } from "#/lib/utils.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
@@ -23,7 +24,7 @@ type MoversListProps = {
 export function MoversList({ items, activeId, onSelect, rangeLabel }: MoversListProps) {
   if (items.length === 0) {
     return (
-      <section className="rounded-xl border border-hairline bg-paper">
+      <section className={cardClass()}>
         <div className="border-b border-hairline px-4 py-3">
           <h2 className="text-base font-bold">Pergerakan {rangeLabel}</h2>
           <p className="text-sm text-slate">Nasional, sorted by changePct</p>
@@ -48,7 +49,7 @@ export function MoversList({ items, activeId, onSelect, rangeLabel }: MoversList
   if (flat.length > 0) groups.push({ title: "Stabil", rows: flat })
 
   return (
-    <section className="rounded-xl border border-hairline bg-paper">
+    <section className={cardClass()}>
       <div className="border-b border-hairline px-4 py-3">
         <h2 className="text-base font-bold">Pergerakan {rangeLabel}</h2>
         <p className="text-sm text-slate">Nasional, sorted by changePct</p>

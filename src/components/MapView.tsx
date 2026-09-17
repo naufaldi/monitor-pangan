@@ -2,7 +2,7 @@ import { useRef } from "react"
 import { GeoJSON, MapContainer, TileLayer } from "react-leaflet"
 import type { Layer, Path } from "leaflet"
 import "leaflet/dist/leaflet.css"
-
+import { cardClass } from "@monitor-pangan/ui"
 import { provinceFeatures } from "#/data/geo.ts"
 import type { PriceRow } from "#/data/provider.ts"
 
@@ -40,7 +40,7 @@ export function MapView({
   selectedRef.current = selectedCode
 
   return (
-    <div className="overflow-hidden rounded-xl border border-hairline bg-paper">
+    <div className={cardClass("none", "overflow-hidden")}>
       <MapContainer
         center={[-2.6, 118]}
         zoom={5}

@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react"
-
+import { Input, cardClass } from "@monitor-pangan/ui"
 import { cn } from "#/lib/utils.ts"
 import type { Commodity } from "#/data/catalog.ts"
 
@@ -67,7 +67,7 @@ export function CommoditySelect({
         aria-controls={listId}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex min-h-11 w-full items-center gap-2 rounded-xl border border-hairline bg-paper px-3 py-1.5 text-left",
+          cardClass("none", "flex min-h-11 w-full items-center gap-2 px-3 py-1.5 text-left"),
           "transition-[scale,background-color,border-color] duration-150 ease-out active:scale-[0.96]",
         )}
       >
@@ -100,16 +100,16 @@ export function CommoditySelect({
       </button>
 
       {open ? (
-        <div className="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-hairline bg-paper shadow-lg">
+        <div className={cardClass("none", "absolute inset-x-0 top-full z-20 mt-1 overflow-hidden shadow-lg")}>
           <div className="border-b border-hairline p-2">
-            <input
+            <Input
               ref={searchRef}
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari komoditas…"
               aria-label="Cari komoditas"
-              className="min-h-11 w-full rounded-lg border border-input bg-background px-3 py-1.5 text-sm"
+              className="min-h-11 w-full"
             />
           </div>
           <ul
