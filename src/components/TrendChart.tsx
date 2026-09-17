@@ -259,6 +259,12 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
         {selected !== null
           ? selected.map((point, index) => {
               const label = `Wilayah terpilih ${formatDateShort(point.date)}: ${formatPrice(point.price, series.unit)}`
+              const focusNational = () => {
+                const nationalIndex = national.findIndex(
+                  (nationalPoint) => nationalPoint.date === point.date,
+                )
+                setActiveIndex(nationalIndex === -1 ? null : nationalIndex)
+              }
               return (
                 <circle
                   key={`terpilih-${point.date}`}
@@ -270,6 +276,9 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
                   strokeWidth={2}
                   tabIndex={0}
                   aria-label={label}
+                  onFocus={focusNational}
+                  onBlur={() => setActiveIndex(null)}
+                  className="cursor-pointer"
                 >
                   <title>{label}</title>
                 </circle>

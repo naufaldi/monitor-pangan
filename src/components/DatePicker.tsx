@@ -132,13 +132,13 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
         </span>
       </div>
 
-      <span className="flex min-h-11 shrink-0 items-center" aria-hidden={!isLatest}>
+      <span className="flex min-h-11 shrink-0 items-center" aria-hidden={isLatest}>
         <Button
           variant="rect"
           onClick={() => onChange(latest ?? "")}
-          disabled={latest == null}
+          disabled={latest == null || isLatest}
           tabIndex={isLatest ? -1 : undefined}
-          className={cn(!isLatest && "invisible")}
+          className={cn(isLatest && "invisible")}
         >
           Terbaru
         </Button>
