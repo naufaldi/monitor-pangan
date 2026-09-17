@@ -1,5 +1,5 @@
+import { Button } from "@monitor-pangan/ui"
 import { formatDateShort } from "#/lib/format.ts"
-import { cn } from "#/lib/utils.ts"
 
 type DatePickerProps = {
   dates: string[]
@@ -12,20 +12,15 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {dates.map((d) => (
-        <button
+        <Button
           key={d}
-          type="button"
+          variant="rect"
+          active={d === value}
           onClick={() => onChange(d)}
           aria-pressed={d === value}
-          className={cn(
-            "tabular-nums rounded-lg border px-3 py-1.5 text-sm font-semibold",
-            d === value
-              ? "border-ink bg-ink text-white"
-              : "border-hairline bg-paper text-ink",
-          )}
         >
           {formatDateShort(d)}
-        </button>
+        </Button>
       ))}
       <span className="text-xs text-slate">Hari perdagangan (Senin–Jumat)</span>
     </div>

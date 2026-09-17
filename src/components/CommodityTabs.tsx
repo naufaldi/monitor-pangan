@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react"
-
-import { cn } from "#/lib/utils.ts"
+import { buttonClass } from "@monitor-pangan/ui"
 import type { Commodity } from "#/data/catalog.ts"
 
 type CommodityTabsProps = {
@@ -30,12 +29,7 @@ export function CommodityTabs({ commodities, value, onChange }: CommodityTabsPro
           aria-selected={c.id === value}
           type="button"
           onClick={() => onChange(c.id)}
-          className={cn(
-            "min-h-11 shrink-0 snap-start rounded-full border px-4 py-2 text-sm font-semibold transition-transform active:scale-[0.96]",
-            c.id === value
-              ? "border-ink bg-ink text-white"
-              : "border-hairline bg-paper text-ink",
-          )}
+          className={buttonClass("pill", c.id === value, "shrink-0 snap-start")}
         >
           {c.name}
         </button>

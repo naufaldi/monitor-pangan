@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-
+import { Input, Select, cardClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPrice } from "#/lib/format.ts"
 import { cn } from "#/lib/utils.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
@@ -45,7 +45,7 @@ export function PriceTable({
   }, [rows, query, sort])
 
   return (
-    <section className="overflow-hidden rounded-xl border border-hairline bg-paper">
+    <section className={cardClass("none", "overflow-hidden")}>
       <div className="flex flex-wrap items-center gap-2 border-b border-hairline px-4 py-3">
         <h2 className="text-base font-bold">
           Harga {commodityName} per provinsi
@@ -54,24 +54,22 @@ export function PriceTable({
           {formatDateShort(date)} · {visible.length} dari {rows.length}
         </span>
         <div className="ml-auto flex gap-2">
-          <input
+          <Input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Cari provinsi…"
             aria-label="Cari provinsi"
-            className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm"
           />
-          <select
+          <Select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
             aria-label="Urutkan"
-            className="rounded-lg border border-input bg-background px-2 py-1.5 text-sm"
           >
             <option value="price-desc">Termahal dulu</option>
             <option value="price-asc">Termurah dulu</option>
             <option value="name">Nama A–Z</option>
-          </select>
+          </Select>
         </div>
       </div>
       <div className="max-h-[480px] overflow-auto">

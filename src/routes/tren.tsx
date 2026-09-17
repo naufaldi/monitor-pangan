@@ -7,7 +7,7 @@ import { TrendChart } from "#/components/TrendChart.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { provider } from "#/data/provider.ts"
 import { formatDateShort, formatPct, formatPrice } from "#/lib/format.ts"
-import { cn } from "#/lib/utils.ts"
+import { Badge, Button, Select, cardClass } from "@monitor-pangan/ui"
 
 export const Route = createFileRoute("/tren")({
   ssr: false,
@@ -113,11 +113,10 @@ function TrenPage() {
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <select
+        <Select
           value={regionCode ?? ""}
           onChange={(e) => setRegionCode(e.target.value === "" ? null : e.target.value)}
           aria-label="Wilayah"
-          className="min-h-11 rounded-lg border border-input bg-paper px-3 py-1.5 text-sm font-semibold"
         >
           <option value="">Nasional</option>
           {provinces.map((p) => (
@@ -125,25 +124,20 @@ function TrenPage() {
               {p.name}
             </option>
           ))}
-        </select>
+        </Select>
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Rentang waktu">
           {TIMEFRAMES.map((t) => {
             const active = t === timeframe
             return (
-              <button
+              <Button
                 key={t}
-                type="button"
+                variant="rect"
+                active={active}
                 onClick={() => setTimeframe(t)}
                 aria-pressed={active}
-                className={cn(
-                  "tabular-nums min-h-11 rounded-lg border px-3 py-1.5 text-sm font-semibold",
-                  active
-                    ? "border-ink bg-ink text-white"
-                    : "border-hairline bg-paper text-ink",
-                )}
               >
                 {t}
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -153,11 +147,11 @@ function TrenPage() {
 
       <section
         aria-label="Ringkasan perubahan"
-        className="rounded-xl border border-hairline bg-paper p-5"
+        className={cardClass("lg")}
       >
-        <span className="tabular-nums rounded-full bg-ember-soft px-3 py-1 text-xs font-semibold text-ember">
+        <Badge tone="ember">
           {formatPct(series.changePct)} · {directionLabel(series.direction)}
-        </span>
+        </Badge>
         {moves.length === 0 ? (
           <p className="mt-3 text-sm text-slate">Belum ada pergerakan harian.</p>
         ) : (

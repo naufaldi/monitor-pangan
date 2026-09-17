@@ -1,3 +1,4 @@
+import { cardClass, cn } from "@monitor-pangan/ui"
 import { formatDateShort, formatPrice } from "#/lib/format.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 
@@ -21,7 +22,7 @@ export function ProvincePanel({
 }: ProvincePanelProps) {
   if (provinceName == null || price == null) {
     return (
-      <aside className="flex flex-col justify-center rounded-xl border border-hairline bg-paper p-5">
+      <aside className={cardClass("lg", "flex flex-col justify-center")}>
         <p className="text-sm text-slate">
           {commodityName} · rata-rata nasional
         </p>
@@ -40,7 +41,7 @@ export function ProvincePanel({
   const above = diff >= 0
 
   return (
-    <aside className="flex flex-col rounded-xl border border-hairline bg-paper p-5">
+    <aside className={cardClass("lg", "flex flex-col")}>
       <p className="text-sm text-slate">
         {commodityName} · {formatDateShort(date)}
       </p>
@@ -49,7 +50,7 @@ export function ProvincePanel({
         {formatPrice(price, unit)}
       </p>
       <p
-        className={`tabular-nums mt-1 text-sm font-semibold ${above ? "text-ember" : "text-leaf-deep"}`}
+        className={cn("tabular-nums mt-1 text-sm font-semibold", above ? "text-ember" : "text-leaf-deep")}
       >
         {above ? "+" : ""}
         {diff.toFixed(1)}% vs rata-rata nasional ({formatPrice(average, unit)})
