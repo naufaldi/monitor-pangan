@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite dev --port 3001",
     "generate-routes": "tsr generate",
-    "build": "tsr generate && vite build",
+    "build": "tsr generate && vite build && node -e \"require('node:fs').copyFileSync('dist/client/_shell.html','dist/client/index.html')\"",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "scrape": "node scripts/scrape-panelharga.mjs",
