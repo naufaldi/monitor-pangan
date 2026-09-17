@@ -5,7 +5,8 @@
     "jsx": "react-jsx",
     "module": "preserve",
     "paths": {
-      "#/*": ["./src/*"]
+      "#/*": ["./src/*"],
+      "@monitor-pangan/ui": ["./packages/ui/src/index.ts"]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],

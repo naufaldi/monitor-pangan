@@ -1,5 +1,5 @@
 import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router"
-
+import { Badge } from "@monitor-pangan/ui"
 import { Navbar } from "../components/Navbar.tsx"
 import { dataBadge, latestLiveDate } from "../data/provider.ts"
 import appCss from "../styles.css?url"
@@ -34,9 +34,9 @@ function RootComponent() {
               Harga pangan strategis Indonesia per provinsi
             </p>
           </div>
-          <span className="ml-auto rounded-full bg-ember-soft px-3 py-1 text-xs font-semibold text-ember">
+          <Badge tone="ember" className="ml-auto">
             {dataBadge(latest)}
-          </span>
+          </Badge>
         </div>
         <div className="mx-auto w-full max-w-6xl px-4 pb-4">
           <Navbar />

@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-
+import { Button, Select, cardClass } from "@monitor-pangan/ui"
 import { ChevronBadge } from "#/components/ChevronBadge.tsx"
 import { formatDateShort } from "#/lib/format.ts"
 import { cn } from "#/lib/utils.ts"
@@ -70,25 +70,22 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
 
   if (dates.length === 0) return null
 
-  const stepButton =
-    "flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-hairline bg-paper px-2 text-ink transition-[scale,background-color,color,opacity] duration-150 ease-out active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
-
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div
         role="group"
         aria-label="Tanggal data"
-        className="flex items-center gap-1 rounded-xl border border-hairline bg-paper p-1"
+        className={cardClass("none", "flex items-center gap-1 p-1")}
       >
-        <button
-          type="button"
+        <Button
+          variant="rect"
           aria-label="Tanggal sebelumnya"
           disabled={prev == null}
           onClick={() => prev != null && onChange(prev)}
-          className={stepButton}
+          className="flex min-w-11 items-center justify-center px-2 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Chevron />
-        </button>
+        </Button>
         <input
           type="date"
           aria-label="Tanggal data"
@@ -101,23 +98,23 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
           }}
           className="tabular-nums min-h-11 rounded-lg bg-paper px-2 text-sm font-semibold text-ink"
         />
-        <button
-          type="button"
+        <Button
+          variant="rect"
           aria-label="Tanggal berikutnya"
           disabled={next == null}
           onClick={() => next != null && onChange(next)}
-          className={stepButton}
+          className="flex min-w-11 items-center justify-center px-2 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Chevron flipped />
-        </button>
+        </Button>
       </div>
 
       <div className="relative flex items-center">
-        <select
+        <Select
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-label="Pilih tanggal perdagangan"
-          className="tabular-nums min-h-11 max-w-52 appearance-none rounded-lg border border-hairline bg-paper py-1.5 pr-11 pl-2 text-sm font-semibold text-ink"
+          className="tabular-nums max-w-52 appearance-none pr-11 pl-2 text-ink"
         >
           {groups.map((g) => (
             <optgroup key={g.label} label={g.label}>
@@ -128,20 +125,16 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
               ))}
             </optgroup>
           ))}
-        </select>
+        </Select>
         <span className="absolute top-1/2 right-1 -translate-y-1/2">
           <ChevronBadge />
         </span>
       </div>
 
       {latest != null && value !== latest ? (
-        <button
-          type="button"
-          onClick={() => onChange(latest)}
-          className="tabular-nums min-h-11 rounded-lg border border-hairline bg-paper px-3 py-1.5 text-sm font-semibold text-ink transition-[scale,background-color,color,opacity] duration-150 ease-out active:scale-[0.96]"
-        >
+        <Button variant="rect" onClick={() => onChange(latest)}>
           Terbaru
-        </button>
+        </Button>
       ) : null}
 
       <span className="text-xs text-slate">Hari perdagangan (Senin–Jumat)</span>

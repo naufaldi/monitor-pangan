@@ -1,3 +1,4 @@
+import { cardClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPct, formatPrice } from "#/lib/format.ts"
 import type { TrendPoint, TrendSeries } from "#/data/provider.ts"
 
@@ -15,7 +16,7 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
       <figure
         role="img"
         aria-label={`Belum ada data tren ${series.commodity.name} untuk rentang ini.`}
-        className="rounded-xl border border-hairline bg-paper p-5"
+        className={cardClass("lg")}
       >
         <p className="text-sm text-slate">
           Belum ada data tren untuk rentang ini.
@@ -118,7 +119,7 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
     <figure
       role="img"
       aria-label={summary}
-      className="rounded-xl border border-hairline bg-paper p-4"
+      className={cardClass("md")}
     >
       <figcaption className="flex flex-wrap items-baseline gap-x-2 px-1 pb-2">
         <span className="text-sm font-semibold">
