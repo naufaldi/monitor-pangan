@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "version": "0.1.0",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite dev --port 3001",
     "generate-routes": "tsr generate",
@@ -21,6 +24,7 @@
     "db:setup": "npm run db:apply && npm run db:seed"
   },
   "dependencies": {
+    "@monitor-pangan/ui": "workspace:*",
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
     "clsx": "^2.1.1",
