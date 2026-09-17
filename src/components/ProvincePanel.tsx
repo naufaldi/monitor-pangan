@@ -1,5 +1,6 @@
-import { cardClass, cn } from "@monitor-pangan/ui"
+import { cardClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPrice } from "#/lib/format.ts"
+import { cn } from "#/lib/utils.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 
 type ProvincePanelProps = {
