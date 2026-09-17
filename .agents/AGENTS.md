@@ -29,7 +29,9 @@ No test or lint runner yet. `pnpm typecheck` + `pnpm build` are the gates. Repor
 
 ## Effect Conventions
 
-Effect is a runtime dependency. Before writing Effect code, inspect nearby code and `node_modules/effect/src` for the APIs you use.
+Effect is a runtime dependency. Before changing Effect code, read the effect-ts skill + nearby source.
+
+- Skill: `.agents/skills/effect-ts/SKILL.md`; API source: `node_modules/effect/src`.
 
 - Prefer `Effect.gen` and `Effect.fn` for programs, `Context.Service` class syntax with `Layer` for services.
 - Use `Schema` for all external validation, typed errors over thrown exceptions.
