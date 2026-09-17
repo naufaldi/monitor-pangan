@@ -1,6 +1,5 @@
-import { cardClass } from "@monitor-pangan/ui"
+import { Badge, cardClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPrice } from "#/lib/format.ts"
-import { cn } from "#/lib/utils.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 
 type ProvincePanelProps = {
@@ -8,6 +7,8 @@ type ProvincePanelProps = {
   provinceName: string | null
   price: number | null
   average: number
+  min: number
+  max: number
   unit: PriceUnit
   date: string
 }
@@ -18,19 +19,24 @@ export function ProvincePanel({
   provinceName,
   price,
   average,
+  min,
+  max,
   unit,
   date,
 }: ProvincePanelProps) {
+  const range = `Termurah ${formatPrice(min, unit)} · Termahal ${formatPrice(max, unit)}`
+
   if (provinceName == null || price == null) {
     return (
       <aside className={cardClass("lg", "flex flex-col justify-center")}>
         <p className="text-sm text-slate">
           {commodityName} · rata-rata nasional
         </p>
-        <p className="tabular-nums text-3xl font-bold">
+        <p className="tabular-nums text-balance text-3xl font-bold">
           {formatPrice(average, unit)}
         </p>
-        <p className="mt-1 text-sm text-slate">{formatDateShort(date)}</p>
+        <p className="tabular-nums mt-1 text-sm text-slate">{formatDateShort(date)}</p>
+        <p className="tabular-nums mt-2 text-sm text-slate">{range}</p>
         <p className="mt-4 text-sm text-slate">
           Klik provinsi di peta untuk melihat detail harganya.
         </p>
@@ -46,21 +52,25 @@ export function ProvincePanel({
       <p className="text-sm text-slate">
         {commodityName} · {formatDateShort(date)}
       </p>
-      <h2 className="text-xl font-bold">{provinceName}</h2>
+      <h2 className="text-balance text-xl font-bold">{provinceName}</h2>
       <p className="tabular-nums mt-2 text-3xl font-bold">
         {formatPrice(price, unit)}
       </p>
-      <p
-        className={cn("tabular-nums mt-1 text-sm font-semibold", above ? "text-ember" : "text-leaf-deep")}
-      >
-        {above ? "+" : ""}
-        {diff.toFixed(1)}% vs rata-rata nasional ({formatPrice(average, unit)})
+      <p className="mt-2 flex flex-wrap items-center gap-2">
+        <Badge tone={above ? "ember" : "neutral"} className={above ? undefined : "text-leaf-deep"}>
+          {above ? "+" : ""}
+          {diff.toFixed(1)}% vs nasional
+        </Badge>
+        <span className="tabular-nums text-sm text-slate">
+          {formatPrice(average, unit)}
+        </span>
       </p>
       <p className="mt-4 text-sm text-slate">
         {above
           ? "Harga di sini lebih mahal dari rata-rata nasional."
           : "Harga di sini lebih murah dari rata-rata nasional."}
       </p>
+      <p className="tabular-nums mt-2 text-sm text-slate">{range}</p>
     </aside>
   )
 }

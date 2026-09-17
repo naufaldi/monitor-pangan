@@ -24,10 +24,11 @@ Single source of truth is `packages/ui/`.
 
 Rules:
 
-- Use `Button` with `variant="pill" | "rect"` and `active` for toggles, tabs, and date or timeframe pickers. Use `buttonClass` on the same shape when the host element cannot be a `<button>` (a `<span>` inside a router `Link`, or a `<button>` that needs a forwarded `ref` or `role="tab"`).
-- Use `Card` for plain `<div>` shells. Use `cardClass(padding)` on semantic hosts (`section`, `aside`, `figure`) to keep landmarks. Padding is `none | md (p-4) | lg (p-5)`. Add `overflow-hidden` through the second argument when content must clip (map, table).
-- Use `Badge` with `tone="ember" | "neutral"` for header status and change pills.
-- Use `Input` and `Select` for all form controls. They render `bg-paper` with `border-input`. Do not reintroduce `bg-background` on controls.
+- Use `Button` with `variant="pill" | "rect"` and `active` for toggles, steppers, and date or timeframe pickers. `Button`, `Input`, and `Select` all forward `ref`. Use `buttonClass` on the same shape when the host element cannot be a `<button>` (a `<span>` inside a router `Link`).
+- Use `Card` for plain `<div>` shells. Use `cardClass(padding)` on semantic hosts (`section`, `aside`, `figure`) to keep landmarks. Padding is `none | md (p-4) | lg (p-5)`. Add `overflow-hidden` through the second argument when content must clip (map, table, dropdown panel).
+- Use `Badge` with `tone="ember" | "neutral"` for header status and change pills. Override text color through `className` when the tone needs it (province panel down state uses `text-leaf-deep`).
+- Use `Input` and `Select` for search, text, and dropdown controls. They render `bg-paper` with `border-input`. Do not reintroduce `bg-background` on controls. The select-with-affordance pattern is a relative wrapper plus `appearance-none` plus `pr-11` plus `ChevronBadge` (`src/components/ChevronBadge.tsx`). The native date input in `src/components/DatePicker.tsx` stays native.
+- Commodity picking uses the grouped `CommoditySelect` combobox, not a tab strip. Do not reintroduce per-commodity tab buttons.
 - Use tokens (`bg-paper`, `bg-canvas`, `text-ink`, `text-slate`, `border-hairline`, `bg-ember-soft`, `text-ember`, `text-leaf-deep`, `bg-muted`) for chrome. Do not hardcode hex for chrome.
 - The map price scale in `src/components/MapView.tsx` (`STOPS`) and the SVG fills in `src/components/TrendChart.tsx` are data visualization, not chrome. Keep the scale together in one table. Reuse token hex values (`#00714c`, `#00bd7d`, `#dc2626`, `#fef2f2`, `#5c6358`) where the scale touches them.
 - State shape first: UI state is `variant` plus `active` plus standard element props. Do not add per-file `cn()` branches that duplicate a primitive variant.

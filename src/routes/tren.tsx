@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
-import { CommodityTabs } from "#/components/CommodityTabs.tsx"
+import { CommoditySelect } from "#/components/CommoditySelect.tsx"
+import { ChevronBadge } from "#/components/ChevronBadge.tsx"
 import { MoversList, type MoverItem } from "#/components/MoversList.tsx"
 import { TrendChart } from "#/components/TrendChart.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
@@ -90,6 +91,7 @@ function TrenPage() {
       }),
     [],
   )
+  const moverById = useMemo(() => new Map(movers.map((m) => [m.commodityId, m])), [movers])
 
   const moves = useMemo(
     () =>
@@ -106,25 +108,35 @@ function TrenPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4">
-      <CommodityTabs
+      <CommoditySelect
         commodities={COMMODITIES}
         value={commodityId}
         onChange={setCommodityId}
+        hintFor={(c) => {
+          const m = moverById.get(c.id)
+          return m == null ? undefined : `${formatPrice(m.lastPrice, m.unit)} · ${formatPct(m.changePct)}`
+        }}
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <Select
-          value={regionCode ?? ""}
-          onChange={(e) => setRegionCode(e.target.value === "" ? null : e.target.value)}
-          aria-label="Wilayah"
-        >
-          <option value="">Nasional</option>
-          {provinces.map((p) => (
-            <option key={p.code} value={p.code}>
-              {p.name}
-            </option>
-          ))}
-        </Select>
+        <div className="relative flex items-center">
+          <Select
+            value={regionCode ?? ""}
+            onChange={(e) => setRegionCode(e.target.value === "" ? null : e.target.value)}
+            aria-label="Wilayah"
+            className="appearance-none pr-11 pl-3"
+          >
+            <option value="">Nasional</option>
+            {provinces.map((p) => (
+              <option key={p.code} value={p.code}>
+                {p.name}
+              </option>
+            ))}
+          </Select>
+          <span className="absolute top-1/2 right-1 -translate-y-1/2">
+            <ChevronBadge />
+          </span>
+        </div>
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Rentang waktu">
           {TIMEFRAMES.map((t) => {
             const active = t === timeframe

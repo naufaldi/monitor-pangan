@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { Input, Select, cardClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPrice } from "#/lib/format.ts"
 import { cn } from "#/lib/utils.ts"
+import { ChevronBadge } from "#/components/ChevronBadge.tsx"
 import type { PriceUnit } from "#/data/catalog.ts"
 
 export type TableRow = {
@@ -61,15 +62,21 @@ export function PriceTable({
             placeholder="Cari provinsi…"
             aria-label="Cari provinsi"
           />
-          <Select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
-            aria-label="Urutkan"
-          >
-            <option value="price-desc">Termahal dulu</option>
-            <option value="price-asc">Termurah dulu</option>
-            <option value="name">Nama A–Z</option>
-          </Select>
+          <div className="relative flex items-center">
+            <Select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              aria-label="Urutkan"
+              className="appearance-none pr-11 pl-2"
+            >
+              <option value="price-desc">Termahal dulu</option>
+              <option value="price-asc">Termurah dulu</option>
+              <option value="name">Nama A–Z</option>
+            </Select>
+            <span className="absolute top-1/2 right-1 -translate-y-1/2">
+              <ChevronBadge />
+            </span>
+          </div>
         </div>
       </div>
       <div className="max-h-[480px] overflow-auto">
@@ -88,10 +95,18 @@ export function PriceTable({
               return (
                 <tr
                   key={r.regionCode}
+                  tabIndex={0}
+                  aria-selected={r.regionCode === selectedCode}
                   onClick={() => onSelect(r.regionCode)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      onSelect(r.regionCode)
+                    }
+                  }}
                   className={cn(
-                    "cursor-pointer border-t border-hairline",
-                    r.regionCode === selectedCode && "bg-ember-soft",
+                    "cursor-pointer border-t border-hairline transition-[background-color] duration-150 ease-out hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink",
+                    r.regionCode === selectedCode && "bg-ember-soft hover:bg-ember-soft",
                   )}
                 >
                   <td className="px-4 py-2 font-medium">{r.name}</td>

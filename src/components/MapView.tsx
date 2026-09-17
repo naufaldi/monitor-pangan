@@ -1,5 +1,6 @@
+import { useRef } from "react"
 import { GeoJSON, MapContainer, TileLayer } from "react-leaflet"
-import type { Layer } from "leaflet"
+import type { Layer, Path } from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { cardClass } from "@monitor-pangan/ui"
 import { provinceFeatures } from "#/data/geo.ts"
@@ -35,6 +36,8 @@ export function MapView({
   onSelect,
 }: MapViewProps) {
   const byCode = new Map(prices.map((r) => [r.regionCode, r.price]))
+  const selectedRef = useRef(selectedCode)
+  selectedRef.current = selectedCode
 
   return (
     <div className={cardClass("none", "overflow-hidden")}>
@@ -66,7 +69,18 @@ export function MapView({
             const code = feature?.properties["code"] as string | undefined
             const name = feature?.properties["name"] as string | undefined
             if (code == null) return
+            const path = layer as Path
             layer.on("click", () => onSelect(code))
+            layer.on("mouseover", () => {
+              path.setStyle({ weight: 2, color: "#1a1c16" })
+            })
+            layer.on("mouseout", () => {
+              const selected = selectedRef.current === code
+              path.setStyle({
+                weight: selected ? 2 : 1,
+                color: selected ? "#1a1c16" : "#ffffff",
+              })
+            })
             layer.bindTooltip(name ?? code, { sticky: true })
           }}
         />

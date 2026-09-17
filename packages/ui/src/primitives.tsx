@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes } from "react"
+import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, Ref, SelectHTMLAttributes } from "react"
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -20,10 +20,11 @@ export function buttonClass(variant: ButtonVariant = "pill", active = false, cla
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant
   active?: boolean
+  ref?: Ref<HTMLButtonElement>
 }
 
-export function Button({ variant = "pill", active = false, className, type = "button", ...rest }: ButtonProps) {
-  return <button type={type} className={buttonClass(variant, active, className)} {...rest} />
+export function Button({ variant = "pill", active = false, className, type = "button", ref, ...rest }: ButtonProps) {
+  return <button ref={ref} type={type} className={buttonClass(variant, active, className)} {...rest} />
 }
 
 export type CardPadding = "none" | "md" | "lg"
@@ -67,18 +68,22 @@ export function inputClass(className?: string): string {
   return cn("rounded-lg border border-input bg-paper px-3 py-1.5 text-sm", className)
 }
 
-export type InputProps = InputHTMLAttributes<HTMLInputElement>
+export type InputProps = InputHTMLAttributes<HTMLInputElement> & {
+  ref?: Ref<HTMLInputElement>
+}
 
-export function Input({ className, ...rest }: InputProps) {
-  return <input className={inputClass(className)} {...rest} />
+export function Input({ className, ref, ...rest }: InputProps) {
+  return <input ref={ref} className={inputClass(className)} {...rest} />
 }
 
 export function selectClass(className?: string): string {
   return cn("min-h-11 rounded-lg border border-input bg-paper px-3 py-1.5 text-sm font-semibold", className)
 }
 
-export type SelectProps = SelectHTMLAttributes<HTMLSelectElement>
+export type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
+  ref?: Ref<HTMLSelectElement>
+}
 
-export function Select({ className, ...rest }: SelectProps) {
-  return <select className={selectClass(className)} {...rest} />
+export function Select({ className, ref, ...rest }: SelectProps) {
+  return <select ref={ref} className={selectClass(className)} {...rest} />
 }
