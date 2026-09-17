@@ -33,7 +33,7 @@ Effect is a runtime dependency. Before changing Effect code, read the effect-ts 
 
 - Skill: `.agents/skills/effect-ts/SKILL.md`; API source: `node_modules/effect/src`.
 
-- Prefer `Effect.gen` and `Effect.fn` for programs, `Context.Service` class syntax with `Layer` for services.
+- Prefer `Effect.gen` and `Effect.fn` for programs, `Context.Tag` class-extends idiom with `Layer` for services.
 - Use `Schema` for all external validation, typed errors over thrown exceptions.
 - Do not use `async` / `await`, `try` / `catch`, `Date.now` or `new Date` (use `Clock`), or `Effect.runSync` in tests.
 - Wrap existing async APIs with `Effect.tryPromise`, exit with `Effect.runPromise`.

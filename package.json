@@ -18,11 +18,11 @@
     "scrape:pihps:range": "node scripts/scrape-pihps.mjs",
     "opendata": "node scripts/import-opendata.mjs",
     "normalize": "node scripts/normalize.mjs",
-    "ingest": "npm run scrape && npm run scrape:pihps && npm run opendata && npm run normalize",
+    "ingest": "pnpm run scrape && pnpm run scrape:pihps && pnpm run opendata && pnpm run normalize",
     "seed": "node scripts/seed-d1.mjs",
     "db:apply": "wrangler d1 execute monitor-pangan --local --file=./db/schema.sql",
     "db:seed": "wrangler d1 execute monitor-pangan --local --file=./data/seed.sql",
-    "db:setup": "npm run db:apply && npm run db:seed"
+    "db:setup": "pnpm run db:apply && pnpm run db:seed"
   },
   "dependencies": {
     "@tanstack/react-router": "latest",
