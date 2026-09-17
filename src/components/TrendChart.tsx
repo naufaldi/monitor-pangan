@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { cardClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPct, formatPrice } from "#/lib/format.ts"
 import type { TrendPoint, TrendSeries } from "#/data/provider.ts"
@@ -10,6 +11,7 @@ type TrendChartProps = {
 /** Responsive SVG price trend with keyboard-accessible dots and a screen-reader data table. */
 export function TrendChart({ series, height = 260 }: TrendChartProps) {
   const national = series.national
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   if (national.length === 0) {
     return (
@@ -93,6 +95,19 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
       ? lineFor(selected, selected.length)
       : null
 
+  const activePoint = activeIndex != null ? national[activeIndex] : undefined
+  const activeX =
+    activeIndex != null ? xFor(activeIndex, national.length) : 0
+  const activeY = activePoint != null ? yFor(activePoint.price) : 0
+  const tooltipW = 156
+  const tooltipH = 42
+  const tooltipX = Math.min(
+    Math.max(activeX - tooltipW / 2, padL),
+    width - padR - tooltipW,
+  )
+  const tooltipBelow = activeY - tooltipH - 12 < padT
+  const tooltipY = tooltipBelow ? activeY + 14 : activeY - tooltipH - 14
+
   const ticks = [0, 1, 2, 3].map((step) => max - (step * (max - min)) / 3)
 
   const labelIndices =
@@ -138,6 +153,7 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
         height={height}
         className="block w-full"
         preserveAspectRatio="xMidYMid meet"
+        onMouseLeave={() => setActiveIndex(null)}
       >
         {ticks.map((tick) => {
           const y = yFor(tick)
@@ -211,19 +227,33 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
         {national.map((point, index) => {
           const label = `Nasional ${formatDateShort(point.date)}: ${formatPrice(point.price, series.unit)}`
           return (
-            <circle
+            <g
               key={`nasional-${point.date}`}
-              cx={xFor(index, national.length)}
-              cy={yFor(point.price)}
-              r={3.5}
-              fill="#ffffff"
-              stroke="#1a1c16"
-              strokeWidth={2}
-              tabIndex={0}
-              aria-label={label}
+              onMouseEnter={() => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(null)}
             >
-              <title>{label}</title>
-            </circle>
+              <circle
+                cx={xFor(index, national.length)}
+                cy={yFor(point.price)}
+                r={10}
+                fill="transparent"
+              />
+              <circle
+                cx={xFor(index, national.length)}
+                cy={yFor(point.price)}
+                r={3.5}
+                fill="#ffffff"
+                stroke="#1a1c16"
+                strokeWidth={2}
+                tabIndex={0}
+                aria-label={label}
+                onFocus={() => setActiveIndex(index)}
+                onBlur={() => setActiveIndex(null)}
+                className="cursor-pointer"
+              >
+                <title>{label}</title>
+              </circle>
+            </g>
           )
         })}
         {selected !== null
@@ -246,6 +276,63 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
               )
             })
           : null}
+        {activePoint != null ? (
+          <g aria-hidden="true" pointerEvents="none">
+            <line
+              x1={activeX}
+              x2={activeX}
+              y1={activeY}
+              y2={baseY}
+              stroke="#5c6358"
+              strokeWidth={1}
+              strokeDasharray="4 3"
+            />
+            <line
+              x1={padL}
+              x2={activeX}
+              y1={activeY}
+              y2={activeY}
+              stroke="#5c6358"
+              strokeWidth={1}
+              strokeDasharray="4 3"
+            />
+            <circle
+              cx={activeX}
+              cy={activeY}
+              r={6.5}
+              fill="none"
+              stroke="#1a1c16"
+              strokeWidth={2}
+            />
+            <rect
+              x={tooltipX}
+              y={tooltipY}
+              width={tooltipW}
+              height={tooltipH}
+              rx={8}
+              fill="#1a1c16"
+            />
+            <text
+              x={tooltipX + 12}
+              y={tooltipY + 18}
+              fontSize={12}
+              fontWeight={700}
+              fill="#ffffff"
+              className="tabular-nums"
+            >
+              {formatPrice(activePoint.price, series.unit)}
+            </text>
+            <text
+              x={tooltipX + 12}
+              y={tooltipY + 33}
+              fontSize={11}
+              fill="#ffffff"
+              opacity={0.75}
+            >
+              {formatDateShort(activePoint.date)}
+            </text>
+          </g>
+        ) : null}
       </svg>
       <details className="mt-2 px-1 text-sm">
         <summary className="cursor-pointer text-sm text-slate">
