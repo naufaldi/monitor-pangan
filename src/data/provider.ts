@@ -2,6 +2,7 @@ import { COMMODITIES, MOCK_DATES, type Commodity, type PriceUnit } from "./catal
 import { loadProvinces } from "./geo.ts"
 import { LIVE_PRICES } from "./prices.gen.ts"
 import { SNAPSHOT_META } from "./snapshot.gen.ts"
+import { TREND_MONTHLY, TREND_MONTHS, TREND_WEEKLY, TREND_WEEKS } from "./trends.gen.ts"
 import { trendDirection } from "#/lib/format.ts"
 
 export type PriceRow = {
@@ -84,6 +85,14 @@ function availableDates(): string[] {
   return [...MOCK_DATES]
 }
 
+/** Newest date with at least one live price. Empty survey days are skipped. */
+export function latestLiveDate(): string {
+  const live = SNAPSHOT_META.liveDates
+  if (live.length > 0) return live[live.length - 1]!
+  const all = availableDates()
+  return all[all.length - 1] ?? ""
+}
+
 function buildSnapshot(date: string, commodityId: string): Snapshot {
   const commodity =
     COMMODITIES.find((c) => c.id === commodityId) ?? COMMODITIES[0]!
@@ -101,9 +110,50 @@ function buildSnapshot(date: string, commodityId: string): Snapshot {
 }
 
 /**
- * National vs selected-region price path over a date window. Resolution is
- * accepted and echoed for the future 2014-2026 backfill, daily in V1.
+ * National vs selected-region price path over a date window. Day resolution
+ * reads live daily prices. Week and month resolutions read the precomputed
+ * backfill bundles, which stay small no matter how many years are scraped.
  */
+function seriesTrend(
+  commodity: Commodity,
+  regionCode: string | null | undefined,
+  range: TrendRange,
+  labels: string[],
+  store: Record<string, (number | null)[]>,
+): TrendSeries | null {
+  const natKey = `${commodity.id}|nasional`;
+  const nat = store[natKey];
+  if (nat == null) return null;
+  const national: TrendPoint[] = [];
+  const selectedPoints: TrendPoint[] = [];
+  const wantSelected = regionCode != null && regionCode !== "";
+  const sel = wantSelected ? (store[`${commodity.id}|${regionCode}`] ?? []) : [];
+  for (let i = 0; i < labels.length; i++) {
+    const date = labels[i]!;
+    if (date < range.from || date > range.to) continue;
+    const price = nat[i];
+    if (price == null) continue;
+    national.push({ date, price });
+    if (wantSelected) {
+      const sp = sel[i];
+      if (sp != null) selectedPoints.push({ date, price: sp });
+    }
+  }
+  if (national.length === 0) return null;
+  const first = national[0]!;
+  const last = national[national.length - 1]!;
+  const changePct = first.price === 0 ? 0 : ((last.price - first.price) / first.price) * 100;
+  return {
+    commodity,
+    unit: commodity.unit,
+    national,
+    selected: wantSelected ? selectedPoints : null,
+    changePct,
+    direction: trendDirection(changePct),
+    range,
+  };
+}
+
 function buildTrend(
   commodityId: string,
   regionCode?: string | null,
@@ -116,6 +166,14 @@ function buildTrend(
     from: range?.from ?? allDates[0],
     to: range?.to ?? allDates[allDates.length - 1],
     resolution: range?.resolution ?? "day",
+  }
+  if (requested.resolution === "week") {
+    const hit = seriesTrend(commodity, regionCode, requested, TREND_WEEKS, TREND_WEEKLY);
+    if (hit != null) return hit;
+  }
+  if (requested.resolution === "month") {
+    const hit = seriesTrend(commodity, regionCode, requested, TREND_MONTHS, TREND_MONTHLY);
+    if (hit != null) return hit;
   }
   const dates = allDates.filter(
     (d) => d >= requested.from && d <= requested.to,
@@ -161,7 +219,7 @@ export const provider: PriceDataProvider = {
  * sample fallback otherwise.
  */
 export function dataBadge(date: string): string {
-  if (SNAPSHOT_META.pricesLive && SNAPSHOT_META.dates.includes(date))
+  if (SNAPSHOT_META.pricesLive && SNAPSHOT_META.liveDates.includes(date))
     return `Data ${date} · PIHPS eceran`
   return "Data contoh"
 }
