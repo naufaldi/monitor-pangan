@@ -8,7 +8,14 @@ const config = defineConfig({
     port: 3001,
   },
   resolve: { tsconfigPaths: true },
-  plugins: [tailwindcss(), tanstackStart(), viteReact()],
+  plugins: [
+    tailwindcss(),
+    tanstackStart({
+      spa: { enabled: true },
+      prerender: { enabled: true, crawlLinks: true },
+    }),
+    viteReact(),
+  ],
 })
 
 export default config
