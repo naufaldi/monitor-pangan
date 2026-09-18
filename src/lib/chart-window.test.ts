@@ -7,13 +7,13 @@ import {
   windowRange,
 } from "./chart-window.ts"
 
-it.effect("exposes Indonesian chip labels without 3H and defaults to 1 tahun", () =>
+it.effect("exposes Indonesian chip labels without 3H and defaults to Semua", () =>
   Effect.sync(() => {
     assert.deepStrictEqual(
       TIMEFRAMES.map((t) => t.label),
       ["7 hari", "1 bulan", "1 tahun", "Semua"],
     )
-    assert.strictEqual(DEFAULT_TIMEFRAME, "1y")
+    assert.strictEqual(DEFAULT_TIMEFRAME, "all")
     assert.strictEqual(timeframeById("1y")?.days, 365)
     assert.strictEqual(timeframeById("7d")?.resolution, "day")
     assert.strictEqual(timeframeById("1m")?.resolution, "day")
