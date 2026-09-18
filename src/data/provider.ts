@@ -14,6 +14,7 @@ export type Snapshot = {
   date: string
   commodity: Commodity
   nationalAvg: number
+  pricedCount: number
   rows: PriceRow[]
 }
 
@@ -119,7 +120,7 @@ function buildSnapshot(date: string, commodityId: string): Snapshot {
     priced.length === 0
       ? 0
       : Math.round(priced.reduce((sum, r) => sum + r.price, 0) / priced.length / 50) * 50
-  return { date, commodity, nationalAvg, rows }
+  return { date, commodity, nationalAvg, pricedCount: priced.length, rows }
 }
 
 /**

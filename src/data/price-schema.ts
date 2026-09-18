@@ -21,6 +21,7 @@ export const SnapshotSchema = Schema.Struct({
   date: DateString,
   commodity: CommoditySchema,
   nationalAvg: Schema.Number,
+  pricedCount: Schema.Number,
   rows: Schema.Array(PriceRowSchema)
 })
 

@@ -1,7 +1,8 @@
-import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router"
+import { useMemo } from "react"
+import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from "@tanstack/react-router"
 import { Badge } from "@monitor-pangan/ui"
 import { Navbar } from "../components/Navbar.tsx"
-import { dataBadge, latestLiveDate } from "../data/provider.ts"
+import { dataBadge, latestLiveDate, provider } from "../data/provider.ts"
 import appCss from "../styles.css?url"
 
 export const Route = createRootRoute({
@@ -24,6 +25,11 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const latest = latestLiveDate()
+  const dates = useMemo(() => provider.dates(), [])
+  const search = useRouterState({ select: (s) => s.location.search })
+  const rawTanggal = (search as Record<string, unknown>).tanggal
+  const tanggal = typeof rawTanggal === "string" && dates.includes(rawTanggal) ? rawTanggal : null
+  const badgeDate = tanggal ?? latest
   return (
     <div className="min-h-svh bg-canvas text-ink">
       <header className="border-b border-hairline bg-paper">
@@ -35,7 +41,7 @@ function RootComponent() {
             </p>
           </div>
           <Badge tone="ember" className="ml-auto">
-            {dataBadge(latest)}
+            {dataBadge(badgeDate)}
           </Badge>
         </div>
         <div className="mx-auto w-full max-w-6xl px-4 pb-4">

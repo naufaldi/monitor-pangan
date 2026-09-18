@@ -8,12 +8,12 @@ import { PriceTable } from "#/components/PriceTable.tsx"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { latestLiveDate, pageSourceNote, provider } from "#/data/provider.ts"
-import { parseCommoditySearch } from "#/lib/commodity-search.ts"
+import { parsePageSearch } from "#/lib/commodity-search.ts"
 import { formatPrice } from "#/lib/format.ts"
 
 export const Route = createFileRoute("/")({
   ssr: false,
-  validateSearch: (search: Record<string, unknown>) => parseCommoditySearch(search),
+  validateSearch: (search: Record<string, unknown>) => parsePageSearch(search),
   component: HomePage,
 })
 
@@ -22,10 +22,12 @@ function HomePage() {
   const provinces = useMemo(() => provider.provinces(), [])
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
-  const [date, setDate] = useState(() => {
-    const live = latestLiveDate()
-    return dates.includes(live) ? live : (dates[dates.length - 1] ?? "")
-  })
+  const live = latestLiveDate()
+  const fallback = dates.includes(live) ? live : (dates[dates.length - 1] ?? "")
+  const date = search.tanggal != null && dates.includes(search.tanggal) ? search.tanggal : fallback
+  const setDate = (next: string) => {
+    void navigate({ search: (prev) => ({ ...prev, tanggal: next }) })
+  }
   const commodityId = search.komoditas ?? COMMODITIES[0]?.id ?? ""
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
 
@@ -41,7 +43,8 @@ function HomePage() {
   const hints = useMemo(() => {
     const map = new Map<string, string>()
     for (const c of COMMODITIES) {
-      map.set(c.id, formatPrice(provider.snapshot(date, c.id).nationalAvg, c.unit))
+      const snap = provider.snapshot(date, c.id)
+      map.set(c.id, snap.pricedCount === 0 ? "Tidak ada data" : formatPrice(snap.nationalAvg, c.unit))
     }
     return map
   }, [date])
@@ -59,8 +62,8 @@ function HomePage() {
       if (r.price > max) max = r.price
     }
     return {
-      min: Number.isFinite(min) ? min : snapshot.nationalAvg,
-      max: max > 0 ? max : snapshot.nationalAvg,
+      min: Number.isFinite(min) ? min : null,
+      max: max > 0 ? max : null,
     }
   }, [snapshot])
 
@@ -95,6 +98,7 @@ function HomePage() {
             provinceName={selected?.name ?? null}
             price={selectedPrice}
             average={snapshot.nationalAvg}
+            pricedCount={snapshot.pricedCount}
             min={extremes.min}
             max={extremes.max}
             unit={snapshot.commodity.unit}
