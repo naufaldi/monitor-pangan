@@ -92,10 +92,14 @@ function usesLivePrices(date: string): boolean {
 
 /** Newest date with at least one live price. Empty survey days are skipped. */
 export function latestLiveDate(): string {
-  const live = SNAPSHOT_META.liveDates
-  if (live.length > 0) return live[live.length - 1]!
-  const all = availableDates()
-  return all[all.length - 1] ?? ""
+  const live = liveSurveyDates()
+  return live[live.length - 1] ?? ""
+}
+
+/** Survey days used for live charts — sample/mock dates are excluded. */
+export function liveSurveyDates(): string[] {
+  if (SNAPSHOT_META.liveDates.length > 0) return [...SNAPSHOT_META.liveDates]
+  return availableDates()
 }
 
 function buildSnapshot(date: string, commodityId: string): Snapshot {
@@ -231,4 +235,12 @@ export const provider: PriceDataProvider = {
 export function dataBadge(date: string): string {
   if (usesLivePrices(date)) return `Data ${date} · PIHPS eceran`
   return "Data contoh"
+}
+
+/** Footer/source sentence. Live PIHPS pages must not claim sample data. */
+export function pageSourceNote(): string {
+  if (usesLivePrices(latestLiveDate())) {
+    return "Angka pada halaman ini berasal dari PIHPS eceran Bank Indonesia."
+  }
+  return "Angka di halaman ini data contoh untuk pengembangan UI — bukan data resmi."
 }

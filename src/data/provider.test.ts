@@ -2,7 +2,7 @@ import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
 import { LIVE_PRICES } from "./prices.gen.ts"
 import { SNAPSHOT_META } from "./snapshot.gen.ts"
-import { dataBadge, provider } from "./provider.ts"
+import { dataBadge, liveSurveyDates, provider } from "./provider.ts"
 
 const LIVE_DATE = "2026-09-16"
 const SAMPLE_DATE = "2026-09-17"
@@ -44,6 +44,12 @@ it.effect("live nationalAvg averages only real PIHPS cells", () =>
         snapshot.rows.reduce((sum, r) => sum + (r.price ?? 0), 0) / snapshot.rows.length / 50,
       ) * 50
     assert.notEqual(snapshot.nationalAvg, polluted)
+  }))
+
+it.effect("live survey dates exclude sample fallback days", () =>
+  Effect.gen(function*() {
+    assert.ok(!liveSurveyDates().includes(SAMPLE_DATE))
+    assert.ok(liveSurveyDates().includes(LIVE_DATE))
   }))
 
 it.effect("sample dates may fill mock prices only when the badge is Data contoh", () =>

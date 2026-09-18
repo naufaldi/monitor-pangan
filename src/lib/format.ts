@@ -22,12 +22,19 @@ export function formatDateShort(iso: string): string {
   return `${d} ${MONTHS[m - 1] ?? m} ${y}`
 }
 
-/** Format a price as "Rp 35.550/kg". */
-export function formatPrice(value: number, unit: "kg" | "liter"): string {
+/** Format a signed rupiah delta as "+Rp 2.000" / "-Rp 500" / "Rp 0". */
+export function formatRupiah(value: number, signed = false): string {
   const grouped = new Intl.NumberFormat("id-ID", {
     maximumFractionDigits: 0,
-  }).format(value)
-  return `Rp ${grouped}/${unit}`
+  }).format(Math.abs(value))
+  const amount = `Rp ${grouped}`
+  if (!signed || value === 0) return value < 0 ? `-${amount}` : amount
+  return `${value > 0 ? "+" : "-"}${amount}`
+}
+
+/** Format a price as "Rp 35.550/kg". */
+export function formatPrice(value: number, unit: "kg" | "liter"): string {
+  return `${formatRupiah(value)}/${unit}`
 }
 
 /** Format a percent delta as "+1.2%", "-0.8%", or "0.0%". */
