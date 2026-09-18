@@ -1,13 +1,13 @@
 export type PriceUnit = "kg" | "liter"
 
 export type Commodity = {
-  id: string
-  name: string
-  unit: PriceUnit
+  readonly id: string
+  readonly name: string
+  readonly unit: PriceUnit
   /** Display group for the grouped commodity picker. */
-  group: string
+  readonly group: string
   /** Mock national anchor price used until the real pipeline lands. */
-  anchor: number
+  readonly anchor: number
 }
 
 export const COMMODITIES: Commodity[] = [

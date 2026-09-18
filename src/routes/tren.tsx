@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { ChartHighlights } from "#/components/ChartHighlights.tsx"
@@ -7,8 +7,9 @@ import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { ChevronBadge } from "#/components/ChevronBadge.tsx"
 import { MoversList, type MoverItem } from "#/components/MoversList.tsx"
 import { TrendChart } from "#/components/TrendChart.tsx"
+import { apiProvider } from "#/data/api-client.ts"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { liveSurveyDates, pageSourceNote, provider } from "#/data/provider.ts"
+import { liveSurveyDates, pageSourceNote, provider, type TrendSeries } from "#/data/provider.ts"
 import {
   chartHighlights,
   chartStrip,
@@ -19,13 +20,18 @@ import {
 import { DEFAULT_TIMEFRAME, TIMEFRAMES, type TimeframeId, timeframeById, windowRange } from "#/lib/chart-window.ts"
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { formatDateShort, formatPct, formatPrice } from "#/lib/format.ts"
-import { Button, Select } from "@monitor-pangan/ui"
+import { Button, Select, cardClass } from "@monitor-pangan/ui"
 
 export const Route = createFileRoute("/tren")({
   ssr: false,
   validateSearch: (search: Record<string, unknown>) => parseCommoditySearch(search),
   component: TrenPage,
 })
+
+type RemoteDaySeries =
+  | { status: "loading" }
+  | { status: "ready"; series: TrendSeries; source: "api" | "bundle" }
+  | { status: "error" }
 
 /** Commodity trend view with region filter and movers. */
 function TrenPage() {
@@ -54,14 +60,57 @@ function TrenPage() {
       }),
     [commodityId, regionCode, from, to, chip.resolution],
   )
+  const [attempt, setAttempt] = useState(0)
+  const [remoteDay, setRemoteDay] = useState<RemoteDaySeries>({ status: "loading" })
+  useEffect(() => {
+    if (chip.resolution !== "day") return
+    let cancelled = false
+    setRemoteDay({ status: "loading" })
+    apiProvider.trend(commodityId, regionCode, { from, to }).then(
+      (daySeries) => {
+        if (!cancelled) setRemoteDay({ status: "ready", series: daySeries, source: "api" })
+      },
+      () => {
+        if (cancelled) return
+        const fallback = provider.trend(commodityId, regionCode, {
+          from,
+          to,
+          resolution: "day",
+        })
+        setRemoteDay(
+          fallback.national.length > 0
+            ? { status: "ready", series: fallback, source: "bundle" }
+            : { status: "error" },
+        )
+      },
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [commodityId, regionCode, from, to, chip.resolution, attempt])
+  const dayLoading = chip.resolution === "day" && remoteDay.status === "loading"
+  const dayError = chip.resolution === "day" && remoteDay.status === "error"
+  const resolved =
+    chip.resolution === "day"
+      ? remoteDay.status === "ready"
+        ? remoteDay.series
+        : null
+      : series
+  const daySource = chip.resolution === "day" && remoteDay.status === "ready" ? remoteDay.source : null
 
   const province = provinces.find((p) => p.code === regionCode) ?? null
   const focusPoints =
-    series.selected != null && realPoints(series.selected).length > 0 ? series.selected : series.national
+    resolved == null
+      ? []
+      : resolved.selected != null && realPoints(resolved.selected).length > 0
+        ? resolved.selected
+        : resolved.national
   const strip = useMemo(() => chartStrip(focusPoints), [focusPoints])
   const highlights = useMemo(() => chartHighlights(focusPoints), [focusPoints])
   const limitedCopy =
-    province != null && isThinProvince(series.selected, series.national)
+    province != null &&
+    resolved != null &&
+    isThinProvince(resolved.selected, resolved.national)
       ? limitedProvinceCopy(province.name)
       : null
 
@@ -87,13 +136,15 @@ function TrenPage() {
   )
   const moverById = useMemo(() => new Map(movers.map((m) => [m.commodityId, m])), [movers])
   const tableRows = useMemo(() => {
-    const selectedByDate = new Map((series.selected ?? []).map((p) => [p.date, p.price]))
-    return series.national.map((point) => ({
+    if (resolved == null) return []
+    const selectedByDate = new Map((resolved.selected ?? []).map((p) => [p.date, p.price]))
+    return resolved.national.map((point) => ({
       date: point.date,
       national: point.price,
       selected: selectedByDate.get(point.date),
     }))
-  }, [series])
+  }, [resolved])
+  const showSelectedColumn = resolved?.selected != null
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4">
@@ -152,11 +203,39 @@ function TrenPage() {
         </div>
       </div>
 
-      <ChartSummaryStrip strip={strip} unit={series.unit} limitedCopy={limitedCopy} />
-      <TrendChart series={series} />
-      <ChartHighlights highlights={highlights} unit={series.unit} />
+      {daySource === "bundle" ? (
+        <p className="text-xs text-slate">
+          Mode luring: tren harian dari bundel 30 hari terakhir.
+        </p>
+      ) : null}
+      {dayLoading || resolved == null ? (
+        <div className={cardClass("lg", "animate-pulse")} aria-label="Memuat tren">
+          <p className="text-sm text-slate">Memuat tren…</p>
+          <div className="mt-4 h-64 rounded-lg bg-muted" />
+        </div>
+      ) : null}
+      {dayError ? (
+        <div className={cardClass("lg")}>
+          <p className="text-base font-bold">Gagal memuat tren harian.</p>
+          <p className="mt-1 text-sm text-slate">
+            API tidak menjawab dan bundel luring tidak mencakup rentang ini.
+          </p>
+          <p className="mt-4">
+            <Button variant="rect" onClick={() => setAttempt((n) => n + 1)}>
+              Coba lagi
+            </Button>
+          </p>
+        </div>
+      ) : null}
+      {resolved != null && !dayLoading && !dayError ? (
+        <>
+          <ChartSummaryStrip strip={strip} unit={resolved.unit} limitedCopy={limitedCopy} />
+          <TrendChart series={resolved} />
+          <ChartHighlights highlights={highlights} unit={resolved.unit} />
+        </>
+      ) : null}
 
-      {tableRows.length > 0 ? (
+      {tableRows.length > 0 && !dayLoading && !dayError ? (
         <details className="text-sm">
           <summary className="cursor-pointer text-sm font-semibold text-slate">Lihat semua</summary>
           <table className="mt-2 w-full text-left text-sm">
@@ -164,7 +243,7 @@ function TrenPage() {
               <tr className="text-xs uppercase text-slate">
                 <th className="py-1 pr-2 font-semibold">Tanggal</th>
                 <th className="py-1 pr-2 text-right font-semibold">Nasional</th>
-                {series.selected != null ? (
+                {showSelectedColumn ? (
                   <th className="py-1 text-right font-semibold">Provinsi</th>
                 ) : null}
               </tr>
@@ -174,11 +253,13 @@ function TrenPage() {
                 <tr key={row.date} className="border-t border-hairline">
                   <td className="py-1 pr-2">{formatDateShort(row.date)}</td>
                   <td className="tabular-nums py-1 pr-2 text-right font-semibold">
-                    {formatPrice(row.national, series.unit)}
+                    {resolved != null ? formatPrice(row.national, resolved.unit) : null}
                   </td>
-                  {series.selected != null ? (
+                  {showSelectedColumn ? (
                     <td className="tabular-nums py-1 text-right">
-                      {row.selected == null ? "–" : formatPrice(row.selected, series.unit)}
+                      {row.selected == null || resolved == null
+                        ? "–"
+                        : formatPrice(row.selected, resolved.unit)}
                     </td>
                   ) : null}
                 </tr>

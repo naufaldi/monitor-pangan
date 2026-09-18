@@ -62,3 +62,15 @@ export class UnknownDateError extends Data.TaggedError("UnknownDateError")<{
 export const decodeSnapshot = Schema.decodeUnknown(SnapshotSchema)
 
 export const decodeTrendSeries = Schema.decodeUnknown(TrendSeriesSchema)
+
+/** Paginated day-trend page served by `GET /api/trend`. */
+export const ApiTrendResponseSchema = Schema.Struct({
+  commodity: CommoditySchema,
+  national: Schema.Array(TrendPointSchema),
+  selected: Schema.NullOr(Schema.Array(TrendPointSchema)),
+  nextCursor: Schema.NullOr(DateString),
+})
+
+export type ApiTrendResponse = typeof ApiTrendResponseSchema.Type
+
+export const decodeApiTrendResponse = Schema.decodeUnknown(ApiTrendResponseSchema)

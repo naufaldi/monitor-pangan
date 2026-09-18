@@ -21,7 +21,7 @@ function colorFor(price: number, average: number): string {
 
 type MapViewProps = {
   snapshotKey: string
-  prices: PriceRow[]
+  prices: readonly PriceRow[]
   average: number
   selectedCode: string | null
   onSelect: (code: string) => void

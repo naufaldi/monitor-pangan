@@ -6,8 +6,8 @@ import { TREND_MONTHLY, TREND_MONTHS, TREND_WEEKLY, TREND_WEEKS } from "./trends
 import { trendDirection } from "#/lib/format.ts"
 
 export type PriceRow = {
-  regionCode: string
-  price: number | null
+  readonly regionCode: string
+  readonly price: number | null
 }
 
 export type Snapshot = {
@@ -15,12 +15,12 @@ export type Snapshot = {
   commodity: Commodity
   nationalAvg: number
   pricedCount: number
-  rows: PriceRow[]
+  rows: readonly PriceRow[]
 }
 
 export type TrendPoint = {
-  date: string
-  price: number
+  readonly date: string
+  readonly price: number
 }
 
 export type TrendDirection = "up" | "down" | "flat"
@@ -36,8 +36,8 @@ export type TrendRange = {
 export type TrendSeries = {
   commodity: Commodity
   unit: PriceUnit
-  national: TrendPoint[]
-  selected: TrendPoint[] | null
+  national: readonly TrendPoint[]
+  selected: readonly TrendPoint[] | null
   changePct: number
   direction: TrendDirection
   range: TrendRange
@@ -56,6 +56,16 @@ export interface PriceDataProvider {
     regionCode?: string | null,
     range?: Partial<TrendRange>,
   ): TrendSeries
+}
+
+/** D1-backed reads. Day resolution only; week and month stay on bundles. */
+export interface AsyncPriceDataProvider {
+  snapshot(date: string, commodityId: string): Promise<Snapshot>
+  trend(
+    commodityId: string,
+    regionCode: string | null,
+    range: { from: string; to: string },
+  ): Promise<TrendSeries>
 }
 
 /** Deterministic 0..1 hash for stable mock values across reloads. */
