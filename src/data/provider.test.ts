@@ -60,6 +60,23 @@ it.effect("sample dates may fill mock prices only when the badge is Data contoh"
     assert.ok(snapshot.rows.every((r) => r.price != null && r.price > 0))
   }))
 
+it.effect("bundled snapshot reports zero priced rows for live-but-unbundled dates", () =>
+  Effect.gen(function*() {
+    const snapshot = provider.snapshot("2025-10-30", "beras")
+    assert.strictEqual(snapshot.pricedCount, 0)
+    assert.ok(snapshot.rows.every((r) => r.price == null))
+  }))
+
+it.effect("bundled snapshot reports priced rows for bundled live dates", () =>
+  Effect.gen(function*() {
+    const snapshot = provider.snapshot(LIVE_DATE, "beras")
+    assert.ok(snapshot.pricedCount > 0)
+    assert.strictEqual(
+      snapshot.pricedCount,
+      snapshot.rows.filter((r) => r.price != null).length,
+    )
+  }))
+
 it.effect("day trend skips null selected-province prices instead of padding zeros", () =>
   Effect.gen(function*() {
     const series = provider.trend("beras", "93", {
