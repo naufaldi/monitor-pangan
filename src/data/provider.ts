@@ -101,6 +101,11 @@ function usesLivePrices(date: string): boolean {
   return SNAPSHOT_META.pricesLive && SNAPSHOT_META.liveDates.includes(date)
 }
 
+/** Whether a date has live PIHPS coverage (otherwise sample fill applies). */
+export function isLiveDate(date: string): boolean {
+  return usesLivePrices(date)
+}
+
 /** Newest date with at least one live price. Empty survey days are skipped. */
 export function latestLiveDate(): string {
   const live = liveSurveyDates()

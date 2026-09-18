@@ -9,7 +9,7 @@ import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 import { apiProvider } from "#/data/api-client.ts"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { LIVE_PRICES } from "#/data/prices.gen.ts"
-import { latestLiveDate, pageSourceNote, provider, type Snapshot } from "#/data/provider.ts"
+import { isLiveDate, latestLiveDate, pageSourceNote, provider, type Snapshot } from "#/data/provider.ts"
 import { parsePageSearch } from "#/lib/commodity-search.ts"
 import { formatPrice } from "#/lib/format.ts"
 import { Button, cardClass } from "@monitor-pangan/ui"
@@ -51,7 +51,12 @@ function HomePage() {
     setRemote({ status: "loading" })
     apiProvider.snapshot(date, commodityId).then(
       (snapshot) => {
-        if (!cancelled) setRemote({ status: "ready", snapshot, source: "api" })
+        if (cancelled) return
+        if (snapshot.pricedCount === 0 && !isLiveDate(date)) {
+          setRemote({ status: "ready", snapshot: provider.snapshot(date, commodityId), source: "bundle" })
+          return
+        }
+        setRemote({ status: "ready", snapshot, source: "api" })
       },
       () => {
         if (cancelled) return
@@ -117,7 +122,7 @@ function HomePage() {
             </div>
             <DatePicker dates={dates} value={date} onChange={setDate} />
           </div>
-          {source === "bundle" ? (
+          {source === "bundle" && isLiveDate(date) ? (
             <p className="mt-1 text-xs text-slate">
               Mode luring: data bundel 30 hari terakhir. Periksa koneksi API lalu muat ulang.
             </p>
