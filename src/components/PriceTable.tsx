@@ -93,9 +93,9 @@ export function PriceTable({
           </thead>
           <tbody>
             {visible.map((r) => {
-              const missing = r.price == null
-              const diff =
-                missing || average === 0 ? 0 : ((r.price - average) / average) * 100
+              const price = r.price
+              const missing = price == null
+              const diff = missing || average === 0 ? 0 : ((price - average) / average) * 100
               const above = diff >= 0
               return (
                 <tr
@@ -116,7 +116,7 @@ export function PriceTable({
                 >
                   <td className="px-4 py-2 font-medium">{r.name}</td>
                   <td className="tabular-nums px-4 py-2 text-right font-semibold">
-                    {missing ? "Tidak ada data" : formatPrice(r.price, unit)}
+                    {missing ? "Tidak ada data" : formatPrice(price, unit)}
                   </td>
                   <td
                     className={cn(
