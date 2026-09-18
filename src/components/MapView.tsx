@@ -56,11 +56,12 @@ export function MapView({
           data={provinceFeatures() as never}
           style={(feature) => {
             const code = feature?.properties["code"] as string | undefined
-            const price = (code != null ? byCode.get(code) : undefined) ?? average
+            const price = code != null ? byCode.get(code) : undefined
             const selected = code === selectedCode
+            const missing = price == null
             return {
-              fillColor: colorFor(price, average),
-              fillOpacity: 0.65,
+              fillColor: missing ? "#e4e6df" : colorFor(price, average),
+              fillOpacity: missing ? 0.35 : 0.65,
               color: selected ? "#1a1c16" : "#ffffff",
               weight: selected ? 2 : 1,
             }
@@ -81,7 +82,11 @@ export function MapView({
                 color: selected ? "#1a1c16" : "#ffffff",
               })
             })
-            layer.bindTooltip(name ?? code, { sticky: true })
+            const price = byCode.get(code)
+            layer.bindTooltip(
+              price == null ? `${name ?? code} · tidak ada data` : (name ?? code),
+              { sticky: true },
+            )
           }}
         />
       </MapContainer>
@@ -95,6 +100,10 @@ export function MapView({
             {s.label}
           </li>
         ))}
+        <li className="flex items-center gap-1.5">
+          <span className="inline-block h-3 w-3 rounded-sm bg-hairline" />
+          Tidak ada data
+        </li>
       </ul>
     </div>
   )

@@ -26,7 +26,7 @@ export function ProvincePanel({
 }: ProvincePanelProps) {
   const range = `Termurah ${formatPrice(min, unit)} · Termahal ${formatPrice(max, unit)}`
 
-  if (provinceName == null || price == null) {
+  if (provinceName == null) {
     return (
       <aside className={cardClass("lg", "flex flex-col justify-center")}>
         <p className="text-sm text-slate">
@@ -40,6 +40,22 @@ export function ProvincePanel({
         <p className="mt-4 text-sm text-slate">
           Klik provinsi di peta untuk melihat detail harganya.
         </p>
+      </aside>
+    )
+  }
+
+  if (price == null) {
+    return (
+      <aside className={cardClass("lg", "flex flex-col justify-center")}>
+        <p className="text-sm text-slate">
+          {commodityName} · {formatDateShort(date)}
+        </p>
+        <h2 className="text-balance text-xl font-bold">{provinceName}</h2>
+        <p className="mt-2 text-3xl font-bold">Tidak ada data</p>
+        <p className="mt-4 text-sm text-slate">
+          Provinsi ini tidak disurvei PIHPS pada tanggal ini, atau sumbernya kosong.
+        </p>
+        <p className="tabular-nums mt-2 text-sm text-slate">{range}</p>
       </aside>
     )
   }

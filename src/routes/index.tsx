@@ -45,6 +45,7 @@ function HomePage() {
     let min = Number.POSITIVE_INFINITY
     let max = 0
     for (const r of snapshot.rows) {
+      if (r.price == null) continue
       if (r.price < min) min = r.price
       if (r.price > max) max = r.price
     }

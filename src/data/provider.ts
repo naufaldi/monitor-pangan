@@ -7,7 +7,7 @@ import { trendDirection } from "#/lib/format.ts"
 
 export type PriceRow = {
   regionCode: string
-  price: number
+  price: number | null
 }
 
 export type Snapshot = {
@@ -85,6 +85,11 @@ function availableDates(): string[] {
   return [...MOCK_DATES]
 }
 
+/** Live PIHPS survey day. Sample/mock fill is only allowed when this is false. */
+function usesLivePrices(date: string): boolean {
+  return SNAPSHOT_META.pricesLive && SNAPSHOT_META.liveDates.includes(date)
+}
+
 /** Newest date with at least one live price. Empty survey days are skipped. */
 export function latestLiveDate(): string {
   const live = SNAPSHOT_META.liveDates
@@ -97,15 +102,19 @@ function buildSnapshot(date: string, commodityId: string): Snapshot {
   const commodity =
     COMMODITIES.find((c) => c.id === commodityId) ?? COMMODITIES[0]!
   const dateIndex = Math.max(0, availableDates().indexOf(date))
-  const rows = provinces.map((p) => ({
-    regionCode: p.code,
-    price:
-      LIVE_PRICES[`${date}:${commodity.id}:${p.code}`] ??
-      mockPrice(commodity, p.code, dateIndex),
-  }))
+  const live = usesLivePrices(date)
+  const rows = provinces.map((p) => {
+    const fromLive = LIVE_PRICES[`${date}:${commodity.id}:${p.code}`]
+    return {
+      regionCode: p.code,
+      price: fromLive ?? (live ? null : mockPrice(commodity, p.code, dateIndex)),
+    }
+  })
+  const priced = rows.filter((r): r is { regionCode: string; price: number } => r.price != null)
   const nationalAvg =
-    Math.round(rows.reduce((sum, r) => sum + r.price, 0) / rows.length / 50) *
-    50
+    priced.length === 0
+      ? 0
+      : Math.round(priced.reduce((sum, r) => sum + r.price, 0) / priced.length / 50) * 50
   return { date, commodity, nationalAvg, rows }
 }
 
@@ -183,10 +192,11 @@ function buildTrend(
   const wantSelected = regionCode != null && regionCode !== ""
   for (const date of dates) {
     const snap = buildSnapshot(date, commodity.id)
+    if (snap.rows.every((r) => r.price == null)) continue
     national.push({ date, price: snap.nationalAvg })
     if (wantSelected) {
       const row = snap.rows.find((r) => r.regionCode === regionCode)
-      if (row != null) selectedPoints.push({ date, price: row.price })
+      if (row?.price != null) selectedPoints.push({ date, price: row.price })
     }
   }
   const first = national[0]
@@ -219,7 +229,6 @@ export const provider: PriceDataProvider = {
  * sample fallback otherwise.
  */
 export function dataBadge(date: string): string {
-  if (SNAPSHOT_META.pricesLive && SNAPSHOT_META.liveDates.includes(date))
-    return `Data ${date} · PIHPS eceran`
+  if (usesLivePrices(date)) return `Data ${date} · PIHPS eceran`
   return "Data contoh"
 }
