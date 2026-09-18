@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
 })
 
 function HomePage() {
-  const dates = useMemo(() => provider.dates().slice(-30), [])
+  const dates = useMemo(() => provider.dates(), [])
   const provinces = useMemo(() => provider.provinces(), [])
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
