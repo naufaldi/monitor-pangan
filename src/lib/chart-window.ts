@@ -16,7 +16,7 @@ export const TIMEFRAMES: readonly TimeframeChip[] = [
   { id: "all", label: "Semua", days: Number.MAX_SAFE_INTEGER, resolution: "month" },
 ]
 
-export const DEFAULT_TIMEFRAME: TimeframeId = "1y"
+export const DEFAULT_TIMEFRAME: TimeframeId = "all"
 
 /** Look up a chip by id. */
 export function timeframeById(id: string): TimeframeChip | undefined {

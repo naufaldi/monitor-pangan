@@ -36,8 +36,10 @@ function TrenPage() {
   const commodityId = search.komoditas ?? COMMODITIES[0]?.id ?? ""
   const [regionCode, setRegionCode] = useState<string | null>(null)
   const [timeframe, setTimeframe] = useState<TimeframeId>(DEFAULT_TIMEFRAME)
-  const chip = timeframeById(timeframe) ?? TIMEFRAMES[2]!
+  const chip = timeframeById(timeframe) ?? timeframeById(DEFAULT_TIMEFRAME) ?? TIMEFRAMES[3]!
   const { from, to } = windowRange(dates, chip.days)
+  const dataSpan =
+    dates.length > 0 ? `${formatDateShort(dates[0]!)} – ${formatDateShort(dates[dates.length - 1]!)}` : ""
 
   const setCommodityId = (id: string) => {
     void navigate({ search: (prev) => ({ ...prev, komoditas: id }) })
@@ -141,6 +143,11 @@ function TrenPage() {
                 </Button>
               )
             })}
+            {dataSpan !== "" ? (
+              <span className="tabular-nums text-xs text-slate" aria-label="Rentang data tersedia">
+                Data: {dataSpan}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
