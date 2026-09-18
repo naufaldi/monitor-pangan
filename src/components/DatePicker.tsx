@@ -55,6 +55,7 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
   const prev = safeIndex > 0 ? dates[safeIndex - 1] : undefined
   const next = safeIndex < dates.length - 1 ? dates[safeIndex + 1] : undefined
   const latest = dates[dates.length - 1]
+  const isLatest = latest == null || value === latest
 
   const groups = useMemo(() => {
     const map = new Map<string, { label: string; dates: string[] }>()
@@ -75,7 +76,7 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
       <div
         role="group"
         aria-label="Tanggal data"
-        className={cardClass("none", "flex items-center gap-1 p-1")}
+        className={cardClass("none", "flex shrink-0 items-center gap-1 p-1")}
       >
         <Button
           variant="rect"
@@ -96,7 +97,7 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
             const picked = e.target.value
             if (picked) onChange(nearestDate(dates, picked))
           }}
-          className="tabular-nums min-h-11 rounded-lg bg-paper px-2 text-sm font-semibold text-ink"
+          className="tabular-nums min-h-11 w-[9.25rem] shrink-0 rounded-lg bg-paper px-2 text-sm font-semibold text-ink"
         />
         <Button
           variant="rect"
@@ -109,12 +110,12 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
         </Button>
       </div>
 
-      <div className="relative flex items-center">
+      <div className="relative flex shrink-0 items-center">
         <Select
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-label="Pilih tanggal perdagangan"
-          className="tabular-nums max-w-52 appearance-none pr-11 pl-2 text-ink"
+          className="tabular-nums w-40 shrink-0 appearance-none pr-11 pl-2 text-ink"
         >
           {groups.map((g) => (
             <optgroup key={g.label} label={g.label}>
@@ -131,11 +132,17 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
         </span>
       </div>
 
-      {latest != null && value !== latest ? (
-        <Button variant="rect" onClick={() => onChange(latest)}>
+      <span className="flex min-h-11 shrink-0 items-center" aria-hidden={isLatest}>
+        <Button
+          variant="rect"
+          onClick={() => onChange(latest ?? "")}
+          disabled={latest == null || isLatest}
+          tabIndex={isLatest ? -1 : undefined}
+          className={cn(isLatest && "invisible")}
+        >
           Terbaru
         </Button>
-      ) : null}
+      </span>
 
       <span className="text-xs text-slate">Hari perdagangan (Senin–Jumat)</span>
     </div>

@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { cardClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPrice } from "#/lib/format.ts"
 import { realPoints } from "#/lib/chart-summary.ts"
@@ -45,6 +46,7 @@ function brokenLine(
 
 /** Responsive SVG price trend. Dual line when a province series is present. */
 export function TrendChart({ series, height = 260 }: TrendChartProps) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const national = realPoints(series.national)
   const selected = series.selected == null ? null : realPoints(series.selected)
   const dates = axisDates(series.national, series.selected)
@@ -106,6 +108,23 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
   const nationalLine = brokenLine(dates, nationalByDate, xFor, yFor)
   const selectedLine =
     selectedByDate == null ? "" : brokenLine(dates, selectedByDate, xFor, yFor)
+
+  const baseY = viewHeight - padB
+  const activeDate = activeIndex != null ? dates[activeIndex] : undefined
+  const activePrice =
+    activeDate != null
+      ? (nationalByDate.get(activeDate) ?? selectedByDate?.get(activeDate))
+      : undefined
+  const activeX = activeIndex != null && activePrice != null ? xFor(activeIndex) : 0
+  const activeY = activePrice != null ? yFor(activePrice) : 0
+  const tooltipW = 156
+  const tooltipH = 42
+  const tooltipX = Math.min(
+    Math.max(activeX - tooltipW / 2, padL),
+    width - padR - tooltipW,
+  )
+  const tooltipBelow = activeY - tooltipH - 12 < padT
+  const tooltipY = tooltipBelow ? activeY + 14 : activeY - tooltipH - 14
   const ticks = [0, 1, 2, 3].map((step) => max - (step * (max - min)) / 3)
   const labelIndices =
     dates.length <= 7 ? dates.map((_, index) => index) : [0, Math.floor((dates.length - 1) / 2), dates.length - 1]
@@ -135,6 +154,7 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
         height={height}
         className="block w-full"
         preserveAspectRatio="xMidYMid meet"
+        onMouseLeave={() => setActiveIndex(null)}
       >
         {ticks.map((tick) => {
           const y = yFor(tick)
@@ -190,19 +210,33 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
           if (price == null) return null
           const label = `Nasional ${formatDateShort(date)}: ${formatPrice(price, series.unit)}`
           return (
-            <circle
+            <g
               key={`nasional-${date}`}
-              cx={xFor(index)}
-              cy={yFor(price)}
-              r={3.5}
-              fill="#ffffff"
-              stroke="#1a1c16"
-              strokeWidth={2}
-              tabIndex={0}
-              aria-label={label}
+              onMouseEnter={() => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(null)}
             >
-              <title>{label}</title>
-            </circle>
+              <circle
+                cx={xFor(index)}
+                cy={yFor(price)}
+                r={10}
+                fill="transparent"
+              />
+              <circle
+                cx={xFor(index)}
+                cy={yFor(price)}
+                r={3.5}
+                fill="#ffffff"
+                stroke="#1a1c16"
+                strokeWidth={2}
+                tabIndex={0}
+                aria-label={label}
+                onFocus={() => setActiveIndex(index)}
+                onBlur={() => setActiveIndex(null)}
+                className="cursor-pointer"
+              >
+                <title>{label}</title>
+              </circle>
+            </g>
           )
         })}
         {selectedByDate != null
@@ -221,12 +255,74 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
                   strokeWidth={2}
                   tabIndex={0}
                   aria-label={label}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
+                  onFocus={() => setActiveIndex(index)}
+                  onBlur={() => setActiveIndex(null)}
+                  className="cursor-pointer"
                 >
                   <title>{label}</title>
                 </circle>
               )
             })
           : null}
+        {activePrice != null && activeDate != null ? (
+          <g aria-hidden="true" pointerEvents="none">
+            <line
+              x1={activeX}
+              x2={activeX}
+              y1={activeY}
+              y2={baseY}
+              stroke="#5c6358"
+              strokeWidth={1}
+              strokeDasharray="4 3"
+            />
+            <line
+              x1={padL}
+              x2={activeX}
+              y1={activeY}
+              y2={activeY}
+              stroke="#5c6358"
+              strokeWidth={1}
+              strokeDasharray="4 3"
+            />
+            <circle
+              cx={activeX}
+              cy={activeY}
+              r={6.5}
+              fill="none"
+              stroke="#1a1c16"
+              strokeWidth={2}
+            />
+            <rect
+              x={tooltipX}
+              y={tooltipY}
+              width={tooltipW}
+              height={tooltipH}
+              rx={8}
+              fill="#1a1c16"
+            />
+            <text
+              x={tooltipX + 12}
+              y={tooltipY + 18}
+              fontSize={12}
+              fontWeight={700}
+              fill="#ffffff"
+              className="tabular-nums"
+            >
+              {formatPrice(activePrice, series.unit)}
+            </text>
+            <text
+              x={tooltipX + 12}
+              y={tooltipY + 33}
+              fontSize={11}
+              fill="#ffffff"
+              opacity={0.75}
+            >
+              {formatDateShort(activeDate)}
+            </text>
+          </g>
+        ) : null}
       </svg>
     </figure>
   )
