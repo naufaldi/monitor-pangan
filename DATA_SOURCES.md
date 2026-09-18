@@ -21,8 +21,8 @@ sites make — rate-limited one-shot, cached to `data/raw/`:
   Source-empty that day: Kepri, Kalbar, Kaltara (`{"data":[]}` — intermittent,
   they usually serve data) plus the 4 post-2022 Papua provinces (93–96:
   Papua Selatan/Tengah/Pegunungan/Barat Daya) PIHPS never surveys — no BI
-  `province_id` exists for them, so those cells fall back to clearly-mixed
-  sample values until covered.
+  `province_id` exists for them. Live snapshots leave those cells empty
+  (no mock fill); `nationalAvg` averages only real PIHPS prices.
 - History depth (verified 2026-09-17): earliest served date is 2017-03-27.
   2014 through mid-March 2017 return `{"data":[]}`. Format is stable across
   years: same ten `level == 1` categories, same `d/m/yyyy` column header.

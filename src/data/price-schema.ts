@@ -14,7 +14,7 @@ export const CommoditySchema = Schema.Struct({
 
 export const PriceRowSchema = Schema.Struct({
   regionCode: Schema.NonEmptyString,
-  price: Schema.Number
+  price: Schema.NullOr(Schema.Number)
 })
 
 export const SnapshotSchema = Schema.Struct({
