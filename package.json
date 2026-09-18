@@ -20,6 +20,7 @@
     "scrape": "node scripts/scrape-panelharga.mjs",
     "scrape:pihps": "node scripts/scrape-pihps.mjs",
     "scrape:pihps:range": "node scripts/scrape-pihps.mjs",
+    "manifests": "node scripts/build-manifests.mjs",
     "opendata": "node scripts/import-opendata.mjs",
     "normalize": "node scripts/normalize.mjs",
     "ingest": "pnpm run scrape && pnpm run scrape:pihps && pnpm run opendata && pnpm run normalize",
