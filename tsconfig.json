@@ -9,7 +9,7 @@
       "@monitor-pangan/ui": ["./packages/ui/src/index.ts"]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
+    "types": ["vite/client", "@cloudflare/workers-types"],
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,

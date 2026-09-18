@@ -1,10 +1,24 @@
 name = "monitor-pangan"
 compatibility_date = "2026-09-17"
+compatibility_flags = ["nodejs_compat"]
+main = "@tanstack/react-start/server-entry"
 
 [[routes]]
 pattern = "monitor.naufaldi.com"
 custom_domain = true
 
+# Remote D1 provisioning (one-time, needs a token with D1 edit perms):
+#   npx wrangler d1 create monitor-pangan
+# then replace database_id below with the real id and seed it:
+#   node scripts/seed-d1.mjs 2026   # per year, after the backfill lands
+#   npx wrangler d1 execute monitor-pangan --remote --file=./data/seed-2026.sql
+# Local dev and tests use --local, which works with the placeholder id.
+[[d1_databases]]
+binding = "DB"
+database_name = "monitor-pangan"
+database_id = "00000000-0000-0000-0000-000000000000"
+
 [assets]
 directory = "./dist/client"
 not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
