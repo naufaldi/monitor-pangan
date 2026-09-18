@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrenRouteImport } from './routes/tren'
+import { Route as ApiSnapshotRouteImport } from './routes/api/snapshot'
+import { Route as ApiTrendRouteImport } from './routes/api/trend'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +24,49 @@ const TrenRoute = TrenRouteImport.update({
   path: '/tren',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSnapshotRoute = ApiSnapshotRouteImport.update({
+  id: '/api/snapshot',
+  path: '/api/snapshot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTrendRoute = ApiTrendRouteImport.update({
+  id: '/api/trend',
+  path: '/api/trend',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/tren': typeof TrenRoute
+  '/api/snapshot': typeof ApiSnapshotRoute
+  '/api/trend': typeof ApiTrendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/tren': typeof TrenRoute
+  '/api/snapshot': typeof ApiSnapshotRoute
+  '/api/trend': typeof ApiTrendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/tren': typeof TrenRoute
+  '/api/snapshot': typeof ApiSnapshotRoute
+  '/api/trend': typeof ApiTrendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/tren'
+  fullPaths: '/' | '/tren' | '/api/snapshot' | '/api/trend'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tren'
-  id: '__root__' | '/' | '/tren'
+  to: '/' | '/tren' | '/api/snapshot' | '/api/trend'
+  id: '__root__' | '/' | '/tren' | '/api/snapshot' | '/api/trend'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TrenRoute: typeof TrenRoute
+  ApiSnapshotRoute: typeof ApiSnapshotRoute
+  ApiTrendRoute: typeof ApiTrendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +85,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/snapshot': {
+      id: '/api/snapshot'
+      path: '/api/snapshot'
+      fullPath: '/api/snapshot'
+      preLoaderRoute: typeof ApiSnapshotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/trend': {
+      id: '/api/trend'
+      path: '/api/trend'
+      fullPath: '/api/trend'
+      preLoaderRoute: typeof ApiTrendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TrenRoute: TrenRoute,
+  ApiSnapshotRoute: ApiSnapshotRoute,
+  ApiTrendRoute: ApiTrendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

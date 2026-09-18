@@ -7,8 +7,9 @@ type ProvincePanelProps = {
   provinceName: string | null
   price: number | null
   average: number
-  min: number
-  max: number
+  pricedCount: number
+  min: number | null
+  max: number | null
   unit: PriceUnit
   date: string
 }
@@ -19,12 +20,32 @@ export function ProvincePanel({
   provinceName,
   price,
   average,
+  pricedCount,
   min,
   max,
   unit,
   date,
 }: ProvincePanelProps) {
-  const range = `Termurah ${formatPrice(min, unit)} · Termahal ${formatPrice(max, unit)}`
+  const range =
+    min == null || max == null
+      ? "Tidak ada data harga pada tanggal ini."
+      : `Termurah ${formatPrice(min, unit)} · Termahal ${formatPrice(max, unit)}`
+
+  if (provinceName == null && pricedCount === 0) {
+    return (
+      <aside className={cardClass("lg", "flex flex-col justify-center")}>
+        <p className="text-sm text-slate">
+          {commodityName} · rata-rata nasional
+        </p>
+        <p className="tabular-nums text-balance text-3xl font-bold">Tidak ada data</p>
+        <p className="tabular-nums mt-1 text-sm text-slate">{formatDateShort(date)}</p>
+        <p className="tabular-nums mt-2 text-sm text-slate">{range}</p>
+        <p className="mt-4 text-sm text-slate">
+          Coba tanggal perdagangan lain untuk melihat harganya.
+        </p>
+      </aside>
+    )
+  }
 
   if (provinceName == null) {
     return (

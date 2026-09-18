@@ -2,7 +2,7 @@ import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
 import { LIVE_PRICES } from "./prices.gen.ts"
 import { SNAPSHOT_META } from "./snapshot.gen.ts"
-import { dataBadge, liveSurveyDates, provider } from "./provider.ts"
+import { dataBadge, bundledSnapshotDates, liveSurveyDates, provider } from "./provider.ts"
 
 const LIVE_DATE = "2026-09-16"
 const SAMPLE_DATE = "2026-09-17"
@@ -58,6 +58,31 @@ it.effect("sample dates may fill mock prices only when the badge is Data contoh"
     assert.strictEqual(dataBadge(SAMPLE_DATE), "Data contoh")
     const snapshot = provider.snapshot(SAMPLE_DATE, "beras")
     assert.ok(snapshot.rows.every((r) => r.price != null && r.price > 0))
+  }))
+
+it.effect("bundled snapshot reports zero priced rows for live-but-unbundled dates", () =>
+  Effect.gen(function*() {
+    const snapshot = provider.snapshot("2025-10-30", "beras")
+    assert.strictEqual(snapshot.pricedCount, 0)
+    assert.ok(snapshot.rows.every((r) => r.price == null))
+  }))
+
+it.effect("bundled snapshot reports priced rows for bundled live dates", () =>
+  Effect.gen(function*() {
+    const snapshot = provider.snapshot(LIVE_DATE, "beras")
+    assert.ok(snapshot.pricedCount > 0)
+    assert.strictEqual(
+      snapshot.pricedCount,
+      snapshot.rows.filter((r) => r.price != null).length,
+    )
+  }))
+
+it.effect("bundled snapshot dates cover only the recent window", () =>
+  Effect.gen(function*() {
+    const bundled = bundledSnapshotDates()
+    assert.ok(bundled.includes(LIVE_DATE))
+    assert.ok(!bundled.includes("2025-10-30"))
+    assert.deepStrictEqual(bundled, [...bundled].sort())
   }))
 
 it.effect("day trend skips null selected-province prices instead of padding zeros", () =>

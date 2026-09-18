@@ -28,12 +28,12 @@ export type ChartHighlights = {
 }
 
 /** Keep only observed positive prices. Zeros and gaps are not extrema. */
-export function realPoints(points: TrendPoint[]): PricedPoint[] {
+export function realPoints(points: readonly TrendPoint[]): PricedPoint[] {
   return points.filter((point): point is PricedPoint => point.price > 0)
 }
 
 /** Summary strip from real endpoints only. Missing ends never invent Δ. */
-export function chartStrip(points: TrendPoint[]): ChartStrip {
+export function chartStrip(points: readonly TrendPoint[]): ChartStrip {
   const real = realPoints(points)
   if (real.length === 0) {
     return {
@@ -72,7 +72,7 @@ export function chartStrip(points: TrendPoint[]): ChartStrip {
   }
 }
 
-function consecutiveMoves(points: TrendPoint[]): ChartMove[] {
+function consecutiveMoves(points: readonly TrendPoint[]): ChartMove[] {
   const real = realPoints(points)
   const moves: ChartMove[] = []
   for (let i = 1; i < real.length; i++) {
@@ -86,7 +86,7 @@ function consecutiveMoves(points: TrendPoint[]): ChartMove[] {
 }
 
 /** Biggest up, biggest down, and last move between consecutive real points. */
-export function chartHighlights(points: TrendPoint[]): ChartHighlights {
+export function chartHighlights(points: readonly TrendPoint[]): ChartHighlights {
   const moves = consecutiveMoves(points)
   let naikTerbesar: ChartMove | null = null
   let turunTerbesar: ChartMove | null = null
@@ -112,8 +112,8 @@ export function limitedProvinceCopy(provinceName: string): string {
 
 /** True when the selected series has far fewer real points than nasional. */
 export function isThinProvince(
-  selected: TrendPoint[] | null,
-  national: TrendPoint[],
+  selected: readonly TrendPoint[] | null,
+  national: readonly TrendPoint[],
 ): boolean {
   if (selected == null) return false
   const n = realPoints(national).length

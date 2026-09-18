@@ -6,20 +6,21 @@ import { TREND_MONTHLY, TREND_MONTHS, TREND_WEEKLY, TREND_WEEKS } from "./trends
 import { trendDirection } from "#/lib/format.ts"
 
 export type PriceRow = {
-  regionCode: string
-  price: number | null
+  readonly regionCode: string
+  readonly price: number | null
 }
 
 export type Snapshot = {
   date: string
   commodity: Commodity
   nationalAvg: number
-  rows: PriceRow[]
+  pricedCount: number
+  rows: readonly PriceRow[]
 }
 
 export type TrendPoint = {
-  date: string
-  price: number
+  readonly date: string
+  readonly price: number
 }
 
 export type TrendDirection = "up" | "down" | "flat"
@@ -35,8 +36,8 @@ export type TrendRange = {
 export type TrendSeries = {
   commodity: Commodity
   unit: PriceUnit
-  national: TrendPoint[]
-  selected: TrendPoint[] | null
+  national: readonly TrendPoint[]
+  selected: readonly TrendPoint[] | null
   changePct: number
   direction: TrendDirection
   range: TrendRange
@@ -55,6 +56,16 @@ export interface PriceDataProvider {
     regionCode?: string | null,
     range?: Partial<TrendRange>,
   ): TrendSeries
+}
+
+/** D1-backed reads. Day resolution only; week and month stay on bundles. */
+export interface AsyncPriceDataProvider {
+  snapshot(date: string, commodityId: string): Promise<Snapshot>
+  trend(
+    commodityId: string,
+    regionCode: string | null,
+    range: { from: string; to: string },
+  ): Promise<TrendSeries>
 }
 
 /** Deterministic 0..1 hash for stable mock values across reloads. */
@@ -90,6 +101,18 @@ function usesLivePrices(date: string): boolean {
   return SNAPSHOT_META.pricesLive && SNAPSHOT_META.liveDates.includes(date)
 }
 
+/** Whether a date has live PIHPS coverage (otherwise sample fill applies). */
+export function isLiveDate(date: string): boolean {
+  return usesLivePrices(date)
+}
+
+/** Dates with bundled day prices (the API covers the rest of history). */
+export function bundledSnapshotDates(): string[] {
+  const covered = new Set<string>()
+  for (const key of Object.keys(LIVE_PRICES)) covered.add(key.slice(0, 10))
+  return [...covered].sort()
+}
+
 /** Newest date with at least one live price. Empty survey days are skipped. */
 export function latestLiveDate(): string {
   const live = liveSurveyDates()
@@ -119,7 +142,7 @@ function buildSnapshot(date: string, commodityId: string): Snapshot {
     priced.length === 0
       ? 0
       : Math.round(priced.reduce((sum, r) => sum + r.price, 0) / priced.length / 50) * 50
-  return { date, commodity, nationalAvg, rows }
+  return { date, commodity, nationalAvg, pricedCount: priced.length, rows }
 }
 
 /**

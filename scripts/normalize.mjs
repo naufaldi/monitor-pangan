@@ -111,6 +111,7 @@ let yearOf = null;
 let latestRows = [];
 const recentEntries = [];
 const liveByDate = new Map();
+const coverage = [];
 let liveTotal = 0;
 
 const writeYear = async () => {
@@ -138,6 +139,9 @@ for (const date of allDates) {
   const pihps = JSON.parse(await readFile(`data/raw/pihps-${date}.json`, "utf8"));
   const byRegion = new Map((pihps?.rows ?? []).map((r) => [r.region_code, r.prices]));
   const national = (pihps?.rows ?? []).find((r) => r.region_code == null)?.prices ?? {};
+  const scopes = pihps?.rows ?? [];
+  const errorScopes = scopes.filter((r) => r.status === "http-error").length;
+  const emptyScopes = scopes.filter((r) => r.status === "source-empty").length;
 
   const y = date.slice(0, 4);
   if (yearOf != null && y !== yearOf) await writeYear();
@@ -183,10 +187,41 @@ for (const date of allDates) {
   }
   yearRows.push(...dateRows);
   if (dateRows.some((r) => r.price != null)) latestRows = dateRows;
+  const dateLive = dateRows.filter((r) => r.price != null).length;
+  coverage.push({
+    date,
+    liveCells: dateLive,
+    expectedCells: dateRows.length,
+    errorScopes,
+    emptyScopes,
+    reason:
+      dateLive > 0
+        ? "ok"
+        : errorScopes === scopes.length && scopes.length > 0
+          ? "scrape-errors"
+          : errorScopes > 0
+            ? "partial-scrape-errors"
+            : "source-empty",
+  });
 }
 await writeYear();
 flushWeek();
 flushMonth();
+
+const coverageReport = {
+  generatedAt: new Date().toISOString(),
+  totalDates: coverage.length,
+  liveDates: coverage.filter((c) => c.liveCells > 0).length,
+  totalLiveCells: coverage.reduce((n, c) => n + c.liveCells, 0),
+  totalExpectedCells: coverage.reduce((n, c) => n + c.expectedCells, 0),
+  newestCoveredDate: [...liveByDate.keys()].sort().at(-1) ?? null,
+  sourceEmptyDates: coverage.filter((c) => c.liveCells === 0),
+};
+await writeFile("data/snapshots/coverage.json", JSON.stringify(coverageReport, null, 2));
+console.log(
+  `coverage: dates=${coverageReport.totalDates} live=${coverageReport.liveDates} ` +
+    `sourceEmpty=${coverageReport.sourceEmptyDates.length} newest=${coverageReport.newestCoveredDate}`,
+);
 
 const latestDate = [...liveByDate.keys()].sort().at(-1) ?? allDates.at(-1);
 await writeFile(

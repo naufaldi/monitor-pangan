@@ -41,13 +41,20 @@ const toNum = (s) => {
 async function grid(params, retries = 3) {
   const url = new URL(`${BASE}/hargapangan/WebSite/TabelHarga/GetGridDataDaerah`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  let lastStatus = "fetch-failed";
   for (let attempt = 1; attempt <= retries; attempt++) {
-    const res = await fetch(url, { headers: HEADERS });
-    if (res.ok) return res.json();
-    console.error(`retry ${attempt}/${retries} HTTP ${res.status} ${url.searchParams}`);
+    try {
+      const res = await fetch(url, { headers: HEADERS });
+      if (res.ok) return res.json();
+      lastStatus = `HTTP ${res.status}`;
+      console.error(`retry ${attempt}/${retries} HTTP ${res.status} ${url.searchParams}`);
+    } catch (error) {
+      lastStatus = String(error.cause?.code ?? error.message);
+      console.error(`retry ${attempt}/${retries} ${lastStatus} ${url.searchParams}`);
+    }
     await sleep(1500 * attempt);
   }
-  return { data: [] };
+  throw new Error(`scrape failed after ${retries} retries (${lastStatus}): ${url.searchParams}`);
 }
 
 function isTradingDay(iso) {
@@ -80,24 +87,55 @@ async function scrapeOneDate(iso) {
       end_date: iso,
       ...(s.bi ? { province_id: s.bi } : {}),
     };
-    const json = await grid(params);
+    let json = { data: [] };
+    let status = "ok";
+    try {
+      json = await grid(params);
+    } catch (error) {
+      status = "http-error";
+      console.error(`${iso} ${s.bi || "nasional"}: ${error.message}`);
+    }
     const found = {};
     for (const row of json.data ?? []) {
       const grup = CAT_TO_GRUP[row.name];
       if (row.level === 1 && grup) found[grup] = toNum(row[col]);
     }
-    out.rows.push({ province_id: s.bi || "nasional", region_code: s.kemendagri, prices: found });
-    console.log(`${iso} ${s.bi || "nasional"}: ${Object.values(found).filter((v) => v != null).length}/10 grup`);
+    const priced = Object.values(found).filter((v) => v != null).length;
+    if (status === "ok" && priced === 0) status = "source-empty";
+    out.rows.push({ province_id: s.bi || "nasional", region_code: s.kemendagri, prices: found, status });
+    console.log(`${iso} ${s.bi || "nasional"}: ${priced}/10 grup [${status}]`);
     await sleep(300);
   }
   await mkdir("data/raw", { recursive: true });
-  await writeFile(`data/raw/pihps-${iso}.json`, JSON.stringify(out, null, 2));
-  console.log(`wrote data/raw/pihps-${iso}.json scopes=${out.rows.length}`);
   const liveCells = out.rows.reduce(
     (n, r) => n + Object.values(r.prices).filter((v) => v != null).length,
     0,
   );
-  return { iso, scopes: out.rows.length, liveCells, fetchedAt: out.fetchedAt };
+  const outPath = `data/raw/pihps-${iso}.json`;
+  if (!force && liveCells === 0 && existsSync(outPath)) {
+    let prevLive = 0;
+    try {
+      const prev = JSON.parse(await readFile(outPath, "utf8"));
+      prevLive = (prev.rows ?? []).reduce(
+        (n, r) => n + Object.values(r.prices ?? {}).filter((v) => v != null).length,
+        0,
+      );
+    } catch {
+      prevLive = 0;
+    }
+    if (prevLive > 0) {
+      console.log(`keep ${iso}: fresh scrape empty (0 cells), existing file has ${prevLive} (use --force to overwrite)`);
+      return { iso, scopes: out.rows.length, liveCells: prevLive, keptExisting: true, fetchedAt: out.fetchedAt };
+    }
+  }
+  await writeFile(outPath, JSON.stringify(out, null, 2));
+  console.log(`wrote ${outPath} scopes=${out.rows.length}`);
+  const errors = out.rows.filter((r) => r.status === "http-error").length;
+  if (errors === out.rows.length && out.rows.length > 0) {
+    console.error(`${iso}: all ${errors} scopes failed HTTP, backing off 60s before the next date`);
+    await sleep(60000);
+  }
+  return { iso, scopes: out.rows.length, liveCells, httpErrors: errors, fetchedAt: out.fetchedAt };
 }
 
 const rawArgs = process.argv.slice(2).filter((a) => a !== "--force");

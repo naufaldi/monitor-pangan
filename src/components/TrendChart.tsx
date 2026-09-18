@@ -9,7 +9,7 @@ type TrendChartProps = {
   height?: number
 }
 
-function axisDates(national: TrendPoint[], selected: TrendPoint[] | null): string[] {
+function axisDates(national: readonly TrendPoint[], selected: readonly TrendPoint[] | null): string[] {
   const dates = new Set<string>()
   for (const point of realPoints(national)) dates.add(point.date)
   if (selected != null) {
@@ -18,7 +18,7 @@ function axisDates(national: TrendPoint[], selected: TrendPoint[] | null): strin
   return [...dates].sort()
 }
 
-function priceMap(points: TrendPoint[]): Map<string, number> {
+function priceMap(points: readonly TrendPoint[]): Map<string, number> {
   const map = new Map<string, number>()
   for (const point of realPoints(points)) map.set(point.date, point.price)
   return map

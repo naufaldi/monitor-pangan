@@ -63,6 +63,30 @@ Daily per-province price endpoints (`front/harga-pangan-table`,
 `401 Unauthorized` — the embedded `x-api-key` in the public bundle is rotated
 server-side. The scraper records the 401 and continues; no credential bypass.
 
+## Daily runbook (cron, after 13:00 WIB)
+
+PIHPS publishes around 13:00 WIB. Scraping earlier records honest
+`source-empty` scopes instead of failing.
+
+```sh
+node scripts/scrape-pihps.mjs YYYY-MM-DD   # one date; skips existing files
+node scripts/scrape-panelharga.mjs         # catalog (synthesizes on timeout)
+npm run manifests                          # rebuild data/raw/manifest-*.json
+npm run normalize                          # snapshots + gen bundle + coverage.json
+node scripts/seed-d1.mjs YYYY              # data/seed-YYYY.sql for the touched year
+npx wrangler d1 execute monitor-pangan --remote --file=./data/seed-YYYY.sql
+pnpm deploy                                # build + deploy worker, assets, and API
+```
+
+Scope status per raw file row (`data/raw/pihps-*.json`): `ok` (at least
+one group priced), `source-empty` (HTTP fine, PIHPS served nothing),
+`http-error` (all retries failed). A fresh all-empty scrape never
+overwrites a file that already has live cells unless `--force` is passed.
+`data/snapshots/coverage.json` (git-ignored) reports expected versus live
+cells per date plus the newest covered date, so the UI default and the
+header badge agree. The 4 post-2022 Papua provinces (93–96) are never
+surveyed by PIHPS and stay null by design.
+
 ## Going live (manual parallel track)
 
 1. Register at https://webapi.badanpangan.go.id/register (needs

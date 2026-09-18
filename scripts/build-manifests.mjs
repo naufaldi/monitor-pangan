@@ -35,6 +35,7 @@ for (const [year, isos] of [...byYear.entries()].sort()) {
         (n, r) => n + Object.values(r.prices ?? {}).filter((v) => v != null).length,
         0,
       ),
+      httpErrors: (raw.rows ?? []).filter((r) => r.status === "http-error").length,
       fetchedAt: raw.fetchedAt,
     };
   }
