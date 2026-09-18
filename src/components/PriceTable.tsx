@@ -8,7 +8,7 @@ import type { PriceUnit } from "#/data/catalog.ts"
 export type TableRow = {
   regionCode: string
   name: string
-  price: number
+  price: number | null
 }
 
 type PriceTableProps = {
@@ -41,6 +41,9 @@ export function PriceTable({
     const filtered = q === "" ? rows : rows.filter((r) => r.name.toLowerCase().includes(q))
     return [...filtered].sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name, "id")
+      if (a.price == null && b.price == null) return 0
+      if (a.price == null) return 1
+      if (b.price == null) return -1
       return sort === "price-asc" ? a.price - b.price : b.price - a.price
     })
   }, [rows, query, sort])
@@ -90,7 +93,9 @@ export function PriceTable({
           </thead>
           <tbody>
             {visible.map((r) => {
-              const diff = average === 0 ? 0 : ((r.price - average) / average) * 100
+              const price = r.price
+              const missing = price == null
+              const diff = missing || average === 0 ? 0 : ((price - average) / average) * 100
               const above = diff >= 0
               return (
                 <tr
@@ -111,16 +116,15 @@ export function PriceTable({
                 >
                   <td className="px-4 py-2 font-medium">{r.name}</td>
                   <td className="tabular-nums px-4 py-2 text-right font-semibold">
-                    {formatPrice(r.price, unit)}
+                    {missing ? "Tidak ada data" : formatPrice(price, unit)}
                   </td>
                   <td
                     className={cn(
                       "tabular-nums px-4 py-2 text-right",
-                      above ? "text-ember" : "text-leaf-deep",
+                      missing ? "text-slate" : above ? "text-ember" : "text-leaf-deep",
                     )}
                   >
-                    {above ? "+" : ""}
-                    {diff.toFixed(1)}%
+                    {missing ? "—" : `${above ? "+" : ""}${diff.toFixed(1)}%`}
                   </td>
                 </tr>
               )
