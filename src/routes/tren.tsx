@@ -208,7 +208,7 @@ function TrenPage() {
           Mode luring: tren harian dari bundel 30 hari terakhir.
         </p>
       ) : null}
-      {dayLoading || resolved == null ? (
+      {dayLoading ? (
         <div className={cardClass("lg", "animate-pulse")} aria-label="Memuat tren">
           <p className="text-sm text-slate">Memuat tren…</p>
           <div className="mt-4 h-64 rounded-lg bg-muted" />

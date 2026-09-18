@@ -8,8 +8,7 @@ import { PriceTable } from "#/components/PriceTable.tsx"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 import { apiProvider } from "#/data/api-client.ts"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { LIVE_PRICES } from "#/data/prices.gen.ts"
-import { isLiveDate, latestLiveDate, pageSourceNote, provider, type Snapshot } from "#/data/provider.ts"
+import { bundledSnapshotDates, isLiveDate, latestLiveDate, pageSourceNote, provider, type Snapshot } from "#/data/provider.ts"
 import { parsePageSearch } from "#/lib/commodity-search.ts"
 import { formatPrice } from "#/lib/format.ts"
 import { Button, cardClass } from "@monitor-pangan/ui"
@@ -73,11 +72,7 @@ function HomePage() {
     }
   }, [date, commodityId, attempt])
 
-  const bundledDates = useMemo(() => {
-    const covered = new Set<string>()
-    for (const key of Object.keys(LIVE_PRICES)) covered.add(key.slice(0, 10))
-    return covered
-  }, [])
+  const bundledDates = useMemo(() => new Set(bundledSnapshotDates()), [])
   const hints = useMemo(() => {
     const map = new Map<string, string>()
     if (!bundledDates.has(date)) return map
@@ -129,7 +124,7 @@ function HomePage() {
           ) : null}
         </div>
 
-        {remote.status === "loading" || snapshot == null ? (
+        {remote.status === "loading" ? (
           <div className={cardClass("lg", "animate-pulse")} aria-label="Memuat harga">
             <p className="text-sm text-slate">Memuat harga…</p>
             <div className="mt-4 h-64 rounded-lg bg-muted" />

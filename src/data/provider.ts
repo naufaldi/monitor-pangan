@@ -106,6 +106,13 @@ export function isLiveDate(date: string): boolean {
   return usesLivePrices(date)
 }
 
+/** Dates with bundled day prices (the API covers the rest of history). */
+export function bundledSnapshotDates(): string[] {
+  const covered = new Set<string>()
+  for (const key of Object.keys(LIVE_PRICES)) covered.add(key.slice(0, 10))
+  return [...covered].sort()
+}
+
 /** Newest date with at least one live price. Empty survey days are skipped. */
 export function latestLiveDate(): string {
   const live = liveSurveyDates()

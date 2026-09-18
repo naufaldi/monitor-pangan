@@ -2,7 +2,7 @@ import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
 import { LIVE_PRICES } from "./prices.gen.ts"
 import { SNAPSHOT_META } from "./snapshot.gen.ts"
-import { dataBadge, liveSurveyDates, provider } from "./provider.ts"
+import { dataBadge, bundledSnapshotDates, liveSurveyDates, provider } from "./provider.ts"
 
 const LIVE_DATE = "2026-09-16"
 const SAMPLE_DATE = "2026-09-17"
@@ -75,6 +75,14 @@ it.effect("bundled snapshot reports priced rows for bundled live dates", () =>
       snapshot.pricedCount,
       snapshot.rows.filter((r) => r.price != null).length,
     )
+  }))
+
+it.effect("bundled snapshot dates cover only the recent window", () =>
+  Effect.gen(function*() {
+    const bundled = bundledSnapshotDates()
+    assert.ok(bundled.includes(LIVE_DATE))
+    assert.ok(!bundled.includes("2025-10-30"))
+    assert.deepStrictEqual(bundled, [...bundled].sort())
   }))
 
 it.effect("day trend skips null selected-province prices instead of padding zeros", () =>
