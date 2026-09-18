@@ -6,4 +6,5 @@ dist/
 .DS_Store
 data/raw/
 data/snapshots/2*.json
+data/snapshots/coverage.json
 data/seed-2*.sql
