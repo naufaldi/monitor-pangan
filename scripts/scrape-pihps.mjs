@@ -131,6 +131,10 @@ async function scrapeOneDate(iso) {
   await writeFile(outPath, JSON.stringify(out, null, 2));
   console.log(`wrote ${outPath} scopes=${out.rows.length}`);
   const errors = out.rows.filter((r) => r.status === "http-error").length;
+  if (errors === out.rows.length && out.rows.length > 0) {
+    console.error(`${iso}: all ${errors} scopes failed HTTP, backing off 60s before the next date`);
+    await sleep(60000);
+  }
   return { iso, scopes: out.rows.length, liveCells, httpErrors: errors, fetchedAt: out.fetchedAt };
 }
 
