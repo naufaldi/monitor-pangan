@@ -7,23 +7,32 @@ import { MapView } from "#/components/MapView.tsx"
 import { PriceTable } from "#/components/PriceTable.tsx"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { latestLiveDate, provider } from "#/data/provider.ts"
+import { latestLiveDate, pageSourceNote, provider } from "#/data/provider.ts"
+import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { formatPrice } from "#/lib/format.ts"
 
 export const Route = createFileRoute("/")({
   ssr: false,
+  validateSearch: (search: Record<string, unknown>) => parseCommoditySearch(search),
   component: HomePage,
 })
 
 function HomePage() {
   const dates = useMemo(() => provider.dates().slice(-30), [])
   const provinces = useMemo(() => provider.provinces(), [])
+  const search = Route.useSearch()
+  const navigate = Route.useNavigate()
   const [date, setDate] = useState(() => {
     const live = latestLiveDate()
     return dates.includes(live) ? live : (dates[dates.length - 1] ?? "")
   })
-  const [commodityId, setCommodityId] = useState(COMMODITIES[0]?.id ?? "")
+  const commodityId = search.komoditas ?? COMMODITIES[0]?.id ?? ""
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
+
+  const setCommodityId = (id: string) => {
+    setSelectedCode(null)
+    void navigate({ search: (prev) => ({ ...prev, komoditas: id }) })
+  }
 
   const snapshot = useMemo(
     () => provider.snapshot(date, commodityId),
@@ -63,10 +72,7 @@ function HomePage() {
               <CommoditySelect
                 commodities={COMMODITIES}
                 value={commodityId}
-                onChange={(id) => {
-                  setCommodityId(id)
-                  setSelectedCode(null)
-                }}
+                onChange={setCommodityId}
                 hintFor={(c) => hints.get(c.id)}
               />
             </div>
@@ -110,8 +116,7 @@ function HomePage() {
         />
 
         <footer className="pb-6 text-xs text-slate">
-          Peta: GeoJSON indonesia-geodata (MIT). Angka di halaman ini data contoh
-          untuk pengembangan UI — bukan data resmi. Sumber resmi: Panel Harga
+          Peta: GeoJSON indonesia-geodata (MIT). {pageSourceNote()} Sumber resmi: Panel Harga
           Badan Pangan Nasional dan PIHPS Bank Indonesia.
         </footer>
     </main>
