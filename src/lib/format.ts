@@ -37,6 +37,10 @@ export function formatPrice(value: number, unit: "kg" | "liter"): string {
   return `${formatRupiah(value)}/${unit}`
 }
 
+export function formatAxisPrice(value: number): string {
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(Math.round(value))
+}
+
 /** Format a percent delta as "+1.2%", "-0.8%", or "0.0%". */
 export function formatPct(value: number): string {
   if (Number(value.toFixed(1)) === 0) return "0.0%"
