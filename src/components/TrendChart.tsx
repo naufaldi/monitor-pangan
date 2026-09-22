@@ -137,7 +137,7 @@ function MarkLayer({
               <circle
                 cx={x}
                 cy={y}
-                r={4.5}
+                r={8}
                 fill={paint.fill}
                 stroke={paint.stroke}
                 strokeWidth={2}
@@ -408,7 +408,7 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
               strokeWidth={1}
               strokeDasharray="4 3"
             />
-            <circle cx={activeX} cy={activeY} r={7} fill="none" stroke="#1a1c16" strokeWidth={2} />
+            <circle cx={activeX} cy={activeY} r={12} fill="none" stroke="#1a1c16" strokeWidth={2} />
             <rect x={tooltipX} y={tooltipY} width={tooltipW} height={tooltipH} rx={8} fill="#1a1c16" />
             <text
               x={tooltipX + 12}
