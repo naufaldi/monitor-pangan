@@ -5,19 +5,7 @@ import "leaflet/dist/leaflet.css"
 import { cardClass } from "@monitor-pangan/ui"
 import { provinceFeatures } from "#/data/geo.ts"
 import type { PriceRow } from "#/data/provider.ts"
-
-const STOPS = [
-  { below: 0.9, color: "#00714c", label: "Jauh di bawah rata-rata" },
-  { below: 0.97, color: "#00bd7d", label: "Di bawah rata-rata" },
-  { below: 1.03, color: "#eab308", label: "Sekitar rata-rata" },
-  { below: 1.1, color: "#f97316", label: "Di atas rata-rata" },
-  { below: Number.POSITIVE_INFINITY, color: "#dc2626", label: "Jauh di atas rata-rata" },
-]
-
-function colorFor(price: number, average: number): string {
-  const ratio = average === 0 ? 1 : price / average
-  return STOPS.find((s) => ratio < s.below)?.color ?? "#eab308"
-}
+import { PRICE_BANDS, provinceFill } from "#/lib/province-fill.ts"
 
 type MapViewProps = {
   snapshotKey: string
@@ -59,11 +47,12 @@ export function MapView({
             const price = code != null ? byCode.get(code) : undefined
             const selected = code === selectedCode
             const missing = price == null
+            const fill = provinceFill(price, average)
             return {
-              fillColor: missing ? "#e4e6df" : colorFor(price, average),
-              fillOpacity: missing ? 0.35 : 0.65,
-              color: selected ? "#1a1c16" : "#ffffff",
-              weight: selected ? 2 : 1,
+              fillColor: fill.fillColor,
+              fillOpacity: fill.fillOpacity,
+              color: missing || !selected ? "#ffffff" : "#1a1c16",
+              weight: selected ? 2.5 : 1,
             }
           }}
           onEachFeature={(feature, layer: Layer) => {
@@ -71,15 +60,16 @@ export function MapView({
             const name = feature?.properties["name"] as string | undefined
             if (code == null) return
             const path = layer as Path
+            const missing = byCode.get(code) == null
             layer.on("click", () => onSelect(code))
             layer.on("mouseover", () => {
-              path.setStyle({ weight: 2, color: "#1a1c16" })
+              path.setStyle({ weight: 2.5, color: missing ? "#ffffff" : "#1a1c16" })
             })
             layer.on("mouseout", () => {
               const selected = selectedRef.current === code
               path.setStyle({
-                weight: selected ? 2 : 1,
-                color: selected ? "#1a1c16" : "#ffffff",
+                weight: selected ? 2.5 : 1,
+                color: missing || !selected ? "#ffffff" : "#1a1c16",
               })
             })
             const price = byCode.get(code)
@@ -91,17 +81,17 @@ export function MapView({
         />
       </MapContainer>
       <ul className="flex flex-wrap gap-x-4 gap-y-1 border-t border-hairline px-4 py-2 text-xs text-slate">
-        {STOPS.map((s) => (
-          <li key={s.label} className="flex items-center gap-1.5">
+        {PRICE_BANDS.map((band) => (
+          <li key={band.label} className="flex items-center gap-1.5">
             <span
               className="inline-block h-3 w-3 rounded-sm"
-              style={{ backgroundColor: s.color }}
+              style={{ backgroundColor: band.color }}
             />
-            {s.label}
+            {band.label}
           </li>
         ))}
         <li className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-sm bg-hairline" />
+          <span className="inline-block h-3 w-3 rounded-sm bg-ink" />
           Tidak ada data
         </li>
       </ul>
