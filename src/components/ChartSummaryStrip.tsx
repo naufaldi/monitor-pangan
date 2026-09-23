@@ -40,7 +40,7 @@ function directionMark(direction: TrendDirection): string {
   }
 }
 
-/** Four-callout strip above the chart: Sekarang, Δ range, Termurah, Termahal. */
+/** Four-callout strip above the chart: Sekarang, Rentang, Termurah, Termahal. */
 export function ChartSummaryStrip({ strip, unit, limitedCopy }: ChartSummaryStripProps) {
   if (strip.kind === "empty") {
     return (
@@ -61,7 +61,7 @@ export function ChartSummaryStrip({ strip, unit, limitedCopy }: ChartSummaryStri
         </div>
         {strip.delta != null ? (
           <div>
-            <dt className="text-xs font-semibold text-slate">Δ range</dt>
+            <dt className="text-xs font-semibold text-slate">Rentang</dt>
             <dd className={`tabular-nums text-sm font-bold ${directionClass(strip.delta.direction)}`}>
               <span aria-hidden="true">{directionMark(strip.delta.direction)} </span>
               {formatPct(strip.delta.pct)} · {formatRupiah(strip.delta.rp, true)}

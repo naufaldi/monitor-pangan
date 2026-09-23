@@ -1,16 +1,20 @@
 import { Badge, cardClass } from "@monitor-pangan/ui"
+import { AnchorChanges } from "#/components/AnchorChanges.tsx"
 import { formatDateShort, formatPrice } from "#/lib/format.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
+import type { AnchorChange } from "#/data/provider.ts"
 
 type ProvincePanelProps = {
   commodityName: string
   provinceName: string | null
   price: number | null
-  average: number
+  average: number | null
   min: number
   max: number
   unit: PriceUnit
   date: string
+  harian: AnchorChange | null
+  tahunan: AnchorChange | null
 }
 
 /** Side detail for the selected province, or the national summary. */
@@ -23,8 +27,13 @@ export function ProvincePanel({
   max,
   unit,
   date,
+  harian,
+  tahunan,
 }: ProvincePanelProps) {
-  const range = `Termurah ${formatPrice(min, unit)} · Termahal ${formatPrice(max, unit)}`
+  const range =
+    average == null
+      ? "Tidak ada rata-rata nasional pada tanggal ini."
+      : `Termurah ${formatPrice(min, unit)} · Termahal ${formatPrice(max, unit)}`
 
   if (provinceName == null) {
     return (
@@ -33,9 +42,10 @@ export function ProvincePanel({
           {commodityName} · rata-rata nasional
         </p>
         <p className="tabular-nums text-balance text-3xl font-bold">
-          {formatPrice(average, unit)}
+          {average == null ? "—" : formatPrice(average, unit)}
         </p>
         <p className="tabular-nums mt-1 text-sm text-slate">{formatDateShort(date)}</p>
+        <AnchorChanges harian={harian} tahunan={tahunan} />
         <p className="tabular-nums mt-2 text-sm text-slate">{range}</p>
         <p className="mt-4 text-sm text-slate">
           Klik provinsi di peta untuk melihat detail harganya.
@@ -51,16 +61,16 @@ export function ProvincePanel({
           {commodityName} · {formatDateShort(date)}
         </p>
         <h2 className="text-balance text-xl font-bold">{provinceName}</h2>
-        <p className="mt-2 text-3xl font-bold">Tidak ada data</p>
+        <p className="mt-2 text-3xl font-bold">Tidak disurvei</p>
         <p className="mt-4 text-sm text-slate">
-          Provinsi ini tidak disurvei PIHPS pada tanggal ini, atau sumbernya kosong.
+          Provinsi ini tidak disurvei PIHPS pada tanggal ini.
         </p>
         <p className="tabular-nums mt-2 text-sm text-slate">{range}</p>
       </aside>
     )
   }
 
-  const diff = average === 0 ? 0 : ((price - average) / average) * 100
+  const diff = average == null || average === 0 ? 0 : ((price - average) / average) * 100
   const above = diff >= 0
 
   return (
@@ -78,9 +88,10 @@ export function ProvincePanel({
           {diff.toFixed(1)}% vs nasional
         </Badge>
         <span className="tabular-nums text-sm text-slate">
-          {formatPrice(average, unit)}
+          {average == null ? "—" : formatPrice(average, unit)}
         </span>
       </p>
+      <AnchorChanges harian={harian} tahunan={tahunan} />
       <p className="mt-4 text-sm text-slate">
         {above
           ? "Harga di sini lebih mahal dari rata-rata nasional."
