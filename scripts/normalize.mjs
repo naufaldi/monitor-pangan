@@ -145,6 +145,10 @@ for (const date of allDates) {
   const dateRows = [];
   const pihps = JSON.parse(await readFile(`data/raw/pihps-${date}.json`, "utf8"));
   const byRegion = new Map((pihps?.rows ?? []).map((r) => [r.region_code, r.prices]));
+  const anyLive = [...byRegion.values()].some((prices) =>
+    Object.values(prices ?? {}).some((value) => value != null),
+  );
+  if (!anyLive) continue;
 
   const y = date.slice(0, 4);
   if (yearOf != null && y !== yearOf) await writeYear();
@@ -197,7 +201,8 @@ await writeYear();
 flushWeek();
 flushMonth();
 
-const latestDate = [...liveByDate.keys()].sort().at(-1) ?? allDates.at(-1);
+const liveDates = [...liveByDate.keys()].sort();
+const latestDate = liveDates.at(-1) ?? allDates.at(-1);
 await writeFile(
   "data/snapshots/latest.json",
   JSON.stringify(
@@ -235,7 +240,7 @@ await writeFile(
 );
 await writeFile(
   "src/data/snapshot.gen.ts",
-  `export const SNAPSHOT_META: { level: string; source: string; pricesLive: boolean; fetchedAt: string; dates: string[]; liveDates: string[] } = ${JSON.stringify({ level: "eceran", source: "pihps", pricesLive: liveTotal > 0, fetchedAt: new Date().toISOString(), dates: allDates, liveDates: [...liveByDate.keys()].sort() }, null, 2)};\n`,
+  `export const SNAPSHOT_META: { level: string; source: string; pricesLive: boolean; fetchedAt: string; dates: string[]; liveDates: string[] } = ${JSON.stringify({ level: "eceran", source: "pihps", pricesLive: liveTotal > 0, fetchedAt: new Date().toISOString(), dates: liveDates, liveDates }, null, 2)};\n`,
 );
 console.log(
   `wrote latest=${latestDate} recentEntries=${recentEntries.length} weeks=${weeks.length} months=${months.length} liveTotal=${liveTotal}`,

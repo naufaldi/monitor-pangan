@@ -37,7 +37,8 @@ function HomePage() {
     if (!Number.isFinite(year)) return
     let cancel = false
     if (!isBundledDate(date)) setSeriesReady(false)
-    void Promise.all([loadYearSeries(String(year)), loadYearSeries(String(year - 1))]).then(() => {
+    const years = [year, year - 1].filter((value) => value >= 2017).map(String)
+    void Promise.all(years.map((value) => loadYearSeries(value))).then(() => {
       if (cancel) return
       setSeriesTick((tick) => tick + 1)
       setSeriesReady(true)

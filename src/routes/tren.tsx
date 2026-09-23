@@ -48,8 +48,8 @@ function TrenPage() {
     for (const iso of [anchorDate, from]) {
       const year = Number(iso.slice(0, 4))
       if (!Number.isFinite(year)) continue
-      years.add(String(year))
-      years.add(String(year - 1))
+      if (year >= 2017) years.add(String(year))
+      if (year - 1 >= 2017) years.add(String(year - 1))
     }
     if (years.size === 0) return
     let cancel = false

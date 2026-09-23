@@ -43,12 +43,16 @@ async function grid(params, retries = 3) {
   const url = new URL(`${BASE}/hargapangan/WebSite/TabelHarga/GetGridDataDaerah`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   for (let attempt = 1; attempt <= retries; attempt++) {
-    const res = await fetch(url, { headers: HEADERS });
-    if (res.ok) {
-      const body = await res.json();
-      return { ok: true, data: body.data ?? [] };
+    try {
+      const res = await fetch(url, { headers: HEADERS });
+      if (res.ok) {
+        const body = await res.json();
+        return { ok: true, data: body.data ?? [] };
+      }
+      console.error(`retry ${attempt}/${retries} HTTP ${res.status} ${url.searchParams}`);
+    } catch (err) {
+      console.error(`retry ${attempt}/${retries} ${err} ${url.searchParams}`);
     }
-    console.error(`retry ${attempt}/${retries} HTTP ${res.status} ${url.searchParams}`);
     await sleep(1500 * attempt);
   }
   return { ok: false, data: [] };

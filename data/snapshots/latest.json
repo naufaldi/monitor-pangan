@@ -1,4839 +1,3813 @@
 {
-  "date": "2026-09-16",
+  "date": "2026-09-23",
   "dates": [
-    "2026-09-16"
+    "2026-09-23"
   ],
   "level": "eceran",
   "source": "pihps",
-  "fetchedAt": "2026-09-17T11:03:06.715Z",
+  "fetchedAt": "2026-09-23T06:56:03.383Z",
   "pricesLive": true,
-  "liveRows": 310,
+  "liveRows": 260,
   "expectedRows": 380,
   "rows": [
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "11",
       "level": "eceran",
-      "price": 15700,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "12",
       "level": "eceran",
-      "price": 15500,
+      "price": 15900,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "13",
       "level": "eceran",
-      "price": 18050,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "14",
       "level": "eceran",
-      "price": 16800,
+      "price": 16750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "15",
       "level": "eceran",
       "price": 15700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "16",
       "level": "eceran",
       "price": 16300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "17",
       "level": "eceran",
-      "price": 15950,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "18",
       "level": "eceran",
       "price": 15750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "19",
       "level": "eceran",
-      "price": 15750,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "21",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "31",
       "level": "eceran",
       "price": 16950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "32",
       "level": "eceran",
-      "price": 15600,
+      "price": 15650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "33",
       "level": "eceran",
-      "price": 15650,
+      "price": 15700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "34",
       "level": "eceran",
       "price": 14800,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "35",
       "level": "eceran",
       "price": 15200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "36",
       "level": "eceran",
       "price": 16300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "51",
       "level": "eceran",
-      "price": 16050,
+      "price": 15900,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "52",
       "level": "eceran",
       "price": 13900,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "53",
       "level": "eceran",
       "price": 15400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "61",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "62",
       "level": "eceran",
-      "price": 19950,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "63",
       "level": "eceran",
-      "price": 19550,
+      "price": 19650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "64",
       "level": "eceran",
       "price": 16650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "65",
       "level": "eceran",
-      "price": null,
-      "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "price": 17250,
+      "source_id": "pihps",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "71",
       "level": "eceran",
       "price": 16300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "72",
       "level": "eceran",
-      "price": 16300,
+      "price": 16150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "73",
       "level": "eceran",
       "price": 14400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "74",
       "level": "eceran",
       "price": 15800,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "75",
       "level": "eceran",
       "price": 16700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "76",
       "level": "eceran",
       "price": 14600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "81",
       "level": "eceran",
       "price": 17150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "82",
       "level": "eceran",
       "price": 17700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "91",
       "level": "eceran",
       "price": 19250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "92",
       "level": "eceran",
-      "price": 17200,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "93",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "94",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "95",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "beras",
       "region_code": "96",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        27,
-        28,
-        109,
-        165,
-        166
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "11",
       "level": "eceran",
-      "price": 32400,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "12",
       "level": "eceran",
-      "price": 32750,
+      "price": 29000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "13",
       "level": "eceran",
-      "price": 30750,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "14",
       "level": "eceran",
-      "price": 31800,
+      "price": 31550,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "15",
       "level": "eceran",
-      "price": 28750,
+      "price": 29000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "16",
       "level": "eceran",
       "price": 32750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "17",
       "level": "eceran",
-      "price": 36750,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "18",
       "level": "eceran",
-      "price": 28000,
+      "price": 29650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "19",
       "level": "eceran",
-      "price": 38000,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "21",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "31",
       "level": "eceran",
       "price": 36950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "32",
       "level": "eceran",
-      "price": 31950,
+      "price": 34600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "33",
       "level": "eceran",
-      "price": 29450,
+      "price": 29300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "34",
       "level": "eceran",
       "price": 37500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "35",
       "level": "eceran",
-      "price": 27350,
+      "price": 27900,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "36",
       "level": "eceran",
-      "price": 34350,
+      "price": 35150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "51",
       "level": "eceran",
-      "price": 29150,
+      "price": 30250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "52",
       "level": "eceran",
-      "price": 24250,
+      "price": 24150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "53",
       "level": "eceran",
       "price": 30400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "61",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "62",
       "level": "eceran",
-      "price": 37250,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "63",
       "level": "eceran",
-      "price": 34000,
+      "price": 33600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "64",
       "level": "eceran",
       "price": 36250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "65",
       "level": "eceran",
-      "price": null,
-      "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        30
-      ],
+      "price": 45850,
+      "source_id": "pihps",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "71",
       "level": "eceran",
-      "price": 43000,
+      "price": 42500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "72",
       "level": "eceran",
-      "price": 41750,
+      "price": 38500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "73",
       "level": "eceran",
-      "price": 34600,
+      "price": 35000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "74",
       "level": "eceran",
       "price": 43150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "75",
       "level": "eceran",
-      "price": 40650,
+      "price": 39150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "76",
       "level": "eceran",
-      "price": 41750,
+      "price": 42150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "81",
       "level": "eceran",
-      "price": 43250,
+      "price": 42000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "82",
       "level": "eceran",
       "price": 60000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "91",
       "level": "eceran",
-      "price": 61500,
+      "price": 62200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "92",
       "level": "eceran",
-      "price": 51250,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        30
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "93",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "94",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "95",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-merah",
       "region_code": "96",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        30
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "11",
       "level": "eceran",
-      "price": 35350,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "12",
       "level": "eceran",
-      "price": 35150,
+      "price": 30500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "13",
       "level": "eceran",
-      "price": 35650,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "14",
       "level": "eceran",
       "price": 36150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "15",
       "level": "eceran",
-      "price": 33500,
+      "price": 33750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "16",
       "level": "eceran",
       "price": 33250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "17",
       "level": "eceran",
-      "price": 38000,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "18",
       "level": "eceran",
-      "price": 35150,
+      "price": 35250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "19",
       "level": "eceran",
-      "price": 36000,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "21",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "31",
       "level": "eceran",
       "price": 43950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "32",
       "level": "eceran",
-      "price": 38150,
+      "price": 39000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "33",
       "level": "eceran",
       "price": 37200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "34",
       "level": "eceran",
       "price": 42750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "35",
       "level": "eceran",
-      "price": 29450,
+      "price": 27700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "36",
       "level": "eceran",
       "price": 37750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "51",
       "level": "eceran",
-      "price": 31550,
+      "price": 32050,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "52",
       "level": "eceran",
-      "price": 33650,
+      "price": 33750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "53",
       "level": "eceran",
-      "price": 44150,
+      "price": 44600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "61",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "62",
       "level": "eceran",
-      "price": 37250,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "63",
       "level": "eceran",
-      "price": 35350,
+      "price": 34850,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "64",
       "level": "eceran",
       "price": 42500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "65",
       "level": "eceran",
-      "price": null,
-      "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        31
-      ],
+      "price": 40850,
+      "source_id": "pihps",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "71",
       "level": "eceran",
       "price": 40650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "72",
       "level": "eceran",
-      "price": 42500,
+      "price": 38750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "73",
       "level": "eceran",
-      "price": 36250,
+      "price": 36550,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "74",
       "level": "eceran",
       "price": 45650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "75",
       "level": "eceran",
-      "price": 40650,
+      "price": 40400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "76",
       "level": "eceran",
       "price": 39600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "81",
       "level": "eceran",
-      "price": 43500,
+      "price": 42650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "82",
       "level": "eceran",
       "price": 60000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "91",
       "level": "eceran",
-      "price": 54900,
+      "price": 55000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "92",
       "level": "eceran",
-      "price": 52500,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        31
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "93",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "94",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "95",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "bawang-putih",
       "region_code": "96",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        31
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "11",
       "level": "eceran",
-      "price": 62400,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "12",
       "level": "eceran",
-      "price": 62050,
+      "price": 57250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "13",
       "level": "eceran",
-      "price": 71150,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "14",
       "level": "eceran",
-      "price": 65950,
+      "price": 64350,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "15",
       "level": "eceran",
-      "price": 60400,
+      "price": 53300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "16",
       "level": "eceran",
-      "price": 56500,
+      "price": 58400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "17",
       "level": "eceran",
-      "price": 58900,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "18",
       "level": "eceran",
-      "price": 59800,
+      "price": 52600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "19",
       "level": "eceran",
-      "price": 64750,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "21",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "31",
       "level": "eceran",
-      "price": 53100,
+      "price": 53450,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "32",
       "level": "eceran",
-      "price": 50250,
+      "price": 52800,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "33",
       "level": "eceran",
-      "price": 41300,
+      "price": 42300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "34",
       "level": "eceran",
-      "price": 44750,
+      "price": 48900,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "35",
       "level": "eceran",
-      "price": 28250,
+      "price": 28500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "36",
       "level": "eceran",
-      "price": 48900,
+      "price": 49500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "51",
       "level": "eceran",
-      "price": 32650,
+      "price": 35300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "52",
       "level": "eceran",
-      "price": 31750,
+      "price": 33600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "53",
       "level": "eceran",
-      "price": 43550,
+      "price": 44200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "61",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "62",
       "level": "eceran",
-      "price": 94400,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "63",
       "level": "eceran",
-      "price": 60850,
+      "price": 66450,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "64",
       "level": "eceran",
-      "price": 53150,
+      "price": 55000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "65",
       "level": "eceran",
-      "price": null,
-      "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "price": 76650,
+      "source_id": "pihps",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "71",
       "level": "eceran",
-      "price": 95000,
+      "price": 90000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "72",
       "level": "eceran",
-      "price": 68750,
+      "price": 59050,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "73",
       "level": "eceran",
-      "price": 46100,
+      "price": 46850,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "74",
       "level": "eceran",
-      "price": 60050,
+      "price": 65950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "75",
       "level": "eceran",
-      "price": 93750,
+      "price": 90650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "76",
       "level": "eceran",
-      "price": 50800,
+      "price": 53150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "81",
       "level": "eceran",
-      "price": 110000,
+      "price": 106900,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "82",
       "level": "eceran",
       "price": 115000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "91",
       "level": "eceran",
-      "price": 93000,
+      "price": 92700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "92",
       "level": "eceran",
-      "price": 84400,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "93",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "94",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "95",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-merah",
       "region_code": "96",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        32,
-        126
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "11",
       "level": "eceran",
-      "price": 63500,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "12",
       "level": "eceran",
-      "price": 57950,
+      "price": 53000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "13",
       "level": "eceran",
-      "price": 54650,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "14",
       "level": "eceran",
-      "price": 66750,
+      "price": 66800,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "15",
       "level": "eceran",
-      "price": 65200,
+      "price": 67350,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "16",
       "level": "eceran",
-      "price": 73700,
+      "price": 70200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "17",
       "level": "eceran",
-      "price": 67500,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "18",
       "level": "eceran",
-      "price": 62350,
+      "price": 63050,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "19",
       "level": "eceran",
-      "price": 80650,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "21",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "31",
       "level": "eceran",
-      "price": 66900,
+      "price": 67750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "32",
       "level": "eceran",
-      "price": 64550,
+      "price": 66700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "33",
       "level": "eceran",
-      "price": 56050,
+      "price": 53400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "34",
       "level": "eceran",
-      "price": 57150,
+      "price": 58150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "35",
       "level": "eceran",
-      "price": 50500,
+      "price": 49250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "36",
       "level": "eceran",
-      "price": 63650,
+      "price": 64500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "51",
       "level": "eceran",
-      "price": 54500,
+      "price": 56450,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "52",
       "level": "eceran",
-      "price": 47800,
+      "price": 49000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "53",
       "level": "eceran",
-      "price": 68500,
+      "price": 68100,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "61",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "62",
       "level": "eceran",
-      "price": 115950,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "63",
       "level": "eceran",
-      "price": 70850,
+      "price": 73950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "64",
       "level": "eceran",
-      "price": 83150,
+      "price": 87500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "65",
       "level": "eceran",
-      "price": null,
-      "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        33
-      ],
+      "price": 95200,
+      "source_id": "pihps",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "71",
       "level": "eceran",
-      "price": 138750,
+      "price": 142500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "72",
       "level": "eceran",
-      "price": 109400,
+      "price": 112500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "73",
       "level": "eceran",
-      "price": 73100,
+      "price": 73300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "74",
       "level": "eceran",
-      "price": 91250,
+      "price": 94100,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "75",
       "level": "eceran",
-      "price": 131250,
+      "price": 149400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "76",
       "level": "eceran",
-      "price": 81650,
+      "price": 83950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "81",
       "level": "eceran",
-      "price": 149400,
+      "price": 126900,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "82",
       "level": "eceran",
-      "price": 153750,
+      "price": 151250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "91",
       "level": "eceran",
-      "price": 97950,
+      "price": 103450,
       "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "92",
       "level": "eceran",
-      "price": 107500,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        33
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "93",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "94",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "95",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "cabai-rawit",
       "region_code": "96",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        33
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "11",
       "level": "eceran",
-      "price": 43200,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "12",
       "level": "eceran",
-      "price": 51100,
+      "price": 43000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "13",
       "level": "eceran",
-      "price": 55700,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "14",
       "level": "eceran",
-      "price": 38050,
+      "price": 37550,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "15",
       "level": "eceran",
-      "price": 43650,
+      "price": 42150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "16",
       "level": "eceran",
-      "price": 42250,
+      "price": 41400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "17",
       "level": "eceran",
-      "price": 45750,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "18",
       "level": "eceran",
-      "price": 38500,
+      "price": 38400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "19",
       "level": "eceran",
-      "price": 47750,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "21",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "31",
       "level": "eceran",
-      "price": 43050,
+      "price": 41850,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "32",
       "level": "eceran",
-      "price": 40200,
+      "price": 40300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "33",
       "level": "eceran",
-      "price": 40750,
+      "price": 40350,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "34",
       "level": "eceran",
       "price": 41000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "35",
       "level": "eceran",
-      "price": 40300,
+      "price": 39050,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "36",
       "level": "eceran",
-      "price": 42150,
+      "price": 41600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "51",
       "level": "eceran",
-      "price": 45300,
+      "price": 44400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "52",
       "level": "eceran",
-      "price": 46300,
+      "price": 46200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "53",
       "level": "eceran",
-      "price": 51300,
+      "price": 51900,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "61",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "62",
       "level": "eceran",
-      "price": 37000,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "63",
       "level": "eceran",
-      "price": 42350,
+      "price": 41850,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "64",
       "level": "eceran",
-      "price": 39850,
+      "price": 38200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "65",
       "level": "eceran",
-      "price": null,
-      "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        35
-      ],
+      "price": 46750,
+      "source_id": "pihps",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "71",
       "level": "eceran",
-      "price": 39800,
+      "price": 40100,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "72",
       "level": "eceran",
-      "price": 34950,
+      "price": 36250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "73",
       "level": "eceran",
-      "price": 29800,
+      "price": 31350,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "74",
       "level": "eceran",
-      "price": 37150,
+      "price": 37600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "75",
       "level": "eceran",
-      "price": 36750,
+      "price": 37150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "76",
       "level": "eceran",
       "price": 31150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "81",
       "level": "eceran",
       "price": 48150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "82",
       "level": "eceran",
       "price": 43750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "91",
       "level": "eceran",
       "price": 51400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "92",
       "level": "eceran",
-      "price": 50100,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        35
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "93",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "94",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "95",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-ayam",
       "region_code": "96",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        35
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "11",
       "level": "eceran",
-      "price": 164600,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "12",
       "level": "eceran",
-      "price": 146750,
+      "price": 130650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "13",
       "level": "eceran",
-      "price": 158150,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "14",
       "level": "eceran",
       "price": 134600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "15",
       "level": "eceran",
       "price": 155000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "16",
       "level": "eceran",
       "price": 147500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "17",
       "level": "eceran",
-      "price": 155000,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "18",
       "level": "eceran",
       "price": 140950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "19",
       "level": "eceran",
-      "price": 150950,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "21",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "31",
       "level": "eceran",
       "price": 150100,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "32",
       "level": "eceran",
-      "price": 153050,
+      "price": 153850,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "33",
       "level": "eceran",
-      "price": 148250,
+      "price": 146000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "34",
       "level": "eceran",
       "price": 159400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "35",
       "level": "eceran",
-      "price": 138500,
+      "price": 137800,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "36",
       "level": "eceran",
       "price": 147500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "51",
       "level": "eceran",
-      "price": 137250,
+      "price": 132700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "52",
       "level": "eceran",
-      "price": 131900,
+      "price": 132200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "53",
       "level": "eceran",
       "price": 120000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "61",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "62",
       "level": "eceran",
-      "price": 157850,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "63",
       "level": "eceran",
       "price": 168750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "64",
       "level": "eceran",
       "price": 168750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "65",
       "level": "eceran",
-      "price": null,
-      "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        34
-      ],
+      "price": 146250,
+      "source_id": "pihps",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "71",
       "level": "eceran",
       "price": 156250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "72",
       "level": "eceran",
-      "price": 149400,
+      "price": 150000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "73",
       "level": "eceran",
       "price": 137250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "74",
       "level": "eceran",
       "price": 139400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "75",
       "level": "eceran",
-      "price": 148750,
+      "price": 155000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "76",
       "level": "eceran",
       "price": 140000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "81",
       "level": "eceran",
       "price": 142500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "82",
       "level": "eceran",
       "price": 150000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "91",
       "level": "eceran",
-      "price": 158800,
+      "price": 158950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "92",
       "level": "eceran",
-      "price": 167500,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        34
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "93",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "94",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "95",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "daging-sapi",
       "region_code": "96",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        34
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "11",
       "level": "eceran",
-      "price": 29800,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "12",
       "level": "eceran",
-      "price": 30750,
+      "price": 30150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "13",
       "level": "eceran",
-      "price": 28800,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "14",
       "level": "eceran",
-      "price": 30200,
+      "price": 30100,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "15",
       "level": "eceran",
       "price": 25900,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "16",
       "level": "eceran",
       "price": 28400,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "17",
       "level": "eceran",
-      "price": 28800,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "18",
       "level": "eceran",
       "price": 26100,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "19",
       "level": "eceran",
-      "price": 33300,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "21",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "31",
       "level": "eceran",
-      "price": 26850,
+      "price": 27000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "32",
       "level": "eceran",
-      "price": 27000,
+      "price": 26600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "33",
       "level": "eceran",
-      "price": 25700,
+      "price": 25150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "34",
       "level": "eceran",
-      "price": 25650,
+      "price": 25900,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "35",
       "level": "eceran",
-      "price": 25500,
+      "price": 25150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "36",
       "level": "eceran",
-      "price": 26000,
+      "price": 26650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "51",
       "level": "eceran",
-      "price": 29150,
+      "price": 28750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "52",
       "level": "eceran",
-      "price": 29250,
+      "price": 29150,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "53",
       "level": "eceran",
       "price": 31550,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "61",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "62",
       "level": "eceran",
-      "price": 32600,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "63",
       "level": "eceran",
       "price": 29600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "64",
       "level": "eceran",
       "price": 31700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "65",
       "level": "eceran",
-      "price": null,
-      "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        36
-      ],
+      "price": 29900,
+      "source_id": "pihps",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "71",
       "level": "eceran",
       "price": 30200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "72",
       "level": "eceran",
-      "price": 30650,
+      "price": 31050,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "73",
       "level": "eceran",
-      "price": 25800,
+      "price": 25550,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "74",
       "level": "eceran",
       "price": 30300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "75",
       "level": "eceran",
-      "price": 34300,
+      "price": 33800,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "76",
       "level": "eceran",
       "price": 29300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "81",
       "level": "eceran",
-      "price": 35200,
+      "price": 35600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "82",
       "level": "eceran",
       "price": 41250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "91",
       "level": "eceran",
-      "price": 37650,
+      "price": 37700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "92",
       "level": "eceran",
-      "price": 34300,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        36
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "93",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "94",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "95",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "telur-ayam",
       "region_code": "96",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        36
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "11",
       "level": "eceran",
-      "price": 19750,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "12",
       "level": "eceran",
-      "price": 19550,
+      "price": 19000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "13",
       "level": "eceran",
-      "price": 19150,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "14",
       "level": "eceran",
-      "price": 18900,
+      "price": 18850,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "15",
       "level": "eceran",
       "price": 19200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "16",
       "level": "eceran",
       "price": 18950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "17",
       "level": "eceran",
-      "price": 19400,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "18",
       "level": "eceran",
       "price": 18850,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "19",
       "level": "eceran",
-      "price": 18750,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "21",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "31",
       "level": "eceran",
       "price": 19950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "32",
       "level": "eceran",
-      "price": 19000,
+      "price": 18950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "33",
       "level": "eceran",
-      "price": 18600,
+      "price": 18650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "34",
       "level": "eceran",
       "price": 18450,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "35",
       "level": "eceran",
-      "price": 17950,
+      "price": 18000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "36",
       "level": "eceran",
-      "price": 19300,
+      "price": 19250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "51",
       "level": "eceran",
       "price": 18850,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "52",
       "level": "eceran",
       "price": 18950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "53",
       "level": "eceran",
       "price": 19950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "61",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "62",
       "level": "eceran",
-      "price": 21300,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "63",
       "level": "eceran",
       "price": 19550,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "64",
       "level": "eceran",
       "price": 19750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "65",
       "level": "eceran",
-      "price": null,
-      "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        37
-      ],
+      "price": 19400,
+      "source_id": "pihps",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "71",
       "level": "eceran",
       "price": 18700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "72",
       "level": "eceran",
-      "price": 20750,
+      "price": 20500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "73",
       "level": "eceran",
-      "price": 17800,
+      "price": 18000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "74",
       "level": "eceran",
       "price": 21200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "75",
       "level": "eceran",
-      "price": 20500,
+      "price": 20650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "76",
       "level": "eceran",
       "price": 18800,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "81",
       "level": "eceran",
       "price": 21700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "82",
       "level": "eceran",
       "price": 21000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "91",
       "level": "eceran",
-      "price": 24500,
+      "price": 24450,
       "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "92",
       "level": "eceran",
-      "price": 22000,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        37
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "93",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "94",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "95",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "gula-pasir",
       "region_code": "96",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        37
-      ],
+      "panelharga_ids": [],
       "unit": "kg"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "11",
       "level": "eceran",
-      "price": 22900,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "12",
       "level": "eceran",
-      "price": 22300,
+      "price": 21950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "13",
       "level": "eceran",
-      "price": 22850,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "14",
       "level": "eceran",
-      "price": 22050,
+      "price": 22100,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "15",
       "level": "eceran",
       "price": 22650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "16",
       "level": "eceran",
       "price": 21200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "17",
       "level": "eceran",
-      "price": 22400,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "18",
       "level": "eceran",
       "price": 22000,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "19",
       "level": "eceran",
-      "price": 20700,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "21",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "31",
       "level": "eceran",
       "price": 22850,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "32",
       "level": "eceran",
-      "price": 22600,
+      "price": 22750,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "33",
       "level": "eceran",
       "price": 21850,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "34",
       "level": "eceran",
       "price": 22850,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "35",
       "level": "eceran",
-      "price": 22200,
+      "price": 22250,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "36",
       "level": "eceran",
       "price": 20500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "51",
       "level": "eceran",
-      "price": 23200,
+      "price": 23300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "52",
       "level": "eceran",
-      "price": 23450,
+      "price": 23500,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "53",
       "level": "eceran",
-      "price": 23250,
+      "price": 23300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "61",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "62",
       "level": "eceran",
-      "price": 23150,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "63",
       "level": "eceran",
       "price": 22600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "64",
       "level": "eceran",
       "price": 23650,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "65",
       "level": "eceran",
-      "price": null,
-      "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "price": 23350,
+      "source_id": "pihps",
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "71",
       "level": "eceran",
       "price": 21300,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "72",
       "level": "eceran",
-      "price": 22200,
+      "price": 22100,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "73",
       "level": "eceran",
-      "price": 21550,
+      "price": 21600,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "74",
       "level": "eceran",
       "price": 24950,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "75",
       "level": "eceran",
       "price": 28200,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "76",
       "level": "eceran",
       "price": 22800,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "81",
       "level": "eceran",
       "price": 26900,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "82",
       "level": "eceran",
       "price": 24700,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "91",
       "level": "eceran",
       "price": 26350,
       "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "92",
       "level": "eceran",
-      "price": 25700,
-      "source_id": "pihps",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "price": null,
+      "source_id": "panelharga-cms",
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "93",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "94",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "95",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     },
     {
-      "date": "2026-09-16",
+      "date": "2026-09-23",
       "commodity_id": "minyak-goreng",
       "region_code": "96",
       "level": "eceran",
       "price": null,
       "source_id": "panelharga-cms",
-      "panelharga_ids": [
-        38,
-        101,
-        127
-      ],
+      "panelharga_ids": [],
       "unit": "liter"
     }
   ]

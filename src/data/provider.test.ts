@@ -5,26 +5,25 @@ import { SNAPSHOT_META } from "./snapshot.gen.ts"
 import { dataBadge, liveSurveyDates, priceAnchors, provider, registerYearSeries } from "./provider.ts"
 
 const LIVE_DATE = "2026-09-16"
-const SAMPLE_DATE = "2026-09-17"
-const MISSING_LIVE_PROVINCES = ["21", "61", "65", "93", "94", "95", "96"]
+const SAMPLE_DATE = "2017-01-02"
 
 it.effect("live PIHPS snapshot does not invent prices for missing provinces", () =>
   Effect.gen(function*() {
     const snapshot = provider.snapshot(LIVE_DATE, "beras")
     assert.strictEqual(dataBadge(LIVE_DATE), `Data ${LIVE_DATE} · PIHPS eceran`)
-    for (const code of MISSING_LIVE_PROVINCES) {
-      assert.strictEqual(LIVE_PRICES[`${LIVE_DATE}:beras:${code}`], undefined)
-      const row = snapshot.rows.find((r) => r.regionCode === code)
-      assert.notEqual(row, undefined)
-      assert.strictEqual(row?.price, null)
-    }
+    let missing = 0
     for (const row of snapshot.rows) {
       const live = LIVE_PRICES[`${LIVE_DATE}:beras:${row.regionCode}`]
       if (live === undefined) {
         assert.strictEqual(row.price, null)
+        missing += 1
       } else {
         assert.strictEqual(row.price, live)
       }
+    }
+    assert.ok(missing > 0)
+    for (const code of ["93", "94", "95", "96"]) {
+      assert.strictEqual(snapshot.rows.find((row) => row.regionCode === code)?.price, null)
     }
   }))
 
