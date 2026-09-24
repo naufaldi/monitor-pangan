@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
-import { axisInset, markPaint, plottedIndices, seriesMarks } from "./chart-marks.ts"
+import { axisInset, decimatedIndices, markPaint, plottedIndices, seriesMarks } from "./chart-marks.ts"
 import { formatAxisPrice } from "./format.ts"
 
 it.effect("classifies each node from the previous price and marks a missing date as a gap", () =>
@@ -69,6 +69,20 @@ it.effect("formats axis prices as grouped rupiah that fit inside the chart inset
     const inset = axisInset(labels)
     for (const label of labels) {
       assert.ok(inset - 8 - label.length * 7 >= 0)
+    }
+  }),
+)
+
+it.effect("keeps every index for short ranges and strides long ranges while keeping the ends", () =>
+  Effect.sync(() => {
+    assert.deepStrictEqual(decimatedIndices(0), [])
+    assert.deepStrictEqual(decimatedIndices(5), [0, 1, 2, 3, 4])
+    const kept = decimatedIndices(2500)
+    assert.ok(kept.length <= 481)
+    assert.strictEqual(kept[0], 0)
+    assert.strictEqual(kept[kept.length - 1], 2499)
+    for (let i = 1; i < kept.length; i++) {
+      assert.ok(kept[i]! > kept[i - 1]!)
     }
   }),
 )

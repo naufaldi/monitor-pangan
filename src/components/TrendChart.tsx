@@ -1,14 +1,7 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { cardClass } from "@monitor-pangan/ui"
-import { formatAxisPrice, formatDateShort, formatPrice } from "#/lib/format.ts"
-import {
-  axisInset,
-  markPaint,
-  plottedIndices,
-  seriesMarks,
-  type MarkKind,
-  type SeriesMark,
-} from "#/lib/chart-marks.ts"
+import { formatAxisPrice, formatDateShort, formatMonthYear, formatPrice } from "#/lib/format.ts"
+import { axisInset, decimatedIndices } from "#/lib/chart-marks.ts"
 import { realPoints } from "#/lib/chart-summary.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 import type { TrendPoint, TrendSeries } from "#/data/provider.ts"
@@ -25,12 +18,13 @@ type ActiveMark = {
   series: SeriesId
 }
 
-const MARK_LEGEND: ReadonlyArray<{ kind: MarkKind; label: string }> = [
-  { kind: "up", label: "Naik" },
-  { kind: "down", label: "Turun" },
-  { kind: "flat", label: "Datar" },
-  { kind: "gap", label: "Tidak ada data" },
-]
+type PlottedPoint = {
+  index: number
+  date: string
+  price: number
+  x: number
+  y: number
+}
 
 function axisDates(national: TrendPoint[], selected: TrendPoint[] | null): string[] {
   const dates = new Set<string>()
@@ -47,24 +41,41 @@ function priceMap(points: TrendPoint[]): Map<string, number> {
   return map
 }
 
-function brokenLine(
+/** Contiguous plotted runs over kept indices. Gaps break the line instead of bridging it. */
+function lineRuns(
   dates: string[],
+  kept: number[],
   prices: Map<string, number>,
   xFor: (index: number) => number,
   yFor: (price: number) => number,
-): string {
-  const cmds: string[] = []
-  let drawing = false
-  dates.forEach((date, index) => {
+): PlottedPoint[][] {
+  const runs: PlottedPoint[][] = []
+  let current: PlottedPoint[] = []
+  for (const index of kept) {
+    const date = dates[index]!
     const price = prices.get(date)
     if (price == null) {
-      drawing = false
-      return
+      if (current.length > 0) {
+        runs.push(current)
+        current = []
+      }
+      continue
     }
-    cmds.push(`${drawing ? "L" : "M"}${xFor(index).toFixed(1)},${yFor(price).toFixed(1)}`)
-    drawing = true
-  })
-  return cmds.join(" ")
+    current.push({ index, date, price, x: xFor(index), y: yFor(price) })
+  }
+  if (current.length > 0) runs.push(current)
+  return runs
+}
+
+function linePath(run: PlottedPoint[]): string {
+  return run.map((point, i) => `${i === 0 ? "M" : "L"}${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ")
+}
+
+function areaPath(run: PlottedPoint[], baseY: number): string {
+  if (run.length === 0) return ""
+  const first = run[0]!
+  const last = run[run.length - 1]!
+  return `${linePath(run)} L${last.x.toFixed(1)},${baseY.toFixed(1)} L${first.x.toFixed(1)},${baseY.toFixed(1)} Z`
 }
 
 function seriesLabel(series: SeriesId): string {
@@ -80,85 +91,12 @@ function seriesLabel(series: SeriesId): string {
   }
 }
 
-type MarkLayerProps = {
-  marks: SeriesMark[]
-  plotted: ReadonlySet<number>
-  xFor: (index: number) => number
-  yFor: (price: number) => number
-  gapY: number
-  series: SeriesId
-  unit: PriceUnit
-  active: ActiveMark | null
-  onActive: (next: ActiveMark | null) => void
-}
+const CHART_WIDTH = 720
+const CHART_HEIGHT = 280
 
-function MarkLayer({
-  marks,
-  plotted,
-  xFor,
-  yFor,
-  gapY,
-  series,
-  unit,
-  active,
-  onActive,
-}: MarkLayerProps) {
-  const labelPrefix = seriesLabel(series)
-  return (
-    <>
-      {marks.map((mark) => {
-        const y = mark.price == null ? gapY : yFor(mark.price)
-        const x = xFor(mark.index)
-        const label =
-          mark.kind === "gap" || mark.price == null
-            ? `${labelPrefix} ${formatDateShort(mark.date)}: tidak ada data`
-            : `${labelPrefix} ${formatDateShort(mark.date)}: ${formatPrice(mark.price, unit)}`
-        const paint = markPaint(mark.kind)
-        const isActive = active?.series === series && active.index === mark.index
-        const show = plotted.has(mark.index) || isActive
-        return (
-          <g
-            key={`${series}-${mark.date}`}
-            data-chart-mark=""
-            onPointerEnter={(event) => {
-              if (event.pointerType === "mouse") onActive({ index: mark.index, series })
-            }}
-            onPointerLeave={(event) => {
-              if (event.pointerType === "mouse") onActive(null)
-            }}
-            onPointerDown={(event) => {
-              if (event.pointerType === "mouse") return
-              event.preventDefault()
-              onActive(isActive ? null : { index: mark.index, series })
-            }}
-          >
-            <circle cx={x} cy={y} r={12} fill="transparent" />
-            {show ? (
-              <circle
-                cx={x}
-                cy={y}
-                r={8}
-                fill={paint.fill}
-                stroke={paint.stroke}
-                strokeWidth={2}
-                tabIndex={0}
-                aria-label={label}
-                onFocus={() => onActive({ index: mark.index, series })}
-                onBlur={() => onActive(null)}
-                className="cursor-pointer"
-              >
-                <title>{label}</title>
-              </circle>
-            ) : null}
-          </g>
-        )
-      })}
-    </>
-  )
-}
-
-/** Responsive SVG price trend. Dual line when a province series is present. */
+/** Responsive SVG price trend. Clean continuous lines, one crosshair tooltip for dense ranges. */
 export function TrendChart({ series, height = 260 }: TrendChartProps) {
+  const svgRef = useRef<SVGSVGElement | null>(null)
   const [active, setActive] = useState<ActiveMark | null>(null)
   const national = realPoints(series.national)
   const selected = series.selected == null ? null : realPoints(series.selected)
@@ -179,8 +117,8 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
     )
   }
 
-  const width = 720
-  const viewHeight = 260
+  const width = CHART_WIDTH
+  const viewHeight = CHART_HEIGHT
   const padR = 12
   const padT = 12
   const padB = 28
@@ -219,113 +157,138 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
     dates.length <= 1 ? padL + innerW / 2 : padL + (index / (dates.length - 1)) * innerW
   const yForInner = (price: number) => padT + (1 - (price - min) / (max - min)) * innerH
 
-  const nationalMarks = seriesMarks(dates, nationalByDate)
-  const selectedMarks = selectedByDate == null ? null : seriesMarks(dates, selectedByDate)
-  const nationalPlotted = new Set(
-    plottedIndices(
-      nationalMarks,
-      xFor,
-      active?.series === "nasional" ? active.index : null,
-    ),
-  )
-  const selectedPlotted =
-    selectedMarks == null
-      ? null
-      : new Set(
-          plottedIndices(
-            selectedMarks,
-            xFor,
-            active?.series === "provinsi" ? active.index : null,
-          ),
-        )
-
-  const nationalLine = brokenLine(dates, nationalByDate, xFor, yForInner)
-  const selectedLine =
-    selectedByDate == null ? "" : brokenLine(dates, selectedByDate, xFor, yForInner)
+  const kept = decimatedIndices(dates.length)
+  const nationalRuns = lineRuns(dates, kept, nationalByDate, xFor, yForInner)
+  const selectedRuns =
+    selectedByDate == null ? null : lineRuns(dates, kept, selectedByDate, xFor, yForInner)
 
   const baseY = viewHeight - padB
-  const gapY = baseY - 10
-  const activeMarks = active?.series === "provinsi" ? selectedMarks : nationalMarks
-  const activeMark =
-    active == null ? undefined : activeMarks?.find((mark) => mark.index === active.index)
-  const activeX = activeMark != null ? xFor(activeMark.index) : 0
-  const activeY =
-    activeMark == null
-      ? 0
-      : activeMark.price == null
-        ? gapY
-        : yForInner(activeMark.price)
-  const tooltipW = 156
-  const tooltipH = 42
+  const lastNationalPoint = national.length > 0 ? national[national.length - 1]! : null
+  const lastSelectedPoint = selected != null && selected.length > 0 ? selected[selected.length - 1]! : null
+  const lastNationalIndex = lastNationalPoint == null ? -1 : dates.indexOf(lastNationalPoint.date)
+  const lastSelectedIndex = lastSelectedPoint == null ? -1 : dates.indexOf(lastSelectedPoint.date)
+
+  const toIndex = (clientX: number): number | null => {
+    const svg = svgRef.current
+    if (svg == null || dates.length === 0) return null
+    const rect = svg.getBoundingClientRect()
+    if (rect.width === 0) return null
+    const svgX = (clientX - rect.left) * (width / rect.width)
+    const fraction = (svgX - padL) / innerW
+    const raw = Math.round(fraction * (dates.length - 1))
+    return Math.min(Math.max(raw, 0), dates.length - 1)
+  }
+
+  const toSeries = (index: number, clientY: number): SeriesId => {
+    if (selectedByDate == null) return "nasional"
+    const svg = svgRef.current
+    if (svg == null) return "nasional"
+    const rect = svg.getBoundingClientRect()
+    if (rect.height === 0) return "nasional"
+    const svgY = (clientY - rect.top) * (viewHeight / rect.height)
+    const date = dates[index]!
+    const nationalPrice = nationalByDate.get(date)
+    const selectedPrice = selectedByDate.get(date)
+    if (nationalPrice == null) return "provinsi"
+    if (selectedPrice == null) return "nasional"
+    return Math.abs(svgY - yForInner(selectedPrice)) < Math.abs(svgY - yForInner(nationalPrice))
+      ? "provinsi"
+      : "nasional"
+  }
+
+  const pointAt = (clientX: number, clientY: number): ActiveMark | null => {
+    const index = toIndex(clientX)
+    if (index == null) return null
+    return { index, series: toSeries(index, clientY) }
+  }
+
+  const activeDate = active == null ? null : dates[active.index]
+  const activeNational = activeDate == null ? undefined : nationalByDate.get(activeDate)
+  const activeSelected = activeDate == null || selectedByDate == null ? undefined : selectedByDate.get(activeDate)
+  const activeX = active == null ? 0 : xFor(active.index)
+  const activePrice = active?.series === "provinsi" ? (activeSelected ?? activeNational) : activeNational
+  const activeY = activePrice == null ? baseY : yForInner(activePrice)
+  const tooltipW = 176
+  const tooltipH = dual ? 64 : 46
   const tooltipX = Math.min(Math.max(activeX - tooltipW / 2, padL), width - padR - tooltipW)
   const tooltipBelow = activeY - tooltipH - 12 < padT
   const tooltipY = tooltipBelow ? activeY + 14 : activeY - tooltipH - 14
-  const labelIndices =
-    dates.length <= 7
-      ? dates.map((_, index) => index)
-      : [0, Math.floor((dates.length - 1) / 2), dates.length - 1]
+
+  const compactAxis = dates.length > 62
+  const tickFractions = dates.length <= 5 ? dates.map((_, i) => i / Math.max(dates.length - 1, 1)) : [0, 0.25, 0.5, 0.75, 1]
+  const labelIndices = [...new Set(tickFractions.map((f) => Math.round(f * (dates.length - 1))))].sort((a, b) => a - b)
 
   const summary = dual
     ? `Tren ${series.commodity.name}, Provinsi dan Nasional.`
     : `Tren ${series.commodity.name} nasional.`
+  const activeCopy =
+    active == null || activeDate == null
+      ? summary
+      : `${summary} ${formatDateShort(activeDate)}: Nasional ${activeNational == null ? "tidak ada data" : formatPrice(activeNational, series.unit)}${dual ? `, Provinsi ${activeSelected == null ? "tidak ada data" : formatPrice(activeSelected, series.unit)}` : ""}.`
 
   return (
-    <figure role="img" aria-label={summary} className={cardClass("md")}>
-      {dual ? (
-        <figcaption className="flex flex-wrap items-center gap-3 px-1 pb-2 text-xs font-semibold">
+    <figure role="img" aria-label={activeCopy} className={cardClass("md")}>
+      <figcaption className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2 text-xs">
+        <span className="flex flex-wrap items-center gap-3 font-semibold">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-0.5 w-4 bg-ink" aria-hidden="true" />
             Nasional
           </span>
-          <span className="flex items-center gap-1.5 text-ember">
-            <span className="inline-block h-0.5 w-4 bg-ember" aria-hidden="true" />
-            Provinsi
-          </span>
-        </figcaption>
-      ) : (
-        <figcaption className="px-1 pb-2 text-xs font-semibold text-slate">Nasional</figcaption>
-      )}
-      <ul className="flex flex-wrap gap-x-3 gap-y-1 px-1 pb-2 text-xs text-slate">
-        {MARK_LEGEND.map((item) => {
-          const paint = markPaint(item.kind)
-          return (
-            <li key={item.kind} className="flex items-center gap-1.5">
-              <span
-                className="inline-block h-2.5 w-2.5 rounded-full border-2"
-                style={{ backgroundColor: paint.fill, borderColor: paint.stroke }}
-              />
-              {item.label}
-            </li>
-          )
-        })}
-      </ul>
+          {dual ? (
+            <span className="flex items-center gap-1.5 text-ember">
+              <span className="inline-block h-0.5 w-4 bg-ember" aria-hidden="true" />
+              Provinsi
+            </span>
+          ) : null}
+        </span>
+        <span className="font-normal text-slate">Arahkan kursor atau sentuh grafik untuk detail</span>
+      </figcaption>
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${width} ${viewHeight}`}
         height={height}
-        className="block w-full"
+        className="block h-auto w-full touch-pan-y"
         preserveAspectRatio="xMidYMid meet"
+        tabIndex={0}
+        onPointerMove={(event) => {
+          if (event.pointerType === "mouse" || event.buttons > 0) {
+            setActive(pointAt(event.clientX, event.clientY))
+          }
+        }}
+        onPointerDown={(event) => {
+          setActive(pointAt(event.clientX, event.clientY))
+        }}
         onPointerLeave={(event) => {
           if (event.pointerType === "mouse") setActive(null)
         }}
-        onPointerDown={(event) => {
-          if (event.pointerType === "mouse") return
-          const target = event.target
-          if (!(target instanceof Element) || target.closest("[data-chart-mark]") == null) {
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
             setActive(null)
+            return
           }
+          const step =
+            event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : event.key === "Home" ? -Infinity : event.key === "End" ? Infinity : 0
+          if (step === 0) return
+          event.preventDefault()
+          setActive((prev) => {
+            const base = prev?.index ?? (step > 0 ? -1 : dates.length)
+            const next =
+              step === -Infinity ? 0 : step === Infinity ? dates.length - 1 : Math.min(Math.max(base + step, 0), dates.length - 1)
+            return { index: next, series: prev?.series ?? "nasional" }
+          })
         }}
       >
         {ticks.map((tick) => {
           const y = yForInner(tick)
           return (
             <g key={tick}>
-              <line x1={padL} x2={width - padR} y1={y} y2={y} stroke="#e4e6df" strokeWidth={1} />
+              <line x1={padL} x2={width - padR} y1={y} y2={y} style={{ stroke: "var(--color-hairline)" }} strokeWidth={1} />
               <text
                 x={padL - 8}
                 y={y + 4}
                 textAnchor="end"
                 fontSize={11}
-                fill="#5c6358"
+                style={{ fill: "var(--color-slate)" }}
                 className="tabular-nums"
               >
                 {formatAxisPrice(tick)}
@@ -333,24 +296,62 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
             </g>
           )
         })}
-        {nationalLine !== "" ? (
+        {nationalRuns.map((run, i) => (
           <path
-            d={nationalLine}
+            key={`national-area-${i}`}
+            d={areaPath(run, baseY)}
+            style={{ fill: "var(--color-ink)" }}
+            fillOpacity={0.06}
+            stroke="none"
+          />
+        ))}
+        {selectedRuns?.map((run, i) => (
+          <path
+            key={`selected-area-${i}`}
+            d={areaPath(run, baseY)}
+            style={{ fill: "var(--color-ember)" }}
+            fillOpacity={0.07}
+            stroke="none"
+          />
+        ))}
+        {nationalRuns.map((run, i) => (
+          <path
+            key={`national-line-${i}`}
+            d={linePath(run)}
             fill="none"
-            stroke="#1a1c16"
-            strokeWidth={2}
+            style={{ stroke: "var(--color-ink)" }}
+            strokeWidth={2.5}
             strokeLinejoin="round"
             strokeLinecap="round"
           />
-        ) : null}
-        {selectedLine !== "" ? (
+        ))}
+        {selectedRuns?.map((run, i) => (
           <path
-            d={selectedLine}
+            key={`selected-line-${i}`}
+            d={linePath(run)}
             fill="none"
-            stroke="#dc2626"
-            strokeWidth={2}
+            style={{ stroke: "var(--color-ember)" }}
+            strokeWidth={2.5}
             strokeLinejoin="round"
             strokeLinecap="round"
+          />
+        ))}
+        {lastNationalIndex >= 0 && lastNationalPoint != null ? (
+          <circle
+            cx={xFor(lastNationalIndex)}
+            cy={yForInner(lastNationalPoint.price)}
+            r={4.5}
+            style={{ fill: "var(--color-ink)", stroke: "var(--color-paper)" }}
+            strokeWidth={2}
+          />
+        ) : null}
+        {lastSelectedIndex >= 0 && lastSelectedPoint != null ? (
+          <circle
+            cx={xFor(lastSelectedIndex)}
+            cy={yForInner(lastSelectedPoint.price)}
+            r={4.5}
+            style={{ fill: "var(--color-ember)", stroke: "var(--color-paper)" }}
+            strokeWidth={2}
           />
         ) : null}
         {labelIndices.map((pointIndex) => {
@@ -359,73 +360,86 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
           const anchor =
             pointIndex === 0 ? "start" : pointIndex === dates.length - 1 ? "end" : "middle"
           return (
-            <text key={date} x={x} y={viewHeight - 8} textAnchor={anchor} fontSize={11} fill="#5c6358">
-              {formatDateShort(date)}
+            <text key={date} x={x} y={viewHeight - 8} textAnchor={anchor} fontSize={11} style={{ fill: "var(--color-slate)" }}>
+              {compactAxis ? formatMonthYear(date) : formatDateShort(date)}
             </text>
           )
         })}
-        <MarkLayer
-          marks={nationalMarks}
-          plotted={nationalPlotted}
-          xFor={xFor}
-          yFor={yForInner}
-          gapY={gapY}
-          series="nasional"
-          unit={series.unit}
-          active={active}
-          onActive={setActive}
-        />
-        {selectedMarks != null && selectedPlotted != null ? (
-          <MarkLayer
-            marks={selectedMarks}
-            plotted={selectedPlotted}
-            xFor={xFor}
-            yFor={yForInner}
-            gapY={gapY}
-            series="provinsi"
-            unit={series.unit}
-            active={active}
-            onActive={setActive}
-          />
-        ) : null}
-        {activeMark != null ? (
-          <g aria-hidden="true" pointerEvents="none">
+        {active != null && activeDate != null ? (
+          <g pointerEvents="none" aria-hidden="true">
             <line
               x1={activeX}
               x2={activeX}
-              y1={activeY}
+              y1={padT}
               y2={baseY}
-              stroke="#5c6358"
+              style={{ stroke: "var(--color-slate)" }}
               strokeWidth={1}
               strokeDasharray="4 3"
             />
-            <line
-              x1={padL}
-              x2={activeX}
-              y1={activeY}
-              y2={activeY}
-              stroke="#5c6358"
-              strokeWidth={1}
-              strokeDasharray="4 3"
-            />
-            <circle cx={activeX} cy={activeY} r={12} fill="none" stroke="#1a1c16" strokeWidth={2} />
-            <rect x={tooltipX} y={tooltipY} width={tooltipW} height={tooltipH} rx={8} fill="#1a1c16" />
+            {activeNational != null ? (
+              <circle cx={activeX} cy={yForInner(activeNational)} r={5} style={{ fill: "var(--color-paper)", stroke: "var(--color-ink)" }} strokeWidth={2.5} />
+            ) : null}
+            {dual && activeSelected != null ? (
+              <circle cx={activeX} cy={yForInner(activeSelected)} r={5} style={{ fill: "var(--color-paper)", stroke: "var(--color-ember)" }} strokeWidth={2.5} />
+            ) : null}
+            <rect x={tooltipX} y={tooltipY} width={tooltipW} height={tooltipH} rx={8} style={{ fill: "var(--color-ink)" }} />
             <text
               x={tooltipX + 12}
               y={tooltipY + 18}
+              fontSize={11}
+              style={{ fill: "var(--color-paper)" }}
+              opacity={0.75}
+            >
+              {formatDateShort(activeDate)}
+            </text>
+            <text
+              x={tooltipX + 12}
+              y={tooltipY + 34}
               fontSize={12}
               fontWeight={700}
-              fill="#ffffff"
+              style={{ fill: "var(--color-paper)" }}
               className="tabular-nums"
             >
-              {activeMark.price == null ? "Tidak ada data" : formatPrice(activeMark.price, series.unit)}
+              {activeNational == null ? `${seriesLabel("nasional")}: tidak ada data` : `${seriesLabel("nasional")} ${formatPrice(activeNational, series.unit)}`}
             </text>
-            <text x={tooltipX + 12} y={tooltipY + 33} fontSize={11} fill="#ffffff" opacity={0.75}>
-              {formatDateShort(activeMark.date)}
-            </text>
+            {dual ? (
+              <text
+                x={tooltipX + 12}
+                y={tooltipY + 50}
+                fontSize={12}
+                fontWeight={700}
+                style={{ fill: "var(--color-paper)" }}
+                className="tabular-nums"
+              >
+                {activeSelected == null ? `${seriesLabel("provinsi")}: tidak ada data` : `${seriesLabel("provinsi")} ${formatPrice(activeSelected, series.unit)}`}
+              </text>
+            ) : null}
           </g>
         ) : null}
+        <rect
+          x={padL}
+          y={padT}
+          width={innerW}
+          height={innerH}
+          fill="transparent"
+        />
       </svg>
+      <p className="tabular-nums px-1 pt-2 text-xs text-slate">
+        {formatDateShort(series.range.from)} – {formatDateShort(series.range.to)} · {unitLabel(series.unit)}
+      </p>
     </figure>
   )
+}
+
+function unitLabel(unit: PriceUnit): string {
+  switch (unit) {
+    case "kg":
+      return "Rp/kg"
+    case "liter":
+      return "Rp/liter"
+    default: {
+      const _exhaustive: never = unit
+      return _exhaustive
+    }
+  }
 }
