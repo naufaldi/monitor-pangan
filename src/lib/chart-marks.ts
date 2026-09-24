@@ -89,3 +89,18 @@ export function axisInset(labels: readonly string[]): number {
   const widest = labels.reduce((max, label) => Math.max(max, label.length), 0)
   return widest * 7 + 16
 }
+
+/** Cap for points baked into one SVG path. The provider already aggregates
+ * (day/week/month), so this is only a safety net for very long daily ranges. */
+export const MAX_LINE_POINTS = 480
+
+/** Stride-based index decimation that always keeps the first and last index. */
+export function decimatedIndices(count: number, maxPoints = MAX_LINE_POINTS): number[] {
+  if (count <= 0) return []
+  if (count <= maxPoints) return Array.from({ length: count }, (_, index) => index)
+  const stride = Math.ceil(count / maxPoints)
+  const kept: number[] = []
+  for (let index = 0; index < count; index += stride) kept.push(index)
+  if (kept[kept.length - 1] !== count - 1) kept.push(count - 1)
+  return kept
+}

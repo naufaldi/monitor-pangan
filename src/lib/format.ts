@@ -22,6 +22,13 @@ export function formatDateShort(iso: string): string {
   return `${d} ${MONTHS[m - 1] ?? m} ${y}`
 }
 
+/** Format a YYYY-MM-DD date as "Sep 2026" for long-range axes. */
+export function formatMonthYear(iso: string): string {
+  const [y, m] = iso.split("-").map(Number)
+  if (y == null || m == null) return iso
+  return `${MONTHS[m - 1] ?? m} ${y}`
+}
+
 /** Format a signed rupiah delta as "+Rp 2.000" / "-Rp 500" / "Rp 0". */
 export function formatRupiah(value: number, signed = false): string {
   const grouped = new Intl.NumberFormat("id-ID", {
