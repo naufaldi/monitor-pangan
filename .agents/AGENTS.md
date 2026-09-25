@@ -33,6 +33,7 @@ Single source of truth is `packages/ui/`.
 - Use tokens (`bg-paper`, `bg-canvas`, `text-ink`, `text-slate`, `border-hairline`) for chrome. Do not hardcode hex for chrome.
 - Commodity picking uses the grouped `CommoditySelect` combobox, not a tab strip.
 - `src/routes/tren.tsx` keeps the exhaustive `switch` with a `never` default for direction labels.
+- Before UI polish, motion, or mobile-feel changes, read the vendored Emil Kowalski skills. Skill: `.agents/skills/emil-design-eng/SKILL.md`. Same pack: `.agents/skills/animate/SKILL.md`, `.agents/skills/animate-expo/SKILL.md`, `.agents/skills/animation-vocabulary/SKILL.md`, `.agents/skills/apple-design/SKILL.md`, `.agents/skills/ask-sonner/SKILL.md`, `.agents/skills/find-animation-opportunities/SKILL.md`, `.agents/skills/improve-animations/SKILL.md`, `.agents/skills/mobile-native/SKILL.md`, `.agents/skills/pick-ui-library/SKILL.md`, `.agents/skills/prototype/SKILL.md`, `.agents/skills/review-animations/SKILL.md`, `.agents/skills/write-swift/SKILL.md`.
 
 ## Commands
 
