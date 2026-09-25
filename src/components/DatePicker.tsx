@@ -48,6 +48,25 @@ function Chevron({ flipped }: { flipped?: boolean }) {
   )
 }
 
+/**
+ * Open the native calendar picker for the whole date field. Chromium only
+ * opens the picker when the small calendar icon is clicked, so field clicks
+ * must call showPicker explicitly. Falls back to focus where showPicker is
+ * missing; already-open pickers throw and only need focus.
+ */
+function openDatePicker(target: HTMLInputElement): void {
+  const picker = target as HTMLInputElement & { showPicker?: () => void }
+  if (typeof picker.showPicker !== "function") {
+    target.focus()
+    return
+  }
+  try {
+    picker.showPicker()
+  } catch {
+    target.focus()
+  }
+}
+
 /** Single-date snapshot switcher that scales to hundreds of trading days. */
 export function DatePicker({ dates, value, onChange }: DatePickerProps) {
   const index = dates.indexOf(value)
@@ -87,18 +106,27 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
         >
           <Chevron />
         </Button>
-        <input
-          type="date"
-          aria-label="Tanggal data"
-          value={dates[safeIndex] ?? value}
-          min={dates[0]}
-          max={latest}
-          onChange={(e) => {
-            const picked = e.target.value
-            if (picked) onChange(nearestDate(dates, picked))
-          }}
-          className="tabular-nums min-h-11 w-[9.25rem] shrink-0 rounded-lg bg-paper px-2 text-sm font-semibold text-ink"
-        />
+        <label className="flex min-h-11 shrink-0 cursor-pointer items-center rounded-lg bg-paper px-1">
+          <input
+            type="date"
+            aria-label="Tanggal data"
+            value={dates[safeIndex] ?? value}
+            min={dates[0]}
+            max={latest}
+            onChange={(e) => {
+              const picked = e.target.value
+              if (picked) onChange(nearestDate(dates, picked))
+            }}
+            onClick={(e) => openDatePicker(e.currentTarget)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                openDatePicker(e.currentTarget)
+              }
+            }}
+            className="tabular-nums min-h-11 w-[9.25rem] shrink-0 cursor-pointer rounded-lg bg-transparent px-1 text-sm font-semibold text-ink"
+          />
+        </label>
         <Button
           variant="rect"
           aria-label="Tanggal berikutnya"
@@ -127,7 +155,7 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
             </optgroup>
           ))}
         </Select>
-        <span className="absolute top-1/2 right-1 -translate-y-1/2">
+        <span className="pointer-events-none absolute top-1/2 right-1 -translate-y-1/2">
           <ChevronBadge />
         </span>
       </div>
