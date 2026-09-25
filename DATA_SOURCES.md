@@ -70,11 +70,14 @@ server-side. The scraper records the 401 and continues; no credential bypass.
 retry). Each run ingests WIB today plus the previous 7 calendar days
 (weekends dropped), so missed runs, holidays, and late publishes self-heal;
 upserts are idempotent (`ON CONFLICT ... DO UPDATE` on
-`prices_daily`) and every date leaves a `job_runs` row. PIHPS is keyless —
-no secrets needed. Provisioning:
+`prices_daily`) and every date leaves a `job_runs` row (`complete`, `empty`,
+or `failed` — a failed date never aborts the rest of the window). Scope
+requests are paced 750 ms apart in cron runs because PIHPS rate-limits
+shared Cloudflare egress IPs. PIHPS is keyless — no secrets needed.
+Live D1 (provisioned 2026-09-25, backfilled 16–25 Sep):
 
 ```sh
-wrangler d1 create monitor-pangan # then set database_id in wrangler.toml
+wrangler d1 create monitor-pangan # id 2bfc02d3-5eaf-4c7c-999b-e8e77544be21, set in wrangler.toml
 wrangler d1 execute monitor-pangan --remote --file=./db/schema.sql
 ```
 

@@ -9,6 +9,8 @@ import { Clock, Context, Data, Effect, Layer, Schedule, Schema } from "effect"
  * seven calendar days so missed runs, holidays, and late publishes heal
  * without manual re-scrapes. Upserts are idempotent (`ON CONFLICT ... DO
  * UPDATE`) and each date leaves a row in `job_runs` for observability.
+ * A date that still fails after retries is logged as a `failed` run row and
+ * does not abort the remaining dates.
  *
  * Scrape parameters mirror `scripts/scrape-pihps.mjs` (national + 34
  * surveyed BI provinces, `price_type_id=1` eceran, `tipe_laporan=1`
@@ -43,6 +45,12 @@ const CATEGORY_TO_GROUP: Readonly<Record<string, string>> = {
 export const COMMODITY_IDS = Object.values(CATEGORY_TO_GROUP)
 export const INGEST_LEVEL = "eceran"
 export const INGEST_SOURCE = "pihps"
+
+/** Delay between PIHPS scope requests in production cron runs. PIHPS
+ * rate-limits shared Cloudflare egress IPs, so the 35 scoped requests per
+ * date are spread over ~30s instead of firing back-to-back. Sleeps cost no
+ * CPU time. Pure functions default to 0 so tests stay fast. */
+export const PROD_SCOPE_DELAY_MILLIS = 750
 
 /** YYYY-MM-DD in Asia/Jakarta (WIB, UTC+7, no DST) for a Unix-millis instant. */
 const wibDayFormatter = new Intl.DateTimeFormat("en-CA", {
@@ -249,7 +257,24 @@ export class PihpsClient extends Context.Tag("PihpsClient")<
 
 const retryPolicy = Schedule.intersect(Schedule.exponential("500 millis"), Schedule.recurs(3))
 
-export const fetchDayPrices = Effect.fn("Ingest.fetchDayPrices")(function* (iso: string) {
+/** One-line diagnosable note for a failure. `String()` on Effect tagged
+ * errors drops every field, so prefer JSON and fall back to `String`. */
+export const errorNote = (cause: unknown): string => {
+  if (typeof cause === "object" && cause !== null) {
+    try {
+      const json = JSON.stringify(cause)
+      if (json !== undefined && json !== "{}" && json.length > 2) return json.slice(0, 200)
+    } catch {
+      // fall through to String below
+    }
+  }
+  return String(cause).slice(0, 200)
+}
+
+export const fetchDayPrices = Effect.fn("Ingest.fetchDayPrices")(function* (
+  iso: string,
+  options: { readonly scopeDelayMillis?: number } = {},
+) {
   const client = yield* PihpsClient
   const column = gridColumnFor(iso)
   const scopes: ReadonlyArray<{ readonly bi: string; readonly regionCode: string | null }> = [
@@ -258,7 +283,9 @@ export const fetchDayPrices = Effect.fn("Ingest.fetchDayPrices")(function* (iso:
   ]
   const cells: PriceCell[] = []
   let scopesSeen = 0
+  const delayMillis = options.scopeDelayMillis ?? 0
   for (const scope of scopes) {
+    if (scopesSeen > 0 && delayMillis > 0) yield* Effect.sleep(delayMillis)
     const provinceId = scope.bi === "" ? undefined : scope.bi
     const payload = yield* client
       .fetchGrid({ startDate: iso, endDate: iso, provinceId })
@@ -308,7 +335,7 @@ export const INSERT_RUN_SQL =
 
 export type JobLog = {
   readonly date: string
-  readonly status: "complete" | "empty"
+  readonly status: "complete" | "empty" | "failed"
   readonly rowsUpserted: number
   readonly note: string
 }
@@ -319,6 +346,11 @@ export class PriceStore extends Context.Tag("PriceStore")<
     readonly upsertDay: (
       day: DayPrices,
       at: string,
+    ) => Effect.Effect<JobLog, StoreError>
+    readonly logFailure: (
+      date: string,
+      at: string,
+      note: string,
     ) => Effect.Effect<JobLog, StoreError>
   }
 >() {
@@ -351,6 +383,14 @@ export class PriceStore extends Context.Tag("PriceStore")<
           },
           catch: (cause) => new StoreError({ reason: String(cause).slice(0, 200) }),
         }),
+      logFailure: (date, at, note) =>
+        Effect.tryPromise({
+          try: async () => {
+            await db.prepare(INSERT_RUN_SQL).bind(at, INGEST_SOURCE, "failed", 0, note).run()
+            return { date, status: "failed" as const, rowsUpserted: 0, note } satisfies JobLog
+          },
+          catch: (cause) => new StoreError({ reason: String(cause).slice(0, 200) }),
+        }),
     })
 }
 
@@ -360,6 +400,7 @@ export type IngestSummary = {
   readonly targets: ReadonlyArray<string>
   readonly upserted: number
   readonly skippedEmpty: ReadonlyArray<string>
+  readonly failed: ReadonlyArray<string>
   readonly logs: ReadonlyArray<JobLog>
 }
 
@@ -367,14 +408,16 @@ export const runIngestForDates = Effect.fn("Ingest.runForDates")(function* (
   dates: ReadonlyArray<string>,
   startedAt: string,
   cron: string,
+  options: { readonly scopeDelayMillis?: number } = {},
 ) {
   const store = yield* PriceStore
   const logs: JobLog[] = []
   let upserted = 0
   const skippedEmpty: string[] = []
+  const failed: string[] = []
   yield* Effect.forEach(dates, (iso) =>
     Effect.gen(function* () {
-      const day = yield* fetchDayPrices(iso)
+      const day = yield* fetchDayPrices(iso, { scopeDelayMillis: options.scopeDelayMillis })
       const log = yield* store.upsertDay(day, startedAt)
       logs.push(log)
       if (log.status === "empty") {
@@ -382,7 +425,16 @@ export const runIngestForDates = Effect.fn("Ingest.runForDates")(function* (
       } else {
         upserted += log.rowsUpserted
       }
-    }),
+    }).pipe(
+      Effect.catchAll((cause) =>
+        Effect.gen(function* () {
+          const note = errorNote(cause)
+          yield* store.logFailure(iso, startedAt, note).pipe(Effect.ignore)
+          logs.push({ date: iso, status: "failed", rowsUpserted: 0, note } satisfies JobLog)
+          failed.push(iso)
+        }),
+      ),
+    ),
   )
   return {
     runDate: startedAt,
@@ -390,17 +442,20 @@ export const runIngestForDates = Effect.fn("Ingest.runForDates")(function* (
     targets: [...dates],
     upserted,
     skippedEmpty,
+    failed,
     logs,
   } satisfies IngestSummary
 })
 
 export const runIngest = Effect.fn("Ingest.run")(function* (
-  options: { readonly lookbackDays?: number; readonly cron?: string } = {},
+  options: { readonly lookbackDays?: number; readonly cron?: string; readonly scopeDelayMillis?: number } = {},
 ) {
   const nowMillis = yield* Clock.currentTimeMillis
   const today = wibDateKey(nowMillis)
   const dates = planIngestDates(today, options.lookbackDays ?? LOOKBACK_DAYS)
-  return yield* runIngestForDates(dates, isoFromMillis(nowMillis), options.cron ?? "manual")
+  return yield* runIngestForDates(dates, isoFromMillis(nowMillis), options.cron ?? "manual", {
+    scopeDelayMillis: options.scopeDelayMillis,
+  })
 })
 
 export type WorkerEnv = {
@@ -421,13 +476,13 @@ export const scheduled = (
   env: WorkerEnv,
   ctx: WaitUntilContext,
 ): void => {
-  const program = runIngest({ cron: controller.cron }).pipe(
+  const program = runIngest({ cron: controller.cron, scopeDelayMillis: PROD_SCOPE_DELAY_MILLIS }).pipe(
     Effect.provide(PihpsClient.Live(fetch)),
     Effect.provide(PriceStore.D1(env.DB)),
     Effect.tap((summary) =>
       Effect.sync(() => {
         console.log(
-          `ingest done cron=${summary.cron} targets=${summary.targets.length} upserted=${summary.upserted} empty=[${summary.skippedEmpty.join(",")}]`,
+          `ingest done cron=${summary.cron} targets=${summary.targets.length} upserted=${summary.upserted} empty=[${summary.skippedEmpty.join(",")}] failed=[${summary.failed.join(",")}]`,
         )
       }),
     ),

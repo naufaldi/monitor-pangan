@@ -5,9 +5,11 @@ import {
   INGEST_LEVEL,
   INGEST_SOURCE,
   PihpsClient,
+  PihpsFetchError,
   PriceStore,
   UPSERT_PRICE_SQL,
   decodeGridRow,
+  errorNote,
   fetchDayPrices,
   gridColumnFor,
   isTradingDayIso,
@@ -134,6 +136,8 @@ it.effect("ingests priced dates and skips empty ones", () =>
           rowsUpserted: day.liveCells,
           note: `scopes=${day.scopes}`,
         }),
+      logFailure: (date: string, _at: string, note: string) =>
+        Effect.succeed({ date, status: "failed" as const, rowsUpserted: 0, note }),
     })
     const summary = yield* runIngestForDates(["2026-09-23", "2026-09-24"], "2026-09-25T06:30:00.000Z", "30 6 * * *").pipe(
       Effect.provide(stubClientFor(["2026-09-24"])),
@@ -151,6 +155,8 @@ it.effect("reads WIB today from the clock for the daily run", () =>
     const store = Layer.succeed(PriceStore, {
       upsertDay: (day: DayPrices, at: string) =>
         Effect.succeed({ date: day.date, status: "empty" as const, rowsUpserted: 0, note: at }),
+      logFailure: (date: string, at: string, note: string) =>
+        Effect.succeed({ date, status: "failed" as const, rowsUpserted: 0, note: `${at} ${note}` }),
     })
     const summary = yield* runIngest({ lookbackDays: 0, cron: "30 6 * * *" }).pipe(
       Effect.provide(stubClientFor([])),
@@ -158,6 +164,47 @@ it.effect("reads WIB today from the clock for the daily run", () =>
     )
     assert.deepStrictEqual(summary.targets, ["2026-09-25"])
     assert.strictEqual(summary.logs[0]?.note, "2026-09-25T06:30:00.000Z")
+  }))
+
+it.live("logs a failed date without aborting the remaining backfill", () =>
+  Effect.gen(function* () {
+    const failing = "2026-09-21"
+    const client = Layer.succeed(PihpsClient, {
+      fetchGrid: (params: PihpsGridParams) =>
+        params.startDate === failing
+          ? Effect.fail(
+              new PihpsFetchError({ date: failing, provinceId: "nasional", reason: "boom" }),
+            )
+          : Effect.succeed({ data: [] }),
+    })
+    const failures: Array<string> = []
+    const store = Layer.succeed(PriceStore, {
+      upsertDay: (day: DayPrices, _at: string) =>
+        Effect.succeed({ date: day.date, status: "empty" as const, rowsUpserted: 0, note: "" }),
+      logFailure: (date: string, _at: string, note: string) =>
+        Effect.sync(() => {
+          failures.push(date)
+          return { date, status: "failed" as const, rowsUpserted: 0, note }
+        }),
+    })
+    const summary = yield* runIngestForDates(
+      ["2026-09-21", "2026-09-22"],
+      "2026-09-25T06:30:00.000Z",
+      "manual",
+    ).pipe(Effect.provide(client), Effect.provide(store))
+    assert.deepStrictEqual(summary.failed, ["2026-09-21"])
+    assert.deepStrictEqual(summary.skippedEmpty, ["2026-09-22"])
+    assert.deepStrictEqual(failures, ["2026-09-21"])
+    assert.strictEqual(summary.logs.length, 2)
+  }))
+
+it.effect("keeps error fields in failure notes", () =>
+  Effect.gen(function* () {
+    assert.match(
+      errorNote(new PihpsFetchError({ date: "2026-09-21", provinceId: "nasional", reason: "HTTP 429" })),
+      /HTTP 429/,
+    )
+    assert.strictEqual(typeof errorNote("plain"), "string")
   }))
 
 it.effect("upserts are idempotent on the natural key", () =>
