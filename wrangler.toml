@@ -1,10 +1,30 @@
 name = "monitor-pangan"
 compatibility_date = "2026-09-17"
 
+# Scheduled PIHPS ingest worker (`src/worker/ingest.ts`). The same Worker
+# serves the SPA via the ASSETS binding; `scheduled` runs the daily ingest.
+main = "src/worker/ingest.ts"
+
 [[routes]]
 pattern = "monitor.naufaldi.com"
 custom_domain = true
 
 [assets]
 directory = "./dist/client"
+binding = "ASSETS"
 not_found_handling = "single-page-application"
+
+# Daily PIHPS ingest. PIHPS publishes ~13:00 WIB (06:00 UTC), so the first
+# cron fires at 13:30 WIB daily and the second retries on weekday evenings
+# (18:00 WIB). Every run backfills the last 7 calendar days, so the retry
+# mostly matters for same-day late publishes. All times UTC; WIB = UTC+7.
+[triggers]
+crons = ["30 6 * * *", "0 11 * * 1-5"]
+
+# D1 price store (`db/schema.sql`). Create once, then replace database_id:
+#   wrangler d1 create monitor-pangan
+#   wrangler d1 execute monitor-pangan --remote --file=./db/schema.sql
+[[d1_databases]]
+binding = "DB"
+database_name = "monitor-pangan"
+database_id = "00000000-0000-0000-0000-000000000000"

@@ -63,6 +63,21 @@ Daily per-province price endpoints (`front/harga-pangan-table`,
 `401 Unauthorized` — the embedded `x-api-key` in the public bundle is rotated
 server-side. The scraper records the 401 and continues; no credential bypass.
 
+## Daily scheduler (Cloudflare Cron Triggers + D1)
+
+`src/worker/ingest.ts` runs on `[triggers] crons` in `wrangler.toml`
+(`30 6 * * *` daily 13:30 WIB post-publish, `0 11 * * 1-5` weekday-evening
+retry). Each run ingests WIB today plus the previous 7 calendar days
+(weekends dropped), so missed runs, holidays, and late publishes self-heal;
+upserts are idempotent (`ON CONFLICT ... DO UPDATE` on
+`prices_daily`) and every date leaves a `job_runs` row. PIHPS is keyless —
+no secrets needed. Provisioning:
+
+```sh
+wrangler d1 create monitor-pangan # then set database_id in wrangler.toml
+wrangler d1 execute monitor-pangan --remote --file=./db/schema.sql
+```
+
 ## Going live (manual parallel track)
 
 1. Register at https://webapi.badanpangan.go.id/register (needs
