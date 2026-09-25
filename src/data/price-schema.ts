@@ -20,7 +20,7 @@ export const PriceRowSchema = Schema.Struct({
 export const SnapshotSchema = Schema.Struct({
   date: DateString,
   commodity: CommoditySchema,
-  nationalAvg: Schema.Number,
+  nationalAvg: Schema.NullOr(Schema.Number),
   rows: Schema.Array(PriceRowSchema)
 })
 

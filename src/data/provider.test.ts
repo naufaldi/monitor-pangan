@@ -2,29 +2,28 @@ import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
 import { LIVE_PRICES } from "./prices.gen.ts"
 import { SNAPSHOT_META } from "./snapshot.gen.ts"
-import { dataBadge, liveSurveyDates, provider } from "./provider.ts"
+import { dataBadge, liveSurveyDates, priceAnchors, provider, registerYearSeries } from "./provider.ts"
 
 const LIVE_DATE = "2026-09-16"
-const SAMPLE_DATE = "2026-09-17"
-const MISSING_LIVE_PROVINCES = ["21", "61", "65", "93", "94", "95", "96"]
+const SAMPLE_DATE = "2017-01-02"
 
 it.effect("live PIHPS snapshot does not invent prices for missing provinces", () =>
   Effect.gen(function*() {
     const snapshot = provider.snapshot(LIVE_DATE, "beras")
     assert.strictEqual(dataBadge(LIVE_DATE), `Data ${LIVE_DATE} · PIHPS eceran`)
-    for (const code of MISSING_LIVE_PROVINCES) {
-      assert.strictEqual(LIVE_PRICES[`${LIVE_DATE}:beras:${code}`], undefined)
-      const row = snapshot.rows.find((r) => r.regionCode === code)
-      assert.notEqual(row, undefined)
-      assert.strictEqual(row?.price, null)
-    }
+    let missing = 0
     for (const row of snapshot.rows) {
       const live = LIVE_PRICES[`${LIVE_DATE}:beras:${row.regionCode}`]
       if (live === undefined) {
         assert.strictEqual(row.price, null)
+        missing += 1
       } else {
         assert.strictEqual(row.price, live)
       }
+    }
+    assert.ok(missing > 0)
+    for (const code of ["93", "94", "95", "96"]) {
+      assert.strictEqual(snapshot.rows.find((row) => row.regionCode === code)?.price, null)
     }
   }))
 
@@ -36,13 +35,13 @@ it.effect("live nationalAvg averages only real PIHPS cells", () =>
       .filter((price): price is number => price != null)
     assert.ok(livePrices.length > 0)
     assert.ok(livePrices.length < snapshot.rows.length)
-    const expected =
-      Math.round(livePrices.reduce((sum, price) => sum + price, 0) / livePrices.length / 50) * 50
+    const expected = Math.round(
+      livePrices.reduce((sum, price) => sum + price, 0) / livePrices.length,
+    )
     assert.strictEqual(snapshot.nationalAvg, expected)
-    const polluted =
-      Math.round(
-        snapshot.rows.reduce((sum, r) => sum + (r.price ?? 0), 0) / snapshot.rows.length / 50,
-      ) * 50
+    const polluted = Math.round(
+      snapshot.rows.reduce((sum, r) => sum + (r.price ?? 0), 0) / snapshot.rows.length,
+    )
     assert.notEqual(snapshot.nationalAvg, polluted)
   }))
 
@@ -52,12 +51,35 @@ it.effect("live survey dates exclude sample fallback days", () =>
     assert.ok(liveSurveyDates().includes(LIVE_DATE))
   }))
 
-it.effect("sample dates may fill mock prices only when the badge is Data contoh", () =>
+it.effect("dates outside the live survey stay empty instead of invented prices", () =>
   Effect.gen(function*() {
     assert.ok(!SNAPSHOT_META.liveDates.includes(SAMPLE_DATE))
     assert.strictEqual(dataBadge(SAMPLE_DATE), "Data contoh")
     const snapshot = provider.snapshot(SAMPLE_DATE, "beras")
-    assert.ok(snapshot.rows.every((r) => r.price != null && r.price > 0))
+    assert.strictEqual(snapshot.nationalAvg, null)
+    assert.ok(snapshot.rows.every((r) => r.price == null))
+  }))
+
+it.effect("perubahan harian uses the previous live day and perubahan tahunan a registered series", () =>
+  Effect.sync(() => {
+    registerYearSeries({
+      year: "2025",
+      dates: ["2025-09-16"],
+      values: {
+        beras: {
+          "31": [15000],
+        },
+      },
+    })
+    const national = priceAnchors(LIVE_DATE, "beras", null)
+    assert.strictEqual(national.harian?.anchorDate, "2026-09-15")
+    assert.ok(national.harian != null && national.harian.overlap <= national.harian.surveyed)
+    const dkiToday = LIVE_PRICES[`${LIVE_DATE}:beras:31`]
+    const dki = priceAnchors(LIVE_DATE, "beras", "31")
+    assert.strictEqual(dki.tahunan?.anchorDate, "2025-09-16")
+    assert.ok(dkiToday != null)
+    assert.strictEqual(dki.tahunan?.pct, ((dkiToday! - 15000) / 15000) * 100)
+    assert.strictEqual(priceAnchors(LIVE_DATE, "beras", "93").harian, null)
   }))
 
 it.effect("day trend skips null selected-province prices instead of padding zeros", () =>

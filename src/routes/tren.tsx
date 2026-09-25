@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
+import { AnchorChanges } from "#/components/AnchorChanges.tsx"
 import { ChartHighlights } from "#/components/ChartHighlights.tsx"
 import { ChartSummaryStrip } from "#/components/ChartSummaryStrip.tsx"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
@@ -8,7 +9,8 @@ import { ChevronBadge } from "#/components/ChevronBadge.tsx"
 import { MoversList, type MoverItem } from "#/components/MoversList.tsx"
 import { TrendChart } from "#/components/TrendChart.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { liveSurveyDates, pageSourceNote, provider } from "#/data/provider.ts"
+import { liveSurveyDates, pageSourceNote, priceAnchors, provider } from "#/data/provider.ts"
+import { loadYearSeries } from "#/data/year-series.ts"
 import {
   chartHighlights,
   chartStrip,
@@ -19,7 +21,7 @@ import {
 import { DEFAULT_TIMEFRAME, TIMEFRAMES, type TimeframeId, timeframeById, windowRange } from "#/lib/chart-window.ts"
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { formatDateShort, formatPct, formatPrice } from "#/lib/format.ts"
-import { Button, Select } from "@monitor-pangan/ui"
+import { Button, Select, cardClass } from "@monitor-pangan/ui"
 
 export const Route = createFileRoute("/tren")({
   ssr: false,
@@ -36,8 +38,28 @@ function TrenPage() {
   const commodityId = search.komoditas ?? COMMODITIES[0]?.id ?? ""
   const [regionCode, setRegionCode] = useState<string | null>(null)
   const [timeframe, setTimeframe] = useState<TimeframeId>(DEFAULT_TIMEFRAME)
+  const [seriesTick, setSeriesTick] = useState(0)
+  const anchorDate = dates[dates.length - 1] ?? ""
   const chip = timeframeById(timeframe) ?? timeframeById(DEFAULT_TIMEFRAME) ?? TIMEFRAMES[3]!
   const { from, to } = windowRange(dates, chip.days)
+
+  useEffect(() => {
+    const years = new Set<string>()
+    for (const iso of [anchorDate, from]) {
+      const year = Number(iso.slice(0, 4))
+      if (!Number.isFinite(year)) continue
+      if (year >= 2017) years.add(String(year))
+      if (year - 1 >= 2017) years.add(String(year - 1))
+    }
+    if (years.size === 0) return
+    let cancel = false
+    void Promise.all([...years].map((year) => loadYearSeries(year))).then(() => {
+      if (!cancel) setSeriesTick((tick) => tick + 1)
+    })
+    return () => {
+      cancel = true
+    }
+  }, [anchorDate, from])
   const dataSpan =
     dates.length > 0 ? `${formatDateShort(dates[0]!)} – ${formatDateShort(dates[dates.length - 1]!)}` : ""
 
@@ -52,7 +74,11 @@ function TrenPage() {
         to,
         resolution: chip.resolution,
       }),
-    [commodityId, regionCode, from, to, chip.resolution],
+    [commodityId, regionCode, from, to, chip.resolution, seriesTick],
+  )
+  const anchors = useMemo(
+    () => priceAnchors(anchorDate, commodityId, regionCode),
+    [anchorDate, commodityId, regionCode, seriesTick],
   )
 
   const province = provinces.find((p) => p.code === regionCode) ?? null
@@ -153,6 +179,9 @@ function TrenPage() {
       </div>
 
       <ChartSummaryStrip strip={strip} unit={series.unit} limitedCopy={limitedCopy} />
+      <section className={cardClass("md")} aria-label="Perubahan harga">
+        <AnchorChanges harian={anchors.harian} tahunan={anchors.tahunan} />
+      </section>
       <TrendChart series={series} />
       <ChartHighlights highlights={highlights} unit={series.unit} />
 
@@ -191,7 +220,7 @@ function TrenPage() {
       <MoversList items={movers} activeId={commodityId} onSelect={setCommodityId} rangeLabel={moverRange} />
 
       <footer className="pb-6 text-xs text-slate">
-        Tren dihitung dari rata-rata nasional per tanggal survei. {pageSourceNote()}
+        Tren dihitung dari rata-rata nasional per tanggal survei. {pageSourceNote(anchorDate)}
       </footer>
     </main>
   )

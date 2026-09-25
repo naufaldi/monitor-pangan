@@ -22,17 +22,18 @@ sites make — rate-limited one-shot, cached to `data/raw/`:
   they usually serve data) plus the 4 post-2022 Papua provinces (93–96:
   Papua Selatan/Tengah/Pegunungan/Barat Daya) PIHPS never surveys — no BI
   `province_id` exists for them. Live snapshots leave those cells empty
-  (no mock fill); `nationalAvg` averages only real PIHPS prices.
+  (no mock fill); `nationalAvg` is the nearest-rupiah mean of real PIHPS prices.
 - History depth (verified 2026-09-17): earliest served date is 2017-03-27.
   2014 through mid-March 2017 return `{"data":[]}`. Format is stable across
   years: same ten `level == 1` categories, same `d/m/yyyy` column header.
-- Full backfill (completed 2026-09-17): 2,474/2,474 trading days from
-  2017-03-27 through 2026-09-17 scraped — ~791.7k live provincial cells in
-  `data/raw/pihps-*.json` (git-ignored; coverage travels via the derived
-  snapshots plus `src/data/*.gen.ts`). 24 dates are source-empty, all
-  accounted for: national holidays (Nyepi, Idul Fitri/Adha blocks, Natal,
-  Tahun Baru, Pancasila, Pilkada, cuti bersama) plus 2026-09-17, not yet
-  published at scrape time (~13:00 WIB release). Mar–Jul 2017 is a partial
+- Full backfill (refreshed 2026-09-23): hari perdagangan from 2017-03-27
+  through 2026-09-23. `node scripts/scrape-pihps.mjs <YYYY>` fetches each
+  province for the whole year in one request and is resumable via
+  `data/raw/year-scopes/<YYYY>/`. Empty source days are left out of the
+  series. Daily files stay git-ignored; the chart reads `public/series/<YYYY>.json`,
+  and the recent map window plus week/month means stay in `src/data/*.gen.ts`.
+  Days PIHPS returns with no prices (holidays and unpublished days) are
+  omitted. Mar–Jul 2017 is a partial
   rollout ramp (national + few provinces); from ~Jul 2017 onward a normal
   date is 350/350 (national + all 34 surveyed provinces), with sporadic
   single-province source gaps (~8% of dates per province, spread evenly).

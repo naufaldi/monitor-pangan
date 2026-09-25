@@ -1,4 +1,5 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { SERIES_REGIONS, meanRupiah, yearSeriesDocument } from "./daily-series.mjs";
 
 const GRUP_MAP = {
   beras: ["27", "28", "109", "165", "166"],
@@ -18,13 +19,16 @@ const RECENT_DAYS = 30;
 
 const files = await readdir("data/raw");
 const rawFile = files.filter((f) => f.startsWith("panelharga-")).sort().at(-1);
-if (rawFile == null) throw new Error("no data/raw/panelharga-*.json found");
-const raw = JSON.parse(await readFile(`data/raw/${rawFile}`, "utf8"));
-
-const provinces = raw.catalog.provinces?.data ?? [];
-const eceran = raw.catalog.cms_eceran?.data ?? [];
-const byId = new Map(eceran.map((c) => [String(c.id), c]));
-const regionCodes = provinces.map((p) => String(p.national_id).trim());
+let byId = new Map();
+let regionCodes = SERIES_REGIONS;
+if (rawFile != null) {
+  const raw = JSON.parse(await readFile(`data/raw/${rawFile}`, "utf8"));
+  const provinces = raw.catalog.provinces?.data ?? [];
+  const eceran = raw.catalog.cms_eceran?.data ?? [];
+  byId = new Map(eceran.map((c) => [String(c.id), c]));
+  const fromCatalog = provinces.map((p) => String(p.national_id).trim()).filter(Boolean);
+  if (fromCatalog.length > 0) regionCodes = fromCatalog;
+}
 
 const pihpsFiles = files.filter((f) => f.startsWith("pihps-")).sort();
 const allDates = [];
@@ -68,12 +72,12 @@ const flushWeek = () => {
   weeks.push(weekKey);
   for (const key of weekly.keys()) {
     const a = weekAcc.get(key);
-    cell(weekly, key).push(a != null && a.n > 0 ? Math.round((a.sum / a.n) / 50) * 50 : null);
+    cell(weekly, key).push(a != null && a.n > 0 ? Math.round(a.sum / a.n) : null);
   }
   for (const [key, a] of weekAcc) {
     if (!weekly.has(key)) {
       weekly.set(key, new Array(weeks.length - 1).fill(null));
-      weekly.get(key).push(a.n > 0 ? Math.round((a.sum / a.n) / 50) * 50 : null);
+      weekly.get(key).push(a.n > 0 ? Math.round(a.sum / a.n) : null);
     }
   }
   weekAcc = new Map();
@@ -83,12 +87,12 @@ const flushMonth = () => {
   months.push(monthKey);
   for (const key of monthly.keys()) {
     const a = monthAcc.get(key);
-    cell(monthly, key).push(a != null && a.n > 0 ? Math.round((a.sum / a.n) / 50) * 50 : null);
+    cell(monthly, key).push(a != null && a.n > 0 ? Math.round(a.sum / a.n) : null);
   }
   for (const [key, a] of monthAcc) {
     if (!monthly.has(key)) {
       monthly.set(key, new Array(months.length - 1).fill(null));
-      monthly.get(key).push(a.n > 0 ? Math.round((a.sum / a.n) / 50) * 50 : null);
+      monthly.get(key).push(a.n > 0 ? Math.round(a.sum / a.n) : null);
     }
   }
   monthAcc = new Map();
@@ -128,6 +132,10 @@ const writeYear = async () => {
     rows: yearRows,
   };
   await writeFile(`data/snapshots/${yearOf}.json`, JSON.stringify(snap));
+  const lookup = new Map(yearRows.map((row) => [`${row.date}|${row.commodity_id}|${row.region_code}`, row.price]));
+  const document = yearSeriesDocument(String(yearOf), yearDates, (iso, grup, code) => lookup.get(`${iso}|${grup}|${code}`) ?? null);
+  await mkdir("public/series", { recursive: true });
+  await writeFile(`public/series/${yearOf}.json`, JSON.stringify(document));
   console.log(`wrote data/snapshots/${yearOf}.json dates=${yearDates.length} rows=${yearRows.length} live=${live}`);
 };
 
@@ -137,7 +145,10 @@ for (const date of allDates) {
   const dateRows = [];
   const pihps = JSON.parse(await readFile(`data/raw/pihps-${date}.json`, "utf8"));
   const byRegion = new Map((pihps?.rows ?? []).map((r) => [r.region_code, r.prices]));
-  const national = (pihps?.rows ?? []).find((r) => r.region_code == null)?.prices ?? {};
+  const anyLive = [...byRegion.values()].some((prices) =>
+    Object.values(prices ?? {}).some((value) => value != null),
+  );
+  if (!anyLive) continue;
 
   const y = date.slice(0, 4);
   if (yearOf != null && y !== yearOf) await writeYear();
@@ -157,11 +168,10 @@ for (const date of allDates) {
 
   for (const grup of GRUPS) {
     const members = GRUP_MAP[grup].map((id) => byId.get(id)).filter(Boolean);
-    const nat = national[grup] ?? null;
-    addSample(weekAcc, bucketKey(grup, "nasional"), nat);
-    addSample(monthAcc, bucketKey(grup, "nasional"), nat);
+    const dayPrices = [];
     for (const code of regionCodes) {
       const live = byRegion.get(code)?.[grup] ?? null;
+      if (live != null) dayPrices.push(live);
       addSample(weekAcc, bucketKey(grup, code), live);
       addSample(monthAcc, bucketKey(grup, code), live);
       dateRows.push({
@@ -180,6 +190,9 @@ for (const date of allDates) {
         if (date >= cutoff) recentEntries.push(`  ${JSON.stringify(`${date}:${grup}:${code}`)}: ${live},`);
       }
     }
+    const dailyMean = meanRupiah(dayPrices);
+    addSample(weekAcc, bucketKey(grup, "nasional"), dailyMean);
+    addSample(monthAcc, bucketKey(grup, "nasional"), dailyMean);
   }
   yearRows.push(...dateRows);
   if (dateRows.some((r) => r.price != null)) latestRows = dateRows;
@@ -188,7 +201,8 @@ await writeYear();
 flushWeek();
 flushMonth();
 
-const latestDate = [...liveByDate.keys()].sort().at(-1) ?? allDates.at(-1);
+const liveDates = [...liveByDate.keys()].sort();
+const latestDate = liveDates.at(-1) ?? allDates.at(-1);
 await writeFile(
   "data/snapshots/latest.json",
   JSON.stringify(
@@ -226,7 +240,7 @@ await writeFile(
 );
 await writeFile(
   "src/data/snapshot.gen.ts",
-  `export const SNAPSHOT_META: { level: string; source: string; pricesLive: boolean; fetchedAt: string; dates: string[]; liveDates: string[] } = ${JSON.stringify({ level: "eceran", source: "pihps", pricesLive: liveTotal > 0, fetchedAt: new Date().toISOString(), dates: allDates, liveDates: [...liveByDate.keys()].sort() }, null, 2)};\n`,
+  `export const SNAPSHOT_META: { level: string; source: string; pricesLive: boolean; fetchedAt: string; dates: string[]; liveDates: string[] } = ${JSON.stringify({ level: "eceran", source: "pihps", pricesLive: liveTotal > 0, fetchedAt: new Date().toISOString(), dates: liveDates, liveDates }, null, 2)};\n`,
 );
 console.log(
   `wrote latest=${latestDate} recentEntries=${recentEntries.length} weeks=${weeks.length} months=${months.length} liveTotal=${liveTotal}`,

@@ -10,7 +10,7 @@ import { PRICE_BANDS, provinceFill } from "#/lib/province-fill.ts"
 type MapViewProps = {
   snapshotKey: string
   prices: PriceRow[]
-  average: number
+  average: number | null
   selectedCode: string | null
   onSelect: (code: string) => void
 }
@@ -47,7 +47,10 @@ export function MapView({
             const price = code != null ? byCode.get(code) : undefined
             const selected = code === selectedCode
             const missing = price == null
-            const fill = provinceFill(price, average)
+            const fill =
+              price == null || average == null
+                ? { fillColor: "#1a1c16", fillOpacity: 0.9 }
+                : provinceFill(price, average)
             return {
               fillColor: fill.fillColor,
               fillOpacity: fill.fillOpacity,
@@ -74,7 +77,7 @@ export function MapView({
             })
             const price = byCode.get(code)
             layer.bindTooltip(
-              price == null ? `${name ?? code} · tidak ada data` : (name ?? code),
+              price == null ? `${name ?? code} · tidak disurvei` : (name ?? code),
               { sticky: true },
             )
           }}
@@ -92,7 +95,7 @@ export function MapView({
         ))}
         <li className="flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded-sm bg-ink" />
-          Tidak ada data
+          Tidak disurvei
         </li>
       </ul>
     </div>
