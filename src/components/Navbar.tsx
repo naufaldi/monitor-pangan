@@ -14,6 +14,9 @@ export function Navbar() {
       <Link to="/tren" search={search}>
         {({ isActive }) => <span className={buttonClass("pill", isActive)}>Grafik</span>}
       </Link>
+      <Link to="/daya-beli" search={search}>
+        {({ isActive }) => <span className={buttonClass("pill", isActive)}>Daya Beli</span>}
+      </Link>
     </nav>
   )
 }
