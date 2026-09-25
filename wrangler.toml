@@ -27,4 +27,4 @@ crons = ["30 6 * * *", "0 11 * * 1-5"]
 [[d1_databases]]
 binding = "DB"
 database_name = "monitor-pangan"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "2bfc02d3-5eaf-4c7c-999b-e8e77544be21"
