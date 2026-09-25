@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
-import { flushSync } from "react-dom"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { Badge } from "@monitor-pangan/ui"
 
@@ -47,16 +46,27 @@ function DayaBeliPage() {
   const commodityId = search.komoditas ?? COMMODITIES[0]?.id ?? ""
   const commodity = COMMODITIES.find((item) => item.id === commodityId) ?? COMMODITIES[0]!
   const [switching, setSwitching] = useState(false)
+  const switchTimer = useRef<number | null>(null)
 
   const setCommodityId = (id: string) => {
     if (id === commodity.id) return
-    flushSync(() => setSwitching(true))
-    void navigate({ search: (prev) => ({ ...prev, komoditas: id }) })
+    setSwitching(true)
+    if (switchTimer.current != null) window.clearTimeout(switchTimer.current)
+    switchTimer.current = window.setTimeout(() => {
+      switchTimer.current = null
+      void navigate({ search: (prev) => ({ ...prev, komoditas: id }) })
+    }, 200)
   }
 
   useEffect(() => {
     setSwitching(false)
   }, [commodity.id])
+
+  useEffect(() => {
+    return () => {
+      if (switchTimer.current != null) window.clearTimeout(switchTimer.current)
+    }
+  }, [])
 
   const priceDate = useMemo(() => pinnedPriceDate(commodity.id), [commodity.id])
   const snapshot = useMemo(
