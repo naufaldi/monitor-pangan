@@ -1,7 +1,9 @@
 import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
 import {
+  affordabilityEnds,
   buildAffordabilityRows,
+  filterAffordability,
   kgPerWage,
   sortAffordability,
 } from "./daya-beli.ts"
@@ -71,5 +73,67 @@ it.effect("sorting never moves gap rows and never ranks them", () =>
     }
     const asc = sortAffordability(rows, "amount-asc")
     assert.strictEqual(asc[0]?.regionCode, "32")
+  }),
+)
+
+it.effect("name filter keeps matching gaps unranked after priced rows", () =>
+  Effect.sync(() => {
+    const mixed = buildAffordabilityRows({
+      provinces: [
+        { code: "92", name: "Papua Barat" },
+        { code: "31", name: "Jakarta Raya" },
+        { code: "93", name: "Papua Tengah" },
+        { code: "94", name: "Papua Selatan" },
+      ],
+      wages: new Map([
+        ["92", 3841000],
+        ["31", 5729876],
+        ["93", 4508100],
+        ["94", 4285848],
+      ]),
+      prices: new Map([
+        ["92", 20000],
+        ["31", 13500],
+      ]),
+      unit: "kg",
+    })
+    const filtered = filterAffordability(sortAffordability(mixed, "name"), "papua")
+    assert.deepStrictEqual(
+      filtered.map((row) => row.regionCode),
+      ["92", "93", "94"],
+    )
+    assert.strictEqual(filtered[0]?.rank, 2)
+    assert.strictEqual(filtered[1]?.rank, null)
+    assert.strictEqual(filtered[2]?.rank, null)
+    assert.strictEqual(filterAffordability(mixed, "   ").length, mixed.length)
+    assert.strictEqual(filterAffordability(mixed, "tidak-ada").length, 0)
+  }),
+)
+
+it.effect("picks highest and lowest priced rows and ignores gaps", () =>
+  Effect.sync(() => {
+    const rows = buildAffordabilityRows({
+      provinces,
+      wages,
+      prices: new Map([
+        ["31", 13500],
+        ["32", 12000],
+      ]),
+      unit: "kg",
+    })
+    const ends = affordabilityEnds(rows)
+    assert.strictEqual(ends.highest?.regionCode, "31")
+    assert.strictEqual(ends.highest?.amount, 424)
+    assert.strictEqual(ends.lowest?.regionCode, "32")
+    const empty = affordabilityEnds(
+      buildAffordabilityRows({
+        provinces,
+        wages,
+        prices: new Map(),
+        unit: "kg",
+      }),
+    )
+    assert.strictEqual(empty.highest, null)
+    assert.strictEqual(empty.lowest, null)
   }),
 )

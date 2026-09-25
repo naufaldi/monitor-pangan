@@ -79,3 +79,28 @@ export function sortAffordability(
   }
   return [...priced, ...gaps]
 }
+
+/** Highest and lowest priced rows. Gap rows are ignored. */
+export function affordabilityEnds(rows: readonly AffordabilityRow[]): {
+  highest: AffordabilityRow | null
+  lowest: AffordabilityRow | null
+} {
+  let highest: AffordabilityRow | null = null
+  let lowest: AffordabilityRow | null = null
+  for (const row of rows) {
+    if (row.amount == null) continue
+    if (highest == null || row.amount > (highest.amount ?? 0)) highest = row
+    if (lowest == null || row.amount < (lowest.amount ?? 0)) lowest = row
+  }
+  return { highest, lowest }
+}
+
+/** Subset by province name. Order and ranks stay as given, including trailing gaps. */
+export function filterAffordability(
+  rows: readonly AffordabilityRow[],
+  query: string,
+): AffordabilityRow[] {
+  const q = query.trim().toLowerCase()
+  if (q === "") return [...rows]
+  return rows.filter((row) => row.name.toLowerCase().includes(q))
+}
