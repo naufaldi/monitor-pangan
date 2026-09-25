@@ -2,6 +2,7 @@ import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
 import {
   affordabilityEnds,
+  affordabilityTier,
   buildAffordabilityRows,
   filterAffordability,
   kgPerWage,
@@ -107,6 +108,20 @@ it.effect("name filter keeps matching gaps unranked after priced rows", () =>
     assert.strictEqual(filtered[2]?.rank, null)
     assert.strictEqual(filterAffordability(mixed, "   ").length, mixed.length)
     assert.strictEqual(filterAffordability(mixed, "tidak-ada").length, 0)
+  }),
+)
+
+it.effect("splits priced ranks into five tiers and leaves gaps unranked", () =>
+  Effect.sync(() => {
+    assert.strictEqual(affordabilityTier(null, 5), "gap")
+    assert.strictEqual(affordabilityTier(1, 0), "gap")
+    assert.strictEqual(affordabilityTier(1, 5), "best")
+    assert.strictEqual(affordabilityTier(2, 5), "high")
+    assert.strictEqual(affordabilityTier(3, 5), "mid")
+    assert.strictEqual(affordabilityTier(4, 5), "low")
+    assert.strictEqual(affordabilityTier(5, 5), "worst")
+    assert.strictEqual(affordabilityTier(1, 1), "best")
+    assert.strictEqual(affordabilityTier(6, 5), "gap")
   }),
 )
 

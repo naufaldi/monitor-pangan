@@ -1,8 +1,11 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import { Badge, Button, Input, cardClass, cn } from "@monitor-pangan/ui"
 
+import { sortActiveClass, tierChipClass, tierLabel, tierSwatchClass, tierWashClass } from "#/components/daya-beli-tier.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 import {
+  AFFORDABILITY_TIERS,
+  affordabilityTier,
   filterAffordability,
   sortAffordability,
   type AffordabilityRow,
@@ -94,7 +97,7 @@ export function DayaBeliTable({
               active={sort === "amount-desc"}
               aria-pressed={sort === "amount-desc"}
               onClick={() => setSort("amount-desc")}
-              className="w-full lg:w-auto"
+              className={cn("w-full lg:w-auto", sort === "amount-desc" && sortActiveClass("amount-desc"))}
             >
               Daya beli tertinggi
             </Button>
@@ -103,12 +106,24 @@ export function DayaBeliTable({
               active={sort === "amount-asc"}
               aria-pressed={sort === "amount-asc"}
               onClick={() => setSort("amount-asc")}
-              className="w-full lg:w-auto"
+              className={cn("w-full lg:w-auto", sort === "amount-asc" && sortActiveClass("amount-asc"))}
             >
               Daya beli terendah
             </Button>
           </div>
         </div>
+        <ul aria-label="Skala daya beli" className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate">
+          {AFFORDABILITY_TIERS.map((tier) => (
+            <li key={tier} className="flex items-center gap-1.5">
+              <span className={cn("inline-block h-2.5 w-2.5 rounded-sm", tierSwatchClass(tier))} aria-hidden="true" />
+              {tierLabel(tier)}
+            </li>
+          ))}
+          <li className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm border border-hairline bg-muted" aria-hidden="true" />
+            {tierLabel("gap")}
+          </li>
+        </ul>
       </div>
 
       {visible.length === 0 ? (
@@ -125,7 +140,7 @@ export function DayaBeliTable({
           <div className="relative">
             <div
               ref={scroll.ref}
-              className="max-h-[480px] overflow-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink"
+              className="max-h-[480px] overflow-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-leaf-deep"
               tabIndex={0}
               aria-label="Tabel daya beli per provinsi. Geser ke samping untuk kolom upah dan harga."
             >
@@ -152,7 +167,8 @@ export function DayaBeliTable({
                 <tbody>
                   {visible.map((row, index) => {
                     const missing = row.amount == null
-                    const surface = missing ? "bg-muted" : "bg-paper"
+                    const tier = affordabilityTier(row.rank, ranked)
+                    const surface = tierWashClass(tier)
                     return (
                       <Fragment key={row.regionCode}>
                         {index === firstGap ? (
@@ -172,19 +188,22 @@ export function DayaBeliTable({
                               surface,
                             )}
                           >
+                            {tier !== "gap" ? (
+                              <span
+                                aria-hidden="true"
+                                className={cn("absolute inset-y-0 left-0 w-1", tierSwatchClass(tier))}
+                              />
+                            ) : null}
                             <div className="flex items-center gap-2">
-                              <span className={cn("font-medium", missing && "text-slate")}>{row.name}</span>
+                              <span className={cn("font-medium text-ink", missing && "text-slate")}>{row.name}</span>
                               {row.rank != null ? (
-                                <Badge
-                                  tone="neutral"
-                                  className={row.rank === 1 ? "bg-ink text-white" : undefined}
-                                >
-                                  #{row.rank}
+                                <Badge tone="neutral" className={tierChipClass(tier)} title={tierLabel(tier)}>
+                                  <span className="sr-only">{tierLabel(tier)} </span>#{row.rank}
                                 </Badge>
                               ) : null}
                             </div>
                           </td>
-                          <td className={cn("border-b border-hairline px-4 py-3 text-right whitespace-nowrap", surface)}>
+                          <td className={cn("border-b border-hairline px-4 py-3 text-right whitespace-nowrap text-ink", surface)}>
                             {missing || row.amount == null ? (
                               <span className="font-normal text-slate">data tidak tersedia</span>
                             ) : (

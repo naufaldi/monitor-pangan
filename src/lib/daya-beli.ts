@@ -14,6 +14,19 @@ export type AffordabilityRow = {
 
 export type AffordabilitySort = "amount-desc" | "amount-asc" | "name"
 
+/** Same hue order as the map price bands: strongest purchasing power first. */
+export const AFFORDABILITY_TIERS = ["best", "high", "mid", "low", "worst"] as const
+
+export type AffordabilityTier = (typeof AFFORDABILITY_TIERS)[number] | "gap"
+
+/** Quintile of a priced rank. Missing ranks stay unranked. */
+export function affordabilityTier(rank: number | null, rankedCount: number): AffordabilityTier {
+  if (rank == null || rankedCount <= 0 || rank < 1 || rank > rankedCount) return "gap"
+  const index = Math.floor(((rank - 1) / rankedCount) * AFFORDABILITY_TIERS.length)
+  const clamped = Math.min(AFFORDABILITY_TIERS.length - 1, Math.max(0, index))
+  return AFFORDABILITY_TIERS[clamped] ?? "gap"
+}
+
 /** Null-safe floor division of a monthly wage by a unit price. */
 export function kgPerWage(
   wageRpPerBulan: number | null,
