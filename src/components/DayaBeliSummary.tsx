@@ -65,7 +65,8 @@ export function DayaBeliSummary({
         </div>
       ) : (
         <>
-          <div className="border-l-4 border-l-leaf-deep bg-leaf-soft px-5 py-5">
+          <div className="relative px-5 py-5">
+            <span aria-hidden="true" className="absolute inset-y-0 left-0 w-0.5 bg-leaf-deep" />
             <p className="text-sm text-slate">
               Daya beli tertinggi · pekerja formal · {formatDateShort(priceDate)}
             </p>
@@ -90,7 +91,8 @@ export function DayaBeliSummary({
           </div>
           <dl className="grid grid-cols-2 gap-3 px-5 py-4 sm:grid-cols-3">
             {showLow ? (
-              <div className="rounded-lg border-l-4 border-l-ember bg-ember-soft px-3 py-2">
+              <div className="relative pl-3">
+                <span aria-hidden="true" className="absolute inset-y-0 left-0 w-0.5 bg-ember" />
                 <dt className="text-xs font-semibold text-slate">Terendah</dt>
                 <dd className="tabular-nums text-sm font-bold text-ink">
                   {lowest.amount} {unit}

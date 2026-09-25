@@ -22,29 +22,7 @@ export function tierChipClass(tier: AffordabilityTier): string {
   }
 }
 
-/** Opaque row wash. Text stays ink or slate on top of these tints. */
-export function tierWashClass(tier: AffordabilityTier): string {
-  switch (tier) {
-    case "best":
-      return "bg-leaf-soft"
-    case "high":
-      return "bg-leaf-soft"
-    case "mid":
-      return "bg-gold-soft"
-    case "low":
-      return "bg-heat-soft"
-    case "worst":
-      return "bg-ember-soft"
-    case "gap":
-      return "bg-muted"
-    default: {
-      const _exhaustive: never = tier
-      return _exhaustive
-    }
-  }
-}
-
-/** Solid swatch for the scale legend and the row edge. */
+/** Solid swatch for the scale legend and the thin row edge. */
 export function tierSwatchClass(tier: AffordabilityTier): string {
   switch (tier) {
     case "best":

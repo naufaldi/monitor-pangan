@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import { Badge, Button, Input, cardClass, cn } from "@monitor-pangan/ui"
 
-import { sortActiveClass, tierChipClass, tierLabel, tierSwatchClass, tierWashClass } from "#/components/daya-beli-tier.ts"
+import { sortActiveClass, tierChipClass, tierLabel, tierSwatchClass } from "#/components/daya-beli-tier.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 import {
   AFFORDABILITY_TIERS,
@@ -168,7 +168,7 @@ export function DayaBeliTable({
                   {visible.map((row, index) => {
                     const missing = row.amount == null
                     const tier = affordabilityTier(row.rank, ranked)
-                    const surface = tierWashClass(tier)
+                    const surface = tier === "gap" ? "bg-muted" : "bg-paper"
                     return (
                       <Fragment key={row.regionCode}>
                         {index === firstGap ? (
@@ -184,14 +184,14 @@ export function DayaBeliTable({
                         <tr>
                           <td
                             className={cn(
-                              "sticky left-0 z-10 border-r border-b border-hairline px-4 py-3 whitespace-nowrap",
+                              "relative sticky left-0 z-10 border-r border-b border-hairline px-4 py-3 whitespace-nowrap",
                               surface,
                             )}
                           >
                             {tier !== "gap" ? (
                               <span
                                 aria-hidden="true"
-                                className={cn("absolute inset-y-0 left-0 w-1", tierSwatchClass(tier))}
+                                className={cn("absolute inset-y-0 left-0 w-0.5", tierSwatchClass(tier))}
                               />
                             ) : null}
                             <div className="flex items-center gap-2">
