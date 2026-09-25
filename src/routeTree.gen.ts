@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DayaBeliRouteImport } from './routes/daya-beli'
 import { Route as TrenRouteImport } from './routes/tren'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DayaBeliRoute = DayaBeliRouteImport.update({
+  id: '/daya-beli',
+  path: '/daya-beli',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrenRoute = TrenRouteImport.update({
@@ -25,27 +31,31 @@ const TrenRoute = TrenRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/daya-beli': typeof DayaBeliRoute
   '/tren': typeof TrenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/daya-beli': typeof DayaBeliRoute
   '/tren': typeof TrenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/daya-beli': typeof DayaBeliRoute
   '/tren': typeof TrenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/tren'
+  fullPaths: '/' | '/daya-beli' | '/tren'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tren'
-  id: '__root__' | '/' | '/tren'
+  to: '/' | '/daya-beli' | '/tren'
+  id: '__root__' | '/' | '/daya-beli' | '/tren'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DayaBeliRoute: typeof DayaBeliRoute
   TrenRoute: typeof TrenRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daya-beli': {
+      id: '/daya-beli'
+      path: '/daya-beli'
+      fullPath: '/daya-beli'
+      preLoaderRoute: typeof DayaBeliRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tren': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DayaBeliRoute: DayaBeliRoute,
   TrenRoute: TrenRoute,
 }
 export const routeTree = rootRouteImport

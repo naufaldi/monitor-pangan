@@ -31,7 +31,12 @@
   --color-hairline: #e4e6df;
   --color-ember: #dc2626;
   --color-ember-soft: #fef2f2;
+  --color-heat: #f97316;
+  --color-heat-soft: #fff1e6;
+  --color-gold: #eab308;
+  --color-gold-soft: #fdf8e6;
   --color-leaf: #00bd7d;
+  --color-leaf-soft: #e7f6ef;
   --color-leaf-deep: #00714c;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
