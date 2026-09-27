@@ -2,6 +2,7 @@ import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-r
 import { Badge } from "@monitor-pangan/ui"
 import { Navbar } from "../components/Navbar.tsx"
 import { dataBadge, latestLiveDate } from "../data/provider.ts"
+import { seoLinks, seoMeta, seoScripts, THEME_COLOR } from "../seo.ts"
 import appCss from "../styles.css?url"
 
 export const Route = createRootRoute({
@@ -9,13 +10,11 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Monitor Pangan — Harga Pangan Indonesia" },
-      {
-        name: "description",
-        content: "Peta dan tabel harga pangan strategis Indonesia per provinsi.",
-      },
+      { name: "theme-color", content: THEME_COLOR },
+      ...seoMeta("home"),
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [{ rel: "stylesheet", href: appCss }, ...seoLinks("home")],
+    scripts: seoScripts("home"),
   }),
   component: RootComponent,
   shellComponent: RootDocument,
@@ -59,6 +58,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id">
       <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png" />
+        <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/site.webmanifest" />
         <HeadContent />
       </head>
       <body>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Monitor Pangan">
+  <rect width="32" height="32" rx="7" fill="#f4f5f0"/>
+  <ellipse cx="18" cy="13" rx="7" ry="3.6" transform="rotate(-40 18 13)" fill="#00714c"/>
+  <ellipse cx="11" cy="22" rx="4.2" ry="3.2" fill="#6b2d5b"/>
+  <path d="M20.8 6.5c-1.2 3.2-2.2 6.2-1 10.2 1.1 3.8-1.2 6.6-4.2 7.6 4.2.8 8.8-1.2 10.8-5.2 2-4 .6-8.6-1.2-12.2-1.4-.2-3 .0-4.4-.4z" fill="#dc2626"/>
+</svg>

@@ -17,9 +17,15 @@ import { UMP_2026, UMP_LAST_VERIFIED, UMP_YEAR } from "#/data/wages.ts"
 import { affordabilityEnds, buildAffordabilityRows } from "#/lib/daya-beli.ts"
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { formatDateShort } from "#/lib/format.ts"
+import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 
 export const Route = createFileRoute("/daya-beli")({
   ssr: false,
+  head: () => ({
+    meta: seoMeta("daya-beli"),
+    links: seoLinks("daya-beli"),
+    scripts: seoScripts("daya-beli"),
+  }),
   validateSearch: (search: Record<string, unknown>) => parseCommoditySearch(search),
   component: DayaBeliPage,
 })
