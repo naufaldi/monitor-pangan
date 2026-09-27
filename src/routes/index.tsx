@@ -10,9 +10,15 @@ import { COMMODITIES } from "#/data/catalog.ts"
 import { latestLiveDate, pageSourceNote, provider } from "#/data/provider.ts"
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { formatPrice } from "#/lib/format.ts"
+import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 
 export const Route = createFileRoute("/")({
   ssr: false,
+  head: () => ({
+    meta: seoMeta("home"),
+    links: seoLinks("home"),
+    scripts: seoScripts("home"),
+  }),
   validateSearch: (search: Record<string, unknown>) => parseCommoditySearch(search),
   component: HomePage,
 })

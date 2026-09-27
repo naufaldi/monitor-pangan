@@ -19,10 +19,16 @@ import {
 import { DEFAULT_TIMEFRAME, TIMEFRAMES, type TimeframeId, timeframeById, windowRange } from "#/lib/chart-window.ts"
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { formatDateShort, formatPct, formatPrice } from "#/lib/format.ts"
+import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 import { Button, Select } from "@monitor-pangan/ui"
 
 export const Route = createFileRoute("/tren")({
   ssr: false,
+  head: () => ({
+    meta: seoMeta("tren"),
+    links: seoLinks("tren"),
+    scripts: seoScripts("tren"),
+  }),
   validateSearch: (search: Record<string, unknown>) => parseCommoditySearch(search),
   component: TrenPage,
 })
