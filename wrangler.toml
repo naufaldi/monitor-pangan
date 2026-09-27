@@ -8,3 +8,4 @@ custom_domain = true
 [assets]
 directory = "./dist/client"
 not_found_handling = "single-page-application"
+html_handling = "auto-trailing-slash"
