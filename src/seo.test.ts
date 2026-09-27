@@ -94,6 +94,8 @@ it.effect("stamp rewrites head tags and leaves the body title alone", () =>
     const html = `<!doctype html><html lang="id"><head>
 <title>${home.title}</title>
 <meta name="description" content="${home.description}">
+<meta property="og:description" content="${home.description}">
+<meta name="twitter:description" content="${home.description}">
 <meta name="keywords" content="${home.keywords}">
 <link rel="canonical" href="${absoluteUrl("/")}">
 <meta property="og:url" content="${absoluteUrl("/")}">
@@ -105,6 +107,9 @@ it.effect("stamp rewrites head tags and leaves the body title alone", () =>
     assert.ok(head.includes(ROUTE_SEO.tren.title))
     assert.strictEqual(head.includes(home.title), false)
     assert.ok(head.includes(ROUTE_SEO.tren.description))
+    assert.strictEqual(head.includes(home.description), false)
+    assert.ok(head.includes(`property="og:description" content="${ROUTE_SEO.tren.description}"`))
+    assert.ok(head.includes(`name="twitter:description" content="${ROUTE_SEO.tren.description}"`))
     assert.ok(head.includes('rel="canonical" href="https://monitor.naufaldi.com/tren"'))
     assert.ok(head.includes('property="og:url" content="https://monitor.naufaldi.com/tren"'))
     assert.ok(head.includes(`${SITE_ORIGIN}/og.png`))

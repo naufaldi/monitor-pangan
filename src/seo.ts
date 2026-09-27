@@ -143,10 +143,15 @@ export function seoScripts(
   return [{ type: "application/ld+json", children: jsonLd(id) }]
 }
 
-function replaceNamedMeta(head: string, name: string, content: string): string {
-  const pattern = new RegExp(`<meta\\b[^>]*name="${name}"[^>]*>`)
-  if (!pattern.test(head)) throw new Error(`stamp: missing meta name=${name}`)
-  return head.replace(pattern, `<meta name="${name}" content="${content}">`)
+function replaceMeta(
+  head: string,
+  attr: "name" | "property",
+  key: string,
+  content: string,
+): string {
+  const pattern = new RegExp(`<meta\\b[^>]*${attr}="${key}"[^>]*>`)
+  if (!pattern.test(head)) throw new Error(`stamp: missing meta ${attr}=${key}`)
+  return head.replace(pattern, `<meta ${attr}="${key}" content="${content}">`)
 }
 
 /** Replace home tags inside `<head>` with the tren or daya-beli tags. */
@@ -161,8 +166,10 @@ export function stampRouteHtml(html: string, id: "tren" | "daya-beli"): string {
   head = head.replaceAll(homeJson, jsonLd(id))
   if (!head.includes(home.title)) throw new Error("stamp: head missing home title")
   head = head.replaceAll(home.title, route.title)
-  head = replaceNamedMeta(head, "description", route.description)
-  head = replaceNamedMeta(head, "keywords", route.keywords)
+  head = replaceMeta(head, "name", "description", route.description)
+  head = replaceMeta(head, "property", "og:description", route.description)
+  head = replaceMeta(head, "name", "twitter:description", route.description)
+  head = replaceMeta(head, "name", "keywords", route.keywords)
   const canonical = /<link\b[^>]*rel="canonical"[^>]*>/
   if (!canonical.test(head)) throw new Error("stamp: missing canonical")
   head = head.replace(
