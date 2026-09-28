@@ -29,3 +29,11 @@ CREATE TABLE IF NOT EXISTS job_runs (
   rows_upserted INTEGER NOT NULL DEFAULT 0,
   note TEXT
 );
+
+CREATE TABLE IF NOT EXISTS source_days (
+  date TEXT NOT NULL,
+  source_id TEXT NOT NULL,
+  status TEXT NOT NULL,
+  checked_at TEXT NOT NULL,
+  PRIMARY KEY (date, source_id)
+);

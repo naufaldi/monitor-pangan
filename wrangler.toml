@@ -1,4 +1,5 @@
 name = "monitor-pangan"
+main = "src/worker/index.ts"
 compatibility_date = "2026-09-17"
 
 [[routes]]
@@ -7,5 +8,14 @@ custom_domain = true
 
 [assets]
 directory = "./dist/client"
+binding = "ASSETS"
 not_found_handling = "single-page-application"
-html_handling = "auto-trailing-slash"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "monitor-pangan"
+database_id = "2bfc02d3-5eaf-4c7c-999b-e8e77544be21"
+
+[triggers]
+crons = ["15 7 * * 1-5", "15 10 * * 1-5"]

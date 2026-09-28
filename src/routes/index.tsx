@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
@@ -8,6 +8,7 @@ import { PriceTable } from "#/components/PriceTable.tsx"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { latestLiveDate, pageSourceNote, provider } from "#/data/provider.ts"
+import { useVintage } from "#/data/vintage.tsx"
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { formatPrice } from "#/lib/format.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
@@ -24,14 +25,16 @@ export const Route = createFileRoute("/")({
 })
 
 function HomePage() {
-  const dates = useMemo(() => provider.dates(), [])
+  const rev = useVintage()
+  const dates = useMemo(() => provider.dates(), [rev])
   const provinces = useMemo(() => provider.provinces(), [])
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
-  const [date, setDate] = useState(() => {
-    const live = latestLiveDate()
-    return dates.includes(live) ? live : (dates[dates.length - 1] ?? "")
-  })
+  const followLatest = useRef(true)
+  const [date, setDate] = useState(() => latestLiveDate())
+  useEffect(() => {
+    if (followLatest.current) setDate(latestLiveDate())
+  }, [rev])
   const commodityId = search.komoditas ?? COMMODITIES[0]?.id ?? ""
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
 
@@ -82,7 +85,14 @@ function HomePage() {
                 hintFor={(c) => hints.get(c.id)}
               />
             </div>
-            <DatePicker dates={dates} value={date} onChange={setDate} />
+            <DatePicker
+              dates={dates}
+              value={date}
+              onChange={(next) => {
+                followLatest.current = next === latestLiveDate()
+                setDate(next)
+              }}
+            />
           </div>
         </div>
 
@@ -122,7 +132,7 @@ function HomePage() {
         />
 
         <footer className="pb-6 text-xs text-slate">
-          Peta: GeoJSON indonesia-geodata (MIT). {pageSourceNote()} Sumber resmi: Panel Harga
+          Peta: GeoJSON indonesia-geodata (MIT). {pageSourceNote(date)} Sumber resmi: Panel Harga
           Badan Pangan Nasional dan PIHPS Bank Indonesia.
         </footer>
     </main>

@@ -8,7 +8,8 @@ import { ChevronBadge } from "#/components/ChevronBadge.tsx"
 import { MoversList, type MoverItem } from "#/components/MoversList.tsx"
 import { TrendChart } from "#/components/TrendChart.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { liveSurveyDates, pageSourceNote, provider } from "#/data/provider.ts"
+import { latestLiveDate, liveSurveyDates, pageSourceNote, provider } from "#/data/provider.ts"
+import { useVintage } from "#/data/vintage.tsx"
 import {
   chartHighlights,
   chartStrip,
@@ -18,7 +19,7 @@ import {
 } from "#/lib/chart-summary.ts"
 import { DEFAULT_TIMEFRAME, TIMEFRAMES, type TimeframeId, timeframeById, windowRange } from "#/lib/chart-window.ts"
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
-import { formatDateShort, formatPct, formatPrice } from "#/lib/format.ts"
+import { formatDateShort, formatPct, formatPrice, formatSeriesDate } from "#/lib/format.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 import { Button, Select } from "@monitor-pangan/ui"
 
@@ -35,7 +36,8 @@ export const Route = createFileRoute("/tren")({
 
 /** Commodity trend view with region filter and movers. */
 function TrenPage() {
-  const dates = useMemo(() => liveSurveyDates(), [])
+  const rev = useVintage()
+  const dates = useMemo(() => liveSurveyDates(), [rev])
   const provinces = useMemo(() => provider.provinces(), [])
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
@@ -74,7 +76,7 @@ function TrenPage() {
   const moverRange = useMemo(() => {
     const r = provider.trend(COMMODITIES[0]?.id ?? "", null, { resolution: "month" }).range
     return `${formatDateShort(r.from)} – ${formatDateShort(r.to)}`
-  }, [])
+  }, [rev])
 
   const movers = useMemo<MoverItem[]>(
     () =>
@@ -89,7 +91,7 @@ function TrenPage() {
           direction: s.direction,
         }
       }),
-    [],
+    [rev],
   )
   const moverById = useMemo(() => new Map(movers.map((m) => [m.commodityId, m])), [movers])
   const tableRows = useMemo(() => {
@@ -158,9 +160,14 @@ function TrenPage() {
         </div>
       </div>
 
-      <ChartSummaryStrip strip={strip} unit={series.unit} limitedCopy={limitedCopy} />
+      <ChartSummaryStrip
+        strip={strip}
+        unit={series.unit}
+        limitedCopy={limitedCopy}
+        resolution={series.range.resolution}
+      />
       <TrendChart series={series} />
-      <ChartHighlights highlights={highlights} unit={series.unit} />
+      <ChartHighlights highlights={highlights} unit={series.unit} resolution={series.range.resolution} />
 
       {tableRows.length > 0 ? (
         <details className="text-sm">
@@ -178,7 +185,7 @@ function TrenPage() {
             <tbody>
               {tableRows.map((row) => (
                 <tr key={row.date} className="border-t border-hairline">
-                  <td className="py-1 pr-2">{formatDateShort(row.date)}</td>
+                  <td className="py-1 pr-2">{formatSeriesDate(row.date, series.range.resolution)}</td>
                   <td className="tabular-nums py-1 pr-2 text-right font-semibold">
                     {formatPrice(row.national, series.unit)}
                   </td>
@@ -197,7 +204,7 @@ function TrenPage() {
       <MoversList items={movers} activeId={commodityId} onSelect={setCommodityId} rangeLabel={moverRange} />
 
       <footer className="pb-6 text-xs text-slate">
-        Tren dihitung dari rata-rata nasional per tanggal survei. {pageSourceNote()}
+        Tren dihitung dari rata-rata nasional per tanggal survei. {pageSourceNote(latestLiveDate())}
       </footer>
     </main>
   )

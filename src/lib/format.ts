@@ -1,4 +1,4 @@
-import type { TrendDirection } from "#/data/provider.ts"
+import type { TrendDirection, TrendResolution } from "#/data/provider.ts"
 
 const MONTHS = [
   "Jan",
@@ -20,6 +20,46 @@ export function formatDateShort(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number)
   if (y == null || m == null || d == null) return iso
   return `${d} ${MONTHS[m - 1] ?? m} ${y}`
+}
+
+const MONTHS_LONG = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+]
+
+/** Format a YYYY-MM-DD date as "16 September 2026". */
+export function formatDateLong(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number)
+  if (y == null || m == null || d == null) return iso
+  return `${d} ${MONTHS_LONG[m - 1] ?? m} ${y}`
+}
+
+/**
+ * User-visible series date. Month buckets are calendar labels (`Sep 2026`),
+ * not the 1st of the month, which is not a PIHPS survey day.
+ */
+export function formatSeriesDate(iso: string, resolution: TrendResolution): string {
+  switch (resolution) {
+    case "month":
+      return formatMonthYear(iso)
+    case "day":
+    case "week":
+      return formatDateShort(iso)
+    default: {
+      const _exhaustive: never = resolution
+      return _exhaustive
+    }
+  }
 }
 
 /** Format a YYYY-MM-DD date as "Sep 2026" for long-range axes. */

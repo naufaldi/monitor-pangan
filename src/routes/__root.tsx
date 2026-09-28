@@ -1,7 +1,7 @@
 import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router"
 import { Badge } from "@monitor-pangan/ui"
 import { Navbar } from "../components/Navbar.tsx"
-import { dataBadge, latestLiveDate } from "../data/provider.ts"
+import { useDataBadge, VintageProvider } from "../data/vintage.tsx"
 import { seoLinks, seoMeta, seoScripts, THEME_COLOR } from "../seo.ts"
 import appCss from "../styles.css?url"
 
@@ -22,7 +22,15 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const latest = latestLiveDate()
+  return (
+    <VintageProvider>
+      <Shell />
+    </VintageProvider>
+  )
+}
+
+function Shell() {
+  const badge = useDataBadge()
   return (
     <div className="min-h-svh bg-canvas text-ink">
       <header className="border-b border-hairline bg-paper">
@@ -34,7 +42,7 @@ function RootComponent() {
             </p>
           </div>
           <Badge tone="ember" className="ml-auto">
-            {dataBadge(latest)}
+            {badge}
           </Badge>
         </div>
         <div className="mx-auto w-full max-w-6xl px-4 pb-4">
