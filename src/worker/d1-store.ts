@@ -66,10 +66,38 @@ ${REGION_ROWS.map(
 
 const storeError = (cause: unknown) => new StoreError({ message: String(cause) })
 
+/** Split the schema script into single statements. D1 `exec` of the whole script reports incomplete input. */
+export const migrationStatements = (sql: string = MIGRATE_SQL): readonly string[] =>
+  sql
+    .split(";")
+    .map((statement) => statement.trim())
+    .filter((statement) => statement.length > 0)
+
+let migrated: Promise<void> | undefined
+
+const runStatements = (db: D1Database, statements: readonly string[], index: number): Promise<void> => {
+  const statement = statements[index]
+  if (statement === undefined) return Promise.resolve()
+  return db.prepare(statement).run().then(() => runStatements(db, statements, index + 1))
+}
+
+const migrate = (db: D1Database): Promise<void> => {
+  if (migrated !== undefined) return migrated
+  const pending = runStatements(db, migrationStatements(), 0).then(
+    () => undefined,
+    (cause: unknown) => {
+      if (migrated === pending) migrated = undefined
+      throw cause
+    },
+  )
+  migrated = pending
+  return pending
+}
+
 /** D1 binding for the monitor-pangan database. */
 export const d1PriceStoreLayer = (db: D1Database) => {
   const ensure = Effect.tryPromise({
-    try: () => db.exec(MIGRATE_SQL),
+    try: () => migrate(db),
     catch: storeError,
   })
 

@@ -69,6 +69,7 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
   })
   const store = yield* PriceStore
   const payload = yield* store.freshSince(STATIC_LIVE_THROUGH).pipe(
+    Effect.tapError((error) => Effect.logError(error.message)),
     Effect.catchAll(() => Effect.succeed(emptyFreshPayload)),
   )
   const headers = new Headers(asset.headers)
