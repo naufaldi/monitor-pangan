@@ -1,12 +1,13 @@
 import { cardClass } from "@monitor-pangan/ui"
 import type { PriceUnit } from "#/data/catalog.ts"
 import type { ChartHighlights as Highlights, ChartMove } from "#/lib/chart-summary.ts"
-import { formatDateShort, formatPct, formatRupiah } from "#/lib/format.ts"
-import { trendDirection } from "#/lib/format.ts"
+import type { TrendResolution } from "#/data/provider.ts"
+import { formatPct, formatRupiah, formatSeriesDate, trendDirection } from "#/lib/format.ts"
 
 type ChartHighlightsProps = {
   highlights: Highlights
   unit: PriceUnit
+  resolution: TrendResolution
 }
 
 function directionMark(pct: number): string {
@@ -41,7 +42,7 @@ function directionClass(pct: number): string {
   }
 }
 
-function MoveBody({ move, unit }: { move: ChartMove; unit: PriceUnit }) {
+function MoveBody({ move, unit, resolution }: { move: ChartMove; unit: PriceUnit; resolution: TrendResolution }) {
   return (
     <>
       <p className={`tabular-nums mt-1 text-sm font-bold ${directionClass(move.pct)}`}>
@@ -49,14 +50,14 @@ function MoveBody({ move, unit }: { move: ChartMove; unit: PriceUnit }) {
         {formatPct(move.pct)} · {formatRupiah(move.rp, true)}/{unit}
       </p>
       <p className="tabular-nums text-xs text-slate">
-        {formatDateShort(move.from.date)} → {formatDateShort(move.to.date)}
+        {formatSeriesDate(move.from.date, resolution)} → {formatSeriesDate(move.to.date, resolution)}
       </p>
     </>
   )
 }
 
 /** Three highlight cards: biggest up, biggest down, last change. */
-export function ChartHighlights({ highlights, unit }: ChartHighlightsProps) {
+export function ChartHighlights({ highlights, unit, resolution }: ChartHighlightsProps) {
   const cards: Array<{ title: string; move: ChartMove | null; empty: string }> = [
     { title: "Naik terbesar", move: highlights.naikTerbesar, empty: "Tidak ada kenaikan di rentang ini." },
     { title: "Turun terbesar", move: highlights.turunTerbesar, empty: "Tidak ada penurunan di rentang ini." },
@@ -70,7 +71,7 @@ export function ChartHighlights({ highlights, unit }: ChartHighlightsProps) {
           {card.move == null ? (
             <p className="mt-1 text-sm text-slate">{card.empty}</p>
           ) : (
-            <MoveBody move={card.move} unit={unit} />
+            <MoveBody move={card.move} unit={unit} resolution={resolution} />
           )}
         </article>
       ))}

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { cardClass } from "@monitor-pangan/ui"
-import { formatAxisPrice, formatDateShort, formatMonthYear, formatPrice } from "#/lib/format.ts"
+import { formatAxisPrice, formatDateShort, formatMonthYear, formatPrice, formatSeriesDate } from "#/lib/format.ts"
 import { axisInset, decimatedIndices } from "#/lib/chart-marks.ts"
 import { realPoints } from "#/lib/chart-summary.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
@@ -224,7 +224,7 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
   const activeCopy =
     active == null || activeDate == null
       ? summary
-      : `${summary} ${formatDateShort(activeDate)}: Nasional ${activeNational == null ? "tidak ada data" : formatPrice(activeNational, series.unit)}${dual ? `, Provinsi ${activeSelected == null ? "tidak ada data" : formatPrice(activeSelected, series.unit)}` : ""}.`
+      : `${summary} ${formatSeriesDate(activeDate, series.range.resolution)}: Nasional ${activeNational == null ? "tidak ada data" : formatPrice(activeNational, series.unit)}${dual ? `, Provinsi ${activeSelected == null ? "tidak ada data" : formatPrice(activeSelected, series.unit)}` : ""}.`
 
   return (
     <figure role="img" aria-label={activeCopy} className={cardClass("md")}>
@@ -361,7 +361,7 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
             pointIndex === 0 ? "start" : pointIndex === dates.length - 1 ? "end" : "middle"
           return (
             <text key={date} x={x} y={viewHeight - 8} textAnchor={anchor} fontSize={11} style={{ fill: "var(--color-slate)" }}>
-              {compactAxis ? formatMonthYear(date) : formatDateShort(date)}
+              {series.range.resolution === "month" || compactAxis ? formatMonthYear(date) : formatDateShort(date)}
             </text>
           )
         })}
@@ -390,7 +390,7 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
               style={{ fill: "var(--color-paper)" }}
               opacity={0.75}
             >
-              {formatDateShort(activeDate)}
+              {formatSeriesDate(activeDate, series.range.resolution)}
             </text>
             <text
               x={tooltipX + 12}

@@ -1,8 +1,9 @@
 import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
+import { applyFreshPrices, clearFreshPrices, STATIC_LIVE_THROUGH } from "./fresh-prices.ts"
 import { LIVE_PRICES } from "./prices.gen.ts"
 import { SNAPSHOT_META } from "./snapshot.gen.ts"
-import { dataBadge, liveSurveyDates, provider } from "./provider.ts"
+import { dataBadge, latestLiveDate, liveSurveyDates, pageSourceNote, provider } from "./provider.ts"
 
 const LIVE_DATE = "2026-09-16"
 const SAMPLE_DATE = "2026-09-17"
@@ -11,7 +12,9 @@ const MISSING_LIVE_PROVINCES = ["21", "61", "65", "93", "94", "95", "96"]
 it.effect("live PIHPS snapshot does not invent prices for missing provinces", () =>
   Effect.gen(function*() {
     const snapshot = provider.snapshot(LIVE_DATE, "beras")
-    assert.strictEqual(dataBadge(LIVE_DATE), `Data ${LIVE_DATE} · PIHPS eceran`)
+    assert.strictEqual(dataBadge(LIVE_DATE), "Data 16 September 2026 · PIHPS eceran")
+    assert.strictEqual(STATIC_LIVE_THROUGH, LIVE_DATE)
+    assert.strictEqual(SNAPSHOT_META.liveDates.at(-1), STATIC_LIVE_THROUGH)
     for (const code of MISSING_LIVE_PROVINCES) {
       assert.strictEqual(LIVE_PRICES[`${LIVE_DATE}:beras:${code}`], undefined)
       const row = snapshot.rows.find((r) => r.regionCode === code)
@@ -71,3 +74,45 @@ it.effect("day trend skips null selected-province prices instead of padding zero
     assert.strictEqual(series.selected?.length, 0)
     assert.ok(series.national.every((p) => p.price > 0))
   }))
+
+it.effect("a D1 overlay newer than the baked snapshot becomes the price on screen", () =>
+  Effect.gen(function* () {
+    const before = provider
+      .trend("beras", null, { from: "2026-09-01", to: "2026-09-16", resolution: "month" })
+      .national.find((point) => point.date === "2026-09-01")
+    assert.strictEqual(latestLiveDate(), LIVE_DATE)
+    applyFreshPrices({
+      latestDate: "2026-09-28",
+      dates: ["2026-09-28"],
+      prices: { "2026-09-28:beras:31": 16950 },
+    })
+    assert.strictEqual(latestLiveDate(), "2026-09-28")
+    assert.ok(provider.dates().includes("2026-09-28"))
+    assert.ok(!provider.dates().includes(SAMPLE_DATE))
+    const snapshot = provider.snapshot("2026-09-28", "beras")
+    assert.strictEqual(snapshot.rows.find((row) => row.regionCode === "31")?.price, 16950)
+    assert.strictEqual(snapshot.rows.find((row) => row.regionCode === "32")?.price, null)
+    assert.strictEqual(
+      pageSourceNote("2026-09-28", "2026-09-28"),
+      "Harga dari PIHPS: 28 September 2026.",
+    )
+    const day = provider.trend("beras", null, {
+      from: "2026-09-16",
+      to: "2026-09-28",
+      resolution: "day",
+    })
+    assert.deepStrictEqual(
+      day.national.map((point) => point.date),
+      ["2026-09-16", "2026-09-28"],
+    )
+    const month = provider.trend("beras", null, {
+      from: "2026-09-01",
+      to: "2026-09-28",
+      resolution: "month",
+    })
+    const after = month.national.find((point) => point.date === "2026-09-01")
+    assert.ok(before != null && after != null)
+    assert.notStrictEqual(after.price, before.price)
+    clearFreshPrices()
+    assert.strictEqual(latestLiveDate(), LIVE_DATE)
+  }).pipe(Effect.ensuring(Effect.sync(() => clearFreshPrices()))))

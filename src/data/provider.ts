@@ -1,9 +1,11 @@
+import { mondayOf, monthBucket } from "#/lib/civil-date.ts"
+import { formatDateLong, trendDirection } from "#/lib/format.ts"
 import { COMMODITIES, MOCK_DATES, type Commodity, type PriceUnit } from "./catalog.ts"
+import { freshDates, freshPrice } from "./fresh-prices.ts"
 import { loadProvinces } from "./geo.ts"
 import { LIVE_PRICES } from "./prices.gen.ts"
 import { SNAPSHOT_META } from "./snapshot.gen.ts"
 import { TREND_MONTHLY, TREND_MONTHS, TREND_WEEKLY, TREND_WEEKS } from "./trends.gen.ts"
-import { trendDirection } from "#/lib/format.ts"
 
 export type PriceRow = {
   regionCode: string
@@ -85,9 +87,13 @@ function availableDates(): string[] {
   return [...MOCK_DATES]
 }
 
+function isFreshDate(date: string): boolean {
+  return freshDates().includes(date)
+}
+
 /** Live PIHPS survey day. Sample/mock fill is only allowed when this is false. */
 function usesLivePrices(date: string): boolean {
-  return SNAPSHOT_META.pricesLive && SNAPSHOT_META.liveDates.includes(date)
+  return isFreshDate(date) || (SNAPSHOT_META.pricesLive && SNAPSHOT_META.liveDates.includes(date))
 }
 
 /** Newest date with at least one live price. Empty survey days are skipped. */
@@ -98,8 +104,8 @@ export function latestLiveDate(): string {
 
 /** Survey days used for live charts — sample/mock dates are excluded. */
 export function liveSurveyDates(): string[] {
-  if (SNAPSHOT_META.liveDates.length > 0) return [...SNAPSHOT_META.liveDates]
-  return availableDates()
+  const baked = SNAPSHOT_META.liveDates.length > 0 ? SNAPSHOT_META.liveDates : availableDates()
+  return [...new Set([...baked, ...freshDates()])].sort()
 }
 
 function buildSnapshot(date: string, commodityId: string): Snapshot {
@@ -108,7 +114,10 @@ function buildSnapshot(date: string, commodityId: string): Snapshot {
   const dateIndex = Math.max(0, availableDates().indexOf(date))
   const live = usesLivePrices(date)
   const rows = provinces.map((p) => {
-    const fromLive = LIVE_PRICES[`${date}:${commodity.id}:${p.code}`]
+    const key = `${date}:${commodity.id}:${p.code}`
+    const fromFresh = freshPrice(key)
+    if (isFreshDate(date)) return { regionCode: p.code, price: fromFresh ?? null }
+    const fromLive = fromFresh ?? LIVE_PRICES[key]
     return {
       regionCode: p.code,
       price: fromLive ?? (live ? null : mockPrice(commodity, p.code, dateIndex)),
@@ -167,6 +176,75 @@ function seriesTrend(
   };
 }
 
+function meanRounded(values: readonly number[]): number | null {
+  if (values.length === 0) return null
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length / 50) * 50
+}
+
+function upsertPoint(points: TrendPoint[], date: string, price: number): void {
+  const index = points.findIndex((point) => point.date === date)
+  if (index >= 0) points[index] = { date, price }
+  else points.push({ date, price })
+}
+
+/**
+ * Week and month bundles are baked through the static snapshot. Days that
+ * arrived from D1 are folded into the open bucket so the long chart is not
+ * stuck on the old average.
+ */
+function foldFreshPeriods(
+  series: TrendSeries,
+  commodity: Commodity,
+  regionCode: string | null | undefined,
+  resolution: "week" | "month",
+  requested: TrendRange,
+): TrendSeries {
+  if (freshDates().length === 0) return series
+  const keyOf = resolution === "month" ? monthBucket : mondayOf
+  const keys = [...new Set(freshDates().map(keyOf))]
+    .filter((key) => key >= requested.from && key <= requested.to)
+    .sort()
+  if (keys.length === 0) return series
+  const survey = liveSurveyDates().filter((date) => date >= requested.from && date <= requested.to)
+  const wantSelected = regionCode != null && regionCode !== ""
+  const national = series.national.map((point) => ({ ...point }))
+  const selected = series.selected == null ? null : series.selected.map((point) => ({ ...point }))
+  for (const key of keys) {
+    const days = survey.filter((date) => keyOf(date) === key)
+    const nationalValues: number[] = []
+    const selectedValues: number[] = []
+    for (const day of days) {
+      const snap = buildSnapshot(day, commodity.id)
+      if (snap.nationalAvg > 0) nationalValues.push(snap.nationalAvg)
+      if (!wantSelected) continue
+      const price = snap.rows.find((row) => row.regionCode === regionCode)?.price
+      if (price != null) selectedValues.push(price)
+    }
+    const nationalPrice = meanRounded(nationalValues)
+    if (nationalPrice == null) continue
+    upsertPoint(national, key, nationalPrice)
+    if (selected != null) {
+      const selectedPrice = meanRounded(selectedValues)
+      if (selectedPrice != null) upsertPoint(selected, key, selectedPrice)
+    }
+  }
+  national.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+  selected?.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+  const first = national[0]
+  const last = national[national.length - 1]
+  const changePct =
+    first == null || last == null || first.price === 0
+      ? 0
+      : ((last.price - first.price) / first.price) * 100
+  return {
+    ...series,
+    national,
+    selected,
+    changePct,
+    direction: trendDirection(changePct),
+  }
+}
+
 function buildTrend(
   commodityId: string,
   regionCode?: string | null,
@@ -174,7 +252,7 @@ function buildTrend(
 ): TrendSeries {
   const commodity =
     COMMODITIES.find((c) => c.id === commodityId) ?? COMMODITIES[0]!
-  const allDates = availableDates()
+  const allDates = liveSurveyDates()
   const requested: TrendRange = {
     from: range?.from ?? allDates[0],
     to: range?.to ?? allDates[allDates.length - 1],
@@ -182,11 +260,11 @@ function buildTrend(
   }
   if (requested.resolution === "week") {
     const hit = seriesTrend(commodity, regionCode, requested, TREND_WEEKS, TREND_WEEKLY);
-    if (hit != null) return hit;
+    if (hit != null) return foldFreshPeriods(hit, commodity, regionCode, "week", requested);
   }
   if (requested.resolution === "month") {
     const hit = seriesTrend(commodity, regionCode, requested, TREND_MONTHS, TREND_MONTHLY);
-    if (hit != null) return hit;
+    if (hit != null) return foldFreshPeriods(hit, commodity, regionCode, "month", requested);
   }
   const dates = allDates.filter(
     (d) => d >= requested.from && d <= requested.to,
@@ -221,7 +299,7 @@ function buildTrend(
 }
 
 export const provider: PriceDataProvider = {
-  dates: () => availableDates(),
+  dates: () => liveSurveyDates(),
   provinces: () => provinces,
   snapshot: (date, commodityId) => buildSnapshot(date, commodityId),
   trend: (commodityId, regionCode, range) =>
@@ -233,14 +311,19 @@ export const provider: PriceDataProvider = {
  * sample fallback otherwise.
  */
 export function dataBadge(date: string): string {
-  if (usesLivePrices(date)) return `Data ${date} · PIHPS eceran`
+  if (usesLivePrices(date)) return `Data ${formatDateLong(date)} · PIHPS eceran`
   return "Data contoh"
 }
 
-/** Footer/source sentence. Live PIHPS pages must not claim sample data. */
-export function pageSourceNote(): string {
-  if (usesLivePrices(latestLiveDate())) {
-    return "Angka pada halaman ini berasal dari PIHPS eceran Bank Indonesia."
+/**
+ * Footer sentence for the PIHPS day on screen.
+ * The "not today" clause is only true when that civil date is before `today` (Asia/Jakarta).
+ */
+export function pageSourceNote(date: string, today: string): string {
+  if (usesLivePrices(date)) {
+    const sentence = `Harga dari PIHPS: ${formatDateLong(date)}.`
+    if (date < today) return `${sentence} Bukan harga hari ini.`
+    return sentence
   }
   return "Angka di halaman ini data contoh untuk pengembangan UI — bukan data resmi."
 }

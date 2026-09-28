@@ -2,11 +2,13 @@ import { cardClass } from "@monitor-pangan/ui"
 import type { PriceUnit } from "#/data/catalog.ts"
 import type { TrendDirection } from "#/data/provider.ts"
 import type { ChartStrip } from "#/lib/chart-summary.ts"
-import { formatDateShort, formatPct, formatPrice, formatRupiah } from "#/lib/format.ts"
+import type { TrendResolution } from "#/data/provider.ts"
+import { formatPct, formatPrice, formatRupiah, formatSeriesDate } from "#/lib/format.ts"
 
 type ChartSummaryStripProps = {
   strip: ChartStrip
   unit: PriceUnit
+  resolution: TrendResolution
   limitedCopy?: string | null
 }
 
@@ -40,8 +42,8 @@ function directionMark(direction: TrendDirection): string {
   }
 }
 
-/** Four-callout strip above the chart: Sekarang, Δ range, Termurah, Termahal. */
-export function ChartSummaryStrip({ strip, unit, limitedCopy }: ChartSummaryStripProps) {
+/** Four-callout strip above the chart: Terakhir, Δ range, Termurah, Termahal. */
+export function ChartSummaryStrip({ strip, unit, resolution, limitedCopy }: ChartSummaryStripProps) {
   if (strip.kind === "empty") {
     return (
       <section aria-label="Ringkasan grafik" className={cardClass("md")}>
@@ -55,9 +57,9 @@ export function ChartSummaryStrip({ strip, unit, limitedCopy }: ChartSummaryStri
       {limitedCopy != null ? <p className="mb-3 text-sm text-slate">{limitedCopy}</p> : null}
       <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div>
-          <dt className="text-xs font-semibold text-slate">Sekarang</dt>
+          <dt className="text-xs font-semibold text-slate">Terakhir</dt>
           <dd className="tabular-nums text-sm font-bold">{formatPrice(strip.sekarang!.price, unit)}</dd>
-          <dd className="tabular-nums text-xs text-slate">{formatDateShort(strip.sekarang!.date)}</dd>
+          <dd className="tabular-nums text-xs text-slate">{formatSeriesDate(strip.sekarang!.date, resolution)}</dd>
         </div>
         {strip.delta != null ? (
           <div>
@@ -72,14 +74,14 @@ export function ChartSummaryStrip({ strip, unit, limitedCopy }: ChartSummaryStri
           <div>
             <dt className="text-xs font-semibold text-slate">Termurah</dt>
             <dd className="tabular-nums text-sm font-bold">{formatPrice(strip.termurah.price, unit)}</dd>
-            <dd className="tabular-nums text-xs text-slate">{formatDateShort(strip.termurah.date)}</dd>
+            <dd className="tabular-nums text-xs text-slate">{formatSeriesDate(strip.termurah.date, resolution)}</dd>
           </div>
         ) : null}
         {strip.termahal != null ? (
           <div>
             <dt className="text-xs font-semibold text-slate">Termahal</dt>
             <dd className="tabular-nums text-sm font-bold">{formatPrice(strip.termahal.price, unit)}</dd>
-            <dd className="tabular-nums text-xs text-slate">{formatDateShort(strip.termahal.date)}</dd>
+            <dd className="tabular-nums text-xs text-slate">{formatSeriesDate(strip.termahal.date, resolution)}</dd>
           </div>
         ) : null}
       </dl>
