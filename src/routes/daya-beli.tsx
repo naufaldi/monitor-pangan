@@ -10,13 +10,12 @@ import {
   dataBadge,
   latestLiveDate,
   liveSurveyDates,
-  pageSourceNote,
   provider,
 } from "#/data/provider.ts"
 import { UMP_2026, UMP_LAST_VERIFIED, UMP_YEAR } from "#/data/wages.ts"
 import { affordabilityEnds, buildAffordabilityRows } from "#/lib/daya-beli.ts"
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
-import { useVintage } from "#/data/vintage.tsx"
+import { usePageSourceNote, useVintage } from "#/data/vintage.tsx"
 import { formatDateShort } from "#/lib/format.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 
@@ -77,6 +76,8 @@ function DayaBeliPage() {
 
   const rev = useVintage()
   const priceDate = useMemo(() => pinnedPriceDate(commodity.id), [commodity.id, rev])
+  const sampleNote = usePageSourceNote(latestLiveDate())
+  const priceNote = usePageSourceNote(priceDate)
   const snapshot = useMemo(
     () => provider.snapshot(priceDate, commodity.id),
     [priceDate, commodity.id],
@@ -139,7 +140,7 @@ function DayaBeliPage() {
 
       {isSample ? (
         <p className="text-sm text-slate">
-          {pageSourceNote(latestLiveDate())} Tabel daya beli disembunyikan untuk data contoh.
+          {sampleNote} Tabel daya beli disembunyikan untuk data contoh.
         </p>
       ) : (
         <>
@@ -183,7 +184,7 @@ function DayaBeliPage() {
       )}
 
       <footer className="pb-6 text-xs text-slate">
-        Upah: UMP {UMP_YEAR} tiap provinsi (Kepgub). {pageSourceNote(priceDate)}
+        Upah: UMP {UMP_YEAR} tiap provinsi (Kepgub). {priceNote}
       </footer>
     </main>
   )

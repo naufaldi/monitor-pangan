@@ -315,10 +315,15 @@ export function dataBadge(date: string): string {
   return "Data contoh"
 }
 
-/** Footer sentence for the PIHPS day actually on screen. */
-export function pageSourceNote(date: string): string {
+/**
+ * Footer sentence for the PIHPS day on screen.
+ * The "not today" clause is only true when that civil date is before `today` (Asia/Jakarta).
+ */
+export function pageSourceNote(date: string, today: string): string {
   if (usesLivePrices(date)) {
-    return `Harga dari PIHPS: ${formatDateLong(date)}. Bukan harga hari ini.`
+    const sentence = `Harga dari PIHPS: ${formatDateLong(date)}.`
+    if (date < today) return `${sentence} Bukan harga hari ini.`
+    return sentence
   }
   return "Angka di halaman ini data contoh untuk pengembangan UI — bukan data resmi."
 }

@@ -4,6 +4,7 @@ import type { FreshPayload } from "../data/fresh-payload.ts"
 import { STATIC_LIVE_THROUGH } from "../data/fresh-prices.ts"
 import { parsePihpsGrid, type PihpsDecodeError, type PihpsPriceCell } from "../data/pihps-grid.ts"
 import { nextIsoDay, tradingDaysFromThrough } from "../lib/civil-date.ts"
+import { todayInJakarta } from "../lib/jakarta-today.ts"
 
 export class PihpsFetchError extends Data.TaggedError("PihpsFetchError")<{
   readonly message: string
@@ -68,14 +69,6 @@ export const PihpsHttpLive = Layer.succeed(PihpsSource, {
       },
       catch: (cause) => new PihpsFetchError({ message: String(cause) }),
     }),
-})
-
-const JAKARTA = DateTime.zoneUnsafeMakeNamed("Asia/Jakarta")
-
-/** Civil today in Jakarta, where PIHPS publishes. */
-const todayInJakarta = Effect.fn("Pihps.today")(function* () {
-  const now = yield* DateTime.now
-  return DateTime.formatIsoDate(DateTime.setZone(now, JAKARTA))
 })
 
 export type IngestResult = {

@@ -7,8 +7,8 @@ import { MapView } from "#/components/MapView.tsx"
 import { PriceTable } from "#/components/PriceTable.tsx"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { latestLiveDate, pageSourceNote, provider } from "#/data/provider.ts"
-import { useVintage } from "#/data/vintage.tsx"
+import { latestLiveDate, provider } from "#/data/provider.ts"
+import { usePageSourceNote, useVintage } from "#/data/vintage.tsx"
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { formatPrice } from "#/lib/format.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
@@ -32,6 +32,7 @@ function HomePage() {
   const navigate = Route.useNavigate()
   const followLatest = useRef(true)
   const [date, setDate] = useState(() => latestLiveDate())
+  const sourceNote = usePageSourceNote(date)
   useEffect(() => {
     if (followLatest.current) setDate(latestLiveDate())
   }, [rev])
@@ -132,7 +133,7 @@ function HomePage() {
         />
 
         <footer className="pb-6 text-xs text-slate">
-          Peta: GeoJSON indonesia-geodata (MIT). {pageSourceNote(date)} Sumber resmi: Panel Harga
+          Peta: GeoJSON indonesia-geodata (MIT). {sourceNote} Sumber resmi: Panel Harga
           Badan Pangan Nasional dan PIHPS Bank Indonesia.
         </footer>
     </main>

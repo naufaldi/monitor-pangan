@@ -93,8 +93,8 @@ it.effect("a D1 overlay newer than the baked snapshot becomes the price on scree
     assert.strictEqual(snapshot.rows.find((row) => row.regionCode === "31")?.price, 16950)
     assert.strictEqual(snapshot.rows.find((row) => row.regionCode === "32")?.price, null)
     assert.strictEqual(
-      pageSourceNote("2026-09-28"),
-      "Harga dari PIHPS: 28 September 2026. Bukan harga hari ini.",
+      pageSourceNote("2026-09-28", "2026-09-28"),
+      "Harga dari PIHPS: 28 September 2026.",
     )
     const day = provider.trend("beras", null, {
       from: "2026-09-16",

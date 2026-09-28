@@ -8,8 +8,8 @@ import { ChevronBadge } from "#/components/ChevronBadge.tsx"
 import { MoversList, type MoverItem } from "#/components/MoversList.tsx"
 import { TrendChart } from "#/components/TrendChart.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { latestLiveDate, liveSurveyDates, pageSourceNote, provider } from "#/data/provider.ts"
-import { useVintage } from "#/data/vintage.tsx"
+import { latestLiveDate, liveSurveyDates, provider } from "#/data/provider.ts"
+import { usePageSourceNote, useVintage } from "#/data/vintage.tsx"
 import {
   chartHighlights,
   chartStrip,
@@ -37,6 +37,7 @@ export const Route = createFileRoute("/tren")({
 /** Commodity trend view with region filter and movers. */
 function TrenPage() {
   const rev = useVintage()
+  const sourceNote = usePageSourceNote(latestLiveDate())
   const dates = useMemo(() => liveSurveyDates(), [rev])
   const provinces = useMemo(() => provider.provinces(), [])
   const search = Route.useSearch()
@@ -204,7 +205,7 @@ function TrenPage() {
       <MoversList items={movers} activeId={commodityId} onSelect={setCommodityId} rangeLabel={moverRange} />
 
       <footer className="pb-6 text-xs text-slate">
-        Tren dihitung dari rata-rata nasional per tanggal survei. {pageSourceNote(latestLiveDate())}
+        Tren dihitung dari rata-rata nasional per tanggal survei. {sourceNote}
       </footer>
     </main>
   )
