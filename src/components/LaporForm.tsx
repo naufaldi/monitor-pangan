@@ -9,7 +9,15 @@ import { SAVED_COPY, SubmitBodySchema, aliasHasUrl, type Outlet } from "#/data/l
 import { downscaleToJpeg } from "#/lib/photo.ts"
 
 type TurnstileApi = {
-  render: (element: HTMLElement, options: { sitekey: string; callback: (token: string) => void }) => void
+  render: (
+    element: HTMLElement,
+    options: {
+      sitekey: string
+      callback: (token: string) => void
+      "expired-callback": () => void
+      "error-callback": () => void
+    },
+  ) => void
 }
 
 /** Citizen report form. No account. The photo is optional and uploaded straight to R2. */
@@ -27,6 +35,7 @@ export function LaporForm() {
   const [photoFailed, setPhotoFailed] = useState(false)
   const [pending, setPending] = useState(false)
   const widgetRef = useRef<HTMLDivElement | null>(null)
+  const busy = useRef(false)
 
   useEffect(() => {
     void Effect.runPromise(
@@ -48,7 +57,13 @@ export function LaporForm() {
     script.onload = () => {
       const turnstile = (window as Window & { turnstile?: TurnstileApi }).turnstile
       if (turnstile == null) return
-      turnstile.render(element, { sitekey: siteKey, callback: setToken })
+      const clearToken = () => setToken("")
+      turnstile.render(element, {
+        sitekey: siteKey,
+        callback: setToken,
+        "expired-callback": clearToken,
+        "error-callback": clearToken,
+      })
     }
     document.body.append(script)
     return () => script.remove()
@@ -56,15 +71,16 @@ export function LaporForm() {
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
+    if (busy.current) return
     setError(null)
-    setPending(true)
     const parsedPrice = Number(price)
     const aliasValue = alias.trim() === "" ? null : alias.trim()
     if (aliasValue != null && aliasHasUrl(aliasValue)) {
       setError("Alias tidak boleh berisi tautan.")
-      setPending(false)
       return
     }
+    busy.current = true
+    setPending(true)
     const raw = {
       id: crypto.randomUUID(),
       commodityId,
@@ -89,11 +105,14 @@ export function LaporForm() {
               onSuccess: () => setPhotoFailed(false),
             }),
           )
+        } else if (jpeg != null) {
+          setPhotoFailed(true)
         }
         return saved.id
       }).pipe(
         Effect.match({
           onFailure: () => {
+            busy.current = false
             setError("Laporan tidak tersimpan. Periksa isian dan coba lagi.")
             setPending(false)
           },

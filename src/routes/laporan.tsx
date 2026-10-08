@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { Effect } from "effect"
 import { Button } from "@monitor-pangan/ui"
@@ -8,13 +8,34 @@ import { LaporanMap } from "#/components/LaporanMap.tsx"
 import { LaporanProvince } from "#/components/LaporanProvince.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { fetchReports } from "#/data/laporan-client.ts"
-import { EMPTY_WINDOW_COPY, NO_PIN_COPY, outletLabel, type Outlet, type PublicReport } from "#/data/laporan.ts"
+import { EMPTY_WINDOW_COPY, NO_PIN_COPY, otherOutlet, outletLabel, type Outlet, type PublicReport, type ReportsPayload } from "#/data/laporan.ts"
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { loadProvinces } from "#/data/geo.ts"
-import { LIST_PAGE_SIZE } from "#/lib/laporan.ts"
+import { LIST_PAGE_SIZE, mapAndProvinceRows } from "#/lib/laporan.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 
 const provinces = new Set(loadProvinces().map((province) => province.code))
+
+const loadWindow = (outlet: Outlet, commodityId: string | null) =>
+  Effect.gen(function* () {
+    const pages: PublicReport[][] = []
+    let cursor: string | null = null
+    let guard = 0
+    while (guard < 20) {
+      const page: ReportsPayload = yield* fetchReports({
+        outlet,
+        commodityId,
+        cursor,
+        windowOnly: true,
+        limit: 100,
+      })
+      pages.push([...page.rows])
+      cursor = page.nextCursor
+      guard += 1
+      if (cursor == null) break
+    }
+    return pages.flat()
+  })
 
 export const Route = createFileRoute("/laporan")({
   ssr: false,
@@ -36,66 +57,54 @@ function LaporanPage() {
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
   const commodityId = search.komoditas ?? null
-  const [windowRows, setWindowRows] = useState<readonly PublicReport[]>([])
+  const [mapRows, setMapRows] = useState<readonly PublicReport[]>([])
+  const [provinceRows, setProvinceRows] = useState<readonly PublicReport[]>([])
   const [listRows, setListRows] = useState<readonly PublicReport[]>([])
   const [more, setMore] = useState<{ windowOnly: boolean; cursor: string | null } | null>(null)
   const [windowEmpty, setWindowEmpty] = useState(false)
   const [loadError, setLoadError] = useState(false)
+  const requestGen = useRef(0)
 
   useEffect(() => {
-    let cancelled = false
+    const generation = requestGen.current
     void Effect.runPromise(
       Effect.gen(function* () {
-        const windowed = yield* fetchReports({
-          outlet: search.outlet,
-          commodityId,
-          cursor: null,
-          windowOnly: true,
-          limit: 100,
-        })
-        const pages = [windowed.rows]
-        let cursor = windowed.nextCursor
-        let guard = 0
-        while (cursor != null && guard < 20) {
-          const next = yield* fetchReports({
-            outlet: search.outlet,
-            commodityId,
-            cursor,
-            windowOnly: true,
-            limit: 100,
-          })
-          pages.push(next.rows)
-          cursor = next.nextCursor
-          guard += 1
-        }
-        const listed = yield* fetchReports({
-          outlet: search.outlet,
-          commodityId,
-          cursor: null,
-          windowOnly: true,
-          limit: LIST_PAGE_SIZE,
-        })
-        return { mapRows: pages.flat(), listed }
+        const [selected, other, listed] = yield* Effect.all(
+          [
+            loadWindow(search.outlet, commodityId),
+            loadWindow(otherOutlet(search.outlet), commodityId),
+            fetchReports({
+              outlet: search.outlet,
+              commodityId,
+              cursor: null,
+              windowOnly: true,
+              limit: LIST_PAGE_SIZE,
+            }),
+          ],
+          { concurrency: 3 },
+        )
+        return { split: mapAndProvinceRows(selected, other), listed }
       }).pipe(
         Effect.match({
           onFailure: () => {
-            if (!cancelled) {
-              setWindowRows([])
-              setListRows([])
-              setWindowEmpty(false)
-              setMore(null)
-              setLoadError(true)
-            }
+            if (requestGen.current !== generation) return
+            setMapRows([])
+            setProvinceRows([])
+            setListRows([])
+            setWindowEmpty(false)
+            setMore(null)
+            setLoadError(true)
           },
           onSuccess: (loaded) => {
-            if (cancelled) return
-            setWindowRows(loaded.mapRows)
+            if (requestGen.current !== generation) return
+            setMapRows(loaded.split.mapRows)
+            setProvinceRows(loaded.split.provinceRows)
             setListRows(loaded.listed.rows)
-            setWindowEmpty(loaded.mapRows.length === 0)
+            setWindowEmpty(loaded.split.mapRows.length === 0)
             setLoadError(false)
             if (loaded.listed.nextCursor != null) {
               setMore({ windowOnly: true, cursor: loaded.listed.nextCursor })
-            } else if (loaded.listed.resumeCursor != null || loaded.mapRows.length === 0) {
+            } else if (loaded.listed.resumeCursor != null || loaded.split.mapRows.length === 0) {
               setMore({ windowOnly: false, cursor: loaded.listed.resumeCursor })
             } else {
               setMore(null)
@@ -105,13 +114,14 @@ function LaporanPage() {
       ),
     )
     return () => {
-      cancelled = true
+      requestGen.current += 1
     }
   }, [search.outlet, commodityId])
 
   const loadOlder = () => {
     if (more == null) return
     const request = more
+    const generation = requestGen.current
     void Effect.runPromise(
       fetchReports({
         outlet: search.outlet,
@@ -121,15 +131,19 @@ function LaporanPage() {
         limit: LIST_PAGE_SIZE,
       }).pipe(
         Effect.match({
-          onFailure: () => setMore(null),
+          onFailure: () => {
+            if (requestGen.current !== generation) return
+            setMore(null)
+          },
           onSuccess: (page) => {
+            if (requestGen.current !== generation) return
             if (page.rows.length === 0) {
               setMore(null)
               return
             }
             setListRows((current) => [
               ...current,
-              ...page.rows.filter((row) => !current.some((item) => item.id === row.id)),
+              ...page.rows.filter((row) => row.outlet === search.outlet && !current.some((item) => item.id === row.id)),
             ])
             if (page.nextCursor != null) {
               setMore({ windowOnly: request.windowOnly, cursor: page.nextCursor })
@@ -177,7 +191,7 @@ function LaporanPage() {
         }
       />
       <LaporanMap
-        rows={windowRows}
+        rows={mapRows}
         outlet={search.outlet}
         commodityId={commodityId}
         onProvince={(code) => void navigate({ search: (prev) => ({ ...prev, provinsi: code }) })}
@@ -192,7 +206,7 @@ function LaporanPage() {
         <p className="text-sm text-slate">{NO_PIN_COPY}</p>
       )}
       <LaporanProvince
-        rows={windowRows}
+        rows={provinceRows}
         commodityId={commodityId}
         provinceCode={search.provinsi ?? null}
         onProvince={(code) => void navigate({ search: (prev) => ({ ...prev, provinsi: code === "" ? undefined : code }) })}

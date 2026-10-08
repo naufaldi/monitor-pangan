@@ -5,7 +5,8 @@ import "leaflet/dist/leaflet.css"
 import { Card, cardClass } from "@monitor-pangan/ui"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { provinceFeatures } from "#/data/geo.ts"
-import { CITY_MEDIAN_CAPTION, PIN_COMMODITY_EMPTY, evidenceLabel, outletLabel, type PublicReport } from "#/data/laporan.ts"
+import { CITY_MEDIAN_CAPTION, DITINJAU_COPY, PIN_COMMODITY_EMPTY, type PublicReport } from "#/data/laporan.ts"
+import { ReportRow } from "#/components/LaporanList.tsx"
 import { placeByCode } from "#/data/places.ts"
 import { formatPrice } from "#/lib/format.ts"
 import { cityMedian, pins, provinceOutline } from "#/lib/laporan.ts"
@@ -69,6 +70,7 @@ export function LaporanMap({ rows, outlet, commodityId, onProvince }: LaporanMap
           <button type="button" className="text-left text-sm text-slate" onClick={() => onProvince(place.provinceCode)}>
             Lihat provinsi
           </button>
+          {selectedRows.length > 0 ? <p className="text-sm text-slate">{DITINJAU_COPY}</p> : null}
           {commodityId != null && selectedRows.length === 0 ? <p>{PIN_COMMODITY_EMPTY}</p> : null}
           {median != null && commodityId != null ? (
             <p>
@@ -78,14 +80,11 @@ export function LaporanMap({ rows, outlet, commodityId, onProvince }: LaporanMap
               dari {median.count} laporan. {CITY_MEDIAN_CAPTION}
             </p>
           ) : null}
-          <ul className="flex flex-col gap-1 text-sm">
+          <div className="flex flex-col gap-3">
             {selectedRows.map((row) => (
-              <li key={row.id}>
-                {formatPrice(row.price, COMMODITIES.find((item) => item.id === row.commodityId)?.unit ?? "kg")} ·{" "}
-                {outletLabel(row.outlet)} · {evidenceLabel(row.evidence)}
-              </li>
+              <ReportRow key={row.id} row={row} />
             ))}
-          </ul>
+          </div>
         </Card>
       ) : null}
     </div>

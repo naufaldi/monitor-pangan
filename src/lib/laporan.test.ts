@@ -9,6 +9,7 @@ import {
   inWindow,
   medianRounded,
   photoPresentation,
+  mapAndProvinceRows,
   pins,
   provinceOutline,
   provinceRollup,
@@ -179,6 +180,27 @@ it.effect("ritel prices do not move the pasar median", () =>
     assert.strictEqual(rollup.kind, "median")
     if (rollup.kind !== "median") return
     assert.strictEqual(rollup.median, 14500)
+  }),
+)
+
+it.effect("the province panel still sees the outlet the map hides", () =>
+  Effect.sync(() => {
+    const pasar = [report("3274", 13000), report("3275", 14500), report("3273", 16500)]
+    const ritel = [report("3273", 18000, "ritel"), report("3274", 19000, "ritel")]
+    const split = mapAndProvinceRows(pasar, ritel)
+    assert.deepStrictEqual(
+      split.mapRows.map((row) => row.outlet),
+      ["pasar", "pasar", "pasar"],
+    )
+    const hidden = provinceRollup(split.provinceRows, "32", "beras", "ritel", names)
+    assert.strictEqual(hidden.kind, "floor")
+    if (hidden.kind !== "floor") return
+    assert.strictEqual(hidden.cityCount, 2)
+    assert.strictEqual(hidden.reportCount, 2)
+    const shown = provinceRollup(split.provinceRows, "32", "beras", "pasar", names)
+    assert.strictEqual(shown.kind, "median")
+    if (shown.kind !== "median") return
+    assert.strictEqual(shown.median, 14500)
   }),
 )
 

@@ -169,6 +169,20 @@ export function aliasHasUrl(alias: string): boolean {
   return URL_LIKE.test(alias)
 }
 
+/** The outlet the map is not showing. Province medians still read both. */
+export function otherOutlet(outlet: Outlet): Outlet {
+  switch (outlet) {
+    case "pasar":
+      return "ritel"
+    case "ritel":
+      return "pasar"
+    default: {
+      const _exhaustive: never = outlet
+      return _exhaustive
+    }
+  }
+}
+
 /** Visible outlet name. Pasar and ritel stay separate labels. */
 export function outletLabel(outlet: Outlet): string {
   switch (outlet) {

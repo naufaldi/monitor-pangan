@@ -1,4 +1,4 @@
-import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router"
+import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from "@tanstack/react-router"
 import { Badge } from "@monitor-pangan/ui"
 import { Navbar } from "../components/Navbar.tsx"
 import { useDataBadge, VintageProvider } from "../data/vintage.tsx"
@@ -31,6 +31,8 @@ function RootComponent() {
 
 function Shell() {
   const badge = useDataBadge()
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const pihpsBadge = pathname !== "/laporan" && pathname !== "/lapor" && pathname !== "/admin"
   return (
     <div className="min-h-svh bg-canvas text-ink">
       <header className="border-b border-hairline bg-paper">
@@ -41,9 +43,11 @@ function Shell() {
               Harga pangan strategis Indonesia per provinsi
             </p>
           </div>
-          <Badge tone="ember" className="ml-auto">
-            {badge}
-          </Badge>
+          {pihpsBadge ? (
+            <Badge tone="ember" className="ml-auto">
+              {badge}
+            </Badge>
+          ) : null}
         </div>
         <div className="mx-auto w-full max-w-6xl px-4 pb-4">
           <Navbar />

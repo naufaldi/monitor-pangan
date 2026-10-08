@@ -114,5 +114,13 @@ yourself when the bucket exists; this change does not run it:
 wrangler r2 bucket lifecycle set monitor-pangan-laporan --file r2-lifecycle.json
 ```
 
+The browser PUTs the JPEG to R2, so the bucket also needs a CORS rule that
+allows `PUT` with `content-type` from `https://monitor.naufaldi.com`.
+`r2-cors.json` is that rule. Apply it yourself; this change does not run it:
+
+```sh
+wrangler r2 bucket cors set monitor-pangan-laporan --file r2-cors.json
+```
+
 A Free WAF rate limit on `POST /api/laporan` (per IP, 10 seconds, Block) is
 dashboard-only and is not applied here.

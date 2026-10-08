@@ -213,7 +213,7 @@ const submitReport = Effect.fn("Laporan.submit")(function* (request: Request) {
   const saved = yield* store.submit(body, seenOn, DateTime.formatIso(now))
   const uploadUrl =
     saved.photoKey != null && saved.photoKey.startsWith("pending/") && edge.presign != null
-      ? yield* edge.presign(saved.id, now.epochMillis)
+      ? yield* edge.presign(saved.id, now.epochMillis).pipe(Effect.catchAll(() => Effect.succeed(null)))
       : null
   return json({ id: saved.id, status: "pending", uploadUrl })
 })

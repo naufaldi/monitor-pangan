@@ -150,6 +150,17 @@ export function provinceRollup(
   }
 }
 
+/**
+ * Map pins use the selected outlet only.
+ * The province panel receives both outlets and splits them again per median.
+ */
+export function mapAndProvinceRows(
+  selected: readonly PublicReport[],
+  other: readonly PublicReport[],
+): { readonly mapRows: readonly PublicReport[]; readonly provinceRows: readonly PublicReport[] } {
+  return { mapRows: selected, provinceRows: [...selected, ...other] }
+}
+
 /** Hairline province outline. Fill stays off in every state. */
 export const provinceOutline = {
   fillOpacity: 0,

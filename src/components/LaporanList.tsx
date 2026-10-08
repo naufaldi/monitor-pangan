@@ -59,7 +59,7 @@ export function LaporanList({ rows, windowEmpty, canLoadOlder, onLoadOlder }: La
   )
 }
 
-function ReportRow({ row }: { row: PublicReport }) {
+export function ReportRow({ row }: { row: PublicReport }) {
   const commodity = COMMODITIES.find((item) => item.id === row.commodityId)
   const place = placeByCode(row.placeCode)
   const province = provinces.get(row.placeCode.slice(0, 2)) ?? row.placeCode.slice(0, 2)

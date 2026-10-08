@@ -35,6 +35,7 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
   const [view, setView] = useState<"pending" | "reviewed">("pending")
   const [items, setItems] = useState<readonly AdminPendingItem[] | null>(null)
   const [reviewed, setReviewed] = useState<readonly AdminReviewedItem[]>([])
+  const [reviewedCursor, setReviewedCursor] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const reload = () => {
@@ -58,15 +59,23 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
     reload()
   }, [secret])
 
-  const loadReviewed = () => {
+  const loadReviewed = (cursor: string | null) => {
     void Effect.runPromise(
-      fetchReviewed(secret, null).pipe(
+      fetchReviewed(secret, cursor).pipe(
         Effect.match({
           onFailure: (failure) => {
             if (failure instanceof LaporanClientError && failure.status === 401) onReject()
             else setError("Daftar tinjauan tidak bisa dimuat.")
           },
-          onSuccess: (page) => setReviewed(page.rows),
+          onSuccess: (page) => {
+            setReviewed((current) =>
+              cursor == null
+                ? page.rows
+                : [...current, ...page.rows.filter((row) => !current.some((item) => item.id === row.id))],
+            )
+            setReviewedCursor(page.nextCursor)
+            setError(null)
+          },
         }),
       ),
     )
@@ -83,7 +92,7 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
           active={view === "reviewed"}
           onClick={() => {
             setView("reviewed")
-            loadReviewed()
+            loadReviewed(null)
           }}
         >
           Ditinjau
@@ -94,7 +103,9 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
           rows={reviewed}
           secret={secret}
           onReject={onReject}
-          onDone={loadReviewed}
+          onDone={() => loadReviewed(null)}
+          canLoadOlder={reviewedCursor != null}
+          onLoadOlder={() => loadReviewed(reviewedCursor)}
         />
       ) : null}
       {view === "pending" ? <h2 className="text-lg font-bold">Menunggu</h2> : null}
@@ -118,11 +129,15 @@ function ReviewedList({
   secret,
   onDone,
   onReject,
+  canLoadOlder,
+  onLoadOlder,
 }: {
   rows: readonly AdminReviewedItem[]
   secret: string
   onDone: () => void
   onReject: () => void
+  canLoadOlder: boolean
+  onLoadOlder: () => void
 }) {
   const [note, setNote] = useState("")
   const [active, setActive] = useState<string | null>(null)
@@ -174,6 +189,11 @@ function ReviewedList({
           </li>
         ))}
       </ul>
+      {canLoadOlder ? (
+        <Button type="button" onClick={onLoadOlder}>
+          Muat tinjauan lebih lama
+        </Button>
+      ) : null}
     </section>
   )
 }

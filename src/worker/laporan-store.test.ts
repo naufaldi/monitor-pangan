@@ -8,7 +8,7 @@ import { handleLaporan, laporanHttpError, TurnstileRejected, type LaporanEdge } 
 import { LaporanEdge as EdgeTag } from "./laporan-http.ts"
 import { laporanStoreLayer, type PhotoBucket, type StoredPhoto } from "./laporan-store.ts"
 import { LAPORAN_STATEMENTS } from "./laporan-schema.ts"
-import { PRESIGN_EXPIRES_SEC } from "./r2-sign.ts"
+import { PRESIGN_EXPIRES_SEC, SignError } from "./r2-sign.ts"
 
 const SECRET = "0123456789abcdef0123456789abcdef"
 
@@ -75,7 +75,7 @@ const memoryBucket = () => {
   return { bucket, objects, puts, gets }
 }
 
-const harness = (presign: boolean) => {
+const harness = (presign: boolean | "fail") => {
   const raw = new DatabaseSync(":memory:")
   for (const statement of migrationStatements()) raw.exec(statement)
   const photos = memoryBucket()
@@ -83,12 +83,15 @@ const harness = (presign: boolean) => {
     adminSecret: SECRET,
     siteKey: "site-key",
     verify: (token) => (token === "ok" ? Effect.void : Effect.fail(new TurnstileRejected())),
-    presign: presign
-      ? (id, nowMs) =>
-          Effect.succeed(
-            `https://acct.r2.cloudflarestorage.com/monitor-pangan-laporan/pending/${id}.jpg?X-Amz-Expires=${PRESIGN_EXPIRES_SEC}&X-Amz-Date=${nowMs}`,
-          )
-      : null,
+    presign:
+      presign === "fail"
+        ? () => Effect.fail(new SignError({ message: "sign" }))
+        : presign
+          ? (id, nowMs) =>
+              Effect.succeed(
+                `https://acct.r2.cloudflarestorage.com/monitor-pangan-laporan/pending/${id}.jpg?X-Amz-Expires=${PRESIGN_EXPIRES_SEC}&X-Amz-Date=${nowMs}`,
+              )
+          : null,
   }
   const layer = Layer.mergeAll(laporanStoreLayer(sqliteD1(raw), photos.bucket), Layer.succeed(EdgeTag, edge))
   const call = (request: Request) =>
@@ -454,6 +457,22 @@ it.effect("hasPhoto flips off after 30 days and older pages stay reachable", () 
     assert.strictEqual(olderRows[0]?.id, oldId)
     assert.strictEqual(olderRows[0]?.hasPhoto, false)
     assert.strictEqual(olderRows[0]?.evidence, "receipt")
+  }),
+)
+
+it.effect("a signing failure keeps the pending row and omits the upload url", () =>
+  Effect.gen(function* () {
+    const origin = harness("fail")
+    yield* TestClock.setTime(DateTime.unsafeMake("2026-10-08T03:00:00.000Z"))
+    const id = "ffffffff-ffff-4fff-8fff-ffffffffffff"
+    const response = yield* post(origin, id, { photo: true })
+    assert.strictEqual(response.status, 200)
+    const body = yield* bodyOf(response)
+    assert.strictEqual(body.id, id)
+    assert.strictEqual(body.uploadUrl, null)
+    assert.strictEqual(origin.count("laporan_warga"), 1)
+    assert.strictEqual(origin.count("prices_daily"), 0)
+    assert.strictEqual(origin.cell("SELECT status, photo_key FROM laporan_warga WHERE id = ?", id).status, "pending")
   }),
 )
 
