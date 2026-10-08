@@ -17,6 +17,12 @@ export function Navbar() {
       <Link to="/daya-beli" search={search}>
         {({ isActive }) => <span className={buttonClass("pill", isActive)}>Daya Beli</span>}
       </Link>
+      <Link
+        to="/laporan"
+        search={{ outlet: "pasar", komoditas: search.komoditas, provinsi: undefined }}
+      >
+        {({ isActive }) => <span className={buttonClass("pill", isActive)}>Laporan Warga</span>}
+      </Link>
     </nav>
   )
 }

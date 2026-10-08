@@ -26,3 +26,7 @@ npm run build
 Map: `indonesia-geodata` (MIT). Tiles: OpenStreetMap contributors.
 Numbers on this page are mock data until the pipeline lands — official
 sources: Panel Harga Bapanas, PIHPS Bank Indonesia.
+
+Laporan warga (`/laporan`, `/lapor`) is a separate reviewed lane. It is not a
+PIHPS harga. Secrets, the R2 lifecycle rule, and the WAF note are in
+`DATA_SOURCES.md`. Do not commit `.dev.vars`.

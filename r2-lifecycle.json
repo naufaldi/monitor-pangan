@@ -1,0 +1,17 @@
+{
+  "rules": [
+    {
+      "id": "decided-30-days",
+      "enabled": true,
+      "conditions": {
+        "prefix": "decided/"
+      },
+      "deleteObjectsTransition": {
+        "condition": {
+          "type": "Age",
+          "maxAge": 2592000
+        }
+      }
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import { COMMODITY_ROWS, REGION_ROWS } from "../data/pihps-catalog.ts"
 import type { FreshPayload } from "../data/fresh-payload.ts"
 import type { PihpsPriceCell } from "../data/pihps-grid.ts"
 import { PriceStore, StoreError, type JobRecord } from "./ingest.ts"
+import { LAPORAN_MIGRATION_SQL } from "./laporan-schema.ts"
 
 export interface D1Prepared {
   bind(...values: unknown[]): D1Prepared
@@ -62,6 +63,7 @@ ${REGION_ROWS.map(
   ([code, name]) =>
     `INSERT OR IGNORE INTO regions (code, name, level) VALUES (${sqlString(code)}, ${sqlString(name)}, 'province');`,
 ).join("\n")}
+${LAPORAN_MIGRATION_SQL}
 `
 
 const storeError = (cause: unknown) => new StoreError({ message: String(cause) })
@@ -73,7 +75,7 @@ export const migrationStatements = (sql: string = MIGRATE_SQL): readonly string[
     .map((statement) => statement.trim())
     .filter((statement) => statement.length > 0)
 
-let migrated: Promise<void> | undefined
+const migrated = new WeakMap<D1Database, Promise<void>>()
 
 const runStatements = (db: D1Database, statements: readonly string[], index: number): Promise<void> => {
   const statement = statements[index]
@@ -82,17 +84,25 @@ const runStatements = (db: D1Database, statements: readonly string[], index: num
 }
 
 const migrate = (db: D1Database): Promise<void> => {
-  if (migrated !== undefined) return migrated
+  const existing = migrated.get(db)
+  if (existing !== undefined) return existing
   const pending = runStatements(db, migrationStatements(), 0).then(
     () => undefined,
     (cause: unknown) => {
-      if (migrated === pending) migrated = undefined
+      if (migrated.get(db) === pending) migrated.delete(db)
       throw cause
     },
   )
-  migrated = pending
+  migrated.set(db, pending)
   return pending
 }
+
+/** Apply the checked-in schema once per D1 binding. */
+export const ensureMigrated = (db: D1Database) =>
+  Effect.tryPromise({
+    try: () => migrate(db),
+    catch: storeError,
+  })
 
 /** D1 binding for the monitor-pangan database. */
 export const d1PriceStoreLayer = (db: D1Database) => {

@@ -10,7 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as DayaBeliRouteImport } from './routes/daya-beli'
+import { Route as LaporRouteImport } from './routes/lapor'
+import { Route as LaporanRouteImport } from './routes/laporan'
 import { Route as TrenRouteImport } from './routes/tren'
 
 const IndexRoute = IndexRouteImport.update({
@@ -18,9 +21,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DayaBeliRoute = DayaBeliRouteImport.update({
   id: '/daya-beli',
   path: '/daya-beli',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaporRoute = LaporRouteImport.update({
+  id: '/lapor',
+  path: '/lapor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaporanRoute = LaporanRouteImport.update({
+  id: '/laporan',
+  path: '/laporan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrenRoute = TrenRouteImport.update({
@@ -31,31 +49,44 @@ const TrenRoute = TrenRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/daya-beli': typeof DayaBeliRoute
+  '/lapor': typeof LaporRoute
+  '/laporan': typeof LaporanRoute
   '/tren': typeof TrenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/daya-beli': typeof DayaBeliRoute
+  '/lapor': typeof LaporRoute
+  '/laporan': typeof LaporanRoute
   '/tren': typeof TrenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/daya-beli': typeof DayaBeliRoute
+  '/lapor': typeof LaporRoute
+  '/laporan': typeof LaporanRoute
   '/tren': typeof TrenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/daya-beli' | '/tren'
+  fullPaths: '/' | '/admin' | '/daya-beli' | '/lapor' | '/laporan' | '/tren'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/daya-beli' | '/tren'
-  id: '__root__' | '/' | '/daya-beli' | '/tren'
+  to: '/' | '/admin' | '/daya-beli' | '/lapor' | '/laporan' | '/tren'
+  id:
+    '__root__' | '/' | '/admin' | '/daya-beli' | '/lapor' | '/laporan' | '/tren'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   DayaBeliRoute: typeof DayaBeliRoute
+  LaporRoute: typeof LaporRoute
+  LaporanRoute: typeof LaporanRoute
   TrenRoute: typeof TrenRoute
 }
 
@@ -68,11 +99,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/daya-beli': {
       id: '/daya-beli'
       path: '/daya-beli'
       fullPath: '/daya-beli'
       preLoaderRoute: typeof DayaBeliRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lapor': {
+      id: '/lapor'
+      path: '/lapor'
+      fullPath: '/lapor'
+      preLoaderRoute: typeof LaporRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/laporan': {
+      id: '/laporan'
+      path: '/laporan'
+      fullPath: '/laporan'
+      preLoaderRoute: typeof LaporanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tren': {
@@ -87,7 +139,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   DayaBeliRoute: DayaBeliRoute,
+  LaporRoute: LaporRoute,
+  LaporanRoute: LaporanRoute,
   TrenRoute: TrenRoute,
 }
 export const routeTree = rootRouteImport

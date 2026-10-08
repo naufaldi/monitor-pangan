@@ -36,3 +36,15 @@ body {
 .leaflet-container .leaflet-interactive:focus-visible {
   outline: none;
 }
+
+.laporan-pin-wrap {
+  background: transparent;
+  border: 0;
+}
+
+.laporan-pin {
+  display: block;
+  border-radius: 999px;
+  background: var(--color-ink);
+  box-shadow: 0 0 0 2px var(--color-paper);
+}

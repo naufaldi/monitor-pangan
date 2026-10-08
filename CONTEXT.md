@@ -17,3 +17,5 @@ Glossary. No implementation details.
   Weekends and holidays show the last trading day, labeled as such.
 - **data contoh**: clearly-labeled placeholder numbers used while the real
   pipeline does not exist yet. Never presented as official data.
+- **laporan warga**: one price a reader saw, reviewed before it is public,
+  never a PIHPS harga.

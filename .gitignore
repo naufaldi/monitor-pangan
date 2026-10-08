@@ -3,6 +3,7 @@ dist/
 .output/
 .wrangler/
 *.local
+.dev.vars
 .DS_Store
 data/raw/
 data/snapshots/2*.json

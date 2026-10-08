@@ -15,7 +15,7 @@ import {
   stampRouteHtml,
 } from "./seo.ts"
 
-const IDS = ["home", "tren", "daya-beli"] as const
+const IDS = ["home", "tren", "daya-beli", "laporan", "lapor"] as const
 
 it.effect("route copy is Indonesian, unique, and safe to stamp into HTML", () =>
   Effect.sync(() => {
@@ -34,7 +34,7 @@ it.effect("route copy is Indonesian, unique, and safe to stamp into HTML", () =>
         assert.ok(route.description.includes("PIHPS"))
       }
     }
-    assert.strictEqual(titles.size, 3)
+    assert.strictEqual(titles.size, 5)
   }),
 )
 
@@ -43,6 +43,8 @@ it.effect("social URLs are absolute and canonical URLs drop the commodity query"
     assert.strictEqual(absoluteUrl("/"), `${SITE_ORIGIN}/`)
     assert.strictEqual(absoluteUrl("/tren"), `${SITE_ORIGIN}/tren`)
     assert.strictEqual(absoluteUrl("/daya-beli"), `${SITE_ORIGIN}/daya-beli`)
+    assert.strictEqual(absoluteUrl("/laporan"), `${SITE_ORIGIN}/laporan`)
+    assert.strictEqual(absoluteUrl("/lapor"), `${SITE_ORIGIN}/lapor`)
     for (const id of IDS) {
       const image = seoMeta(id).find(
         (tag) => "property" in tag && tag.property === "og:image",
