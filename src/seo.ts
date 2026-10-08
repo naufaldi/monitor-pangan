@@ -24,11 +24,11 @@ function searchConsoleVerification(): string {
 
 export const SEARCH_CONSOLE_VERIFICATION = searchConsoleVerification()
 
-export type SeoRouteId = "home" | "tren" | "daya-beli"
+export type SeoRouteId = "home" | "tren" | "daya-beli" | "laporan" | "lapor"
 
 export type RouteSeo = {
   readonly id: SeoRouteId
-  readonly path: "/" | "/tren" | "/daya-beli"
+  readonly path: "/" | "/tren" | "/daya-beli" | "/laporan" | "/lapor"
   readonly title: string
   readonly description: string
   readonly keywords: string
@@ -61,6 +61,22 @@ export const ROUTE_SEO: Record<SeoRouteId, RouteSeo> = {
       "UMP pekerja formal dibanding harga eceran PIHPS per provinsi. Menunjukkan berapa banyak komoditas yang terbeli.",
     keywords:
       "daya beli, UMP, upah minimum provinsi, harga pangan, pekerja formal, keterjangkauan",
+  },
+  laporan: {
+    id: "laporan",
+    path: "/laporan",
+    title: "Laporan Harga Warga — Monitor Pangan",
+    description:
+      "Harga yang warga laporkan di pasar dan ritel, ditinjau sebelum tampil. Bukan data PIHPS.",
+    keywords: "laporan warga, harga pasar, harga ritel, tinjauan, bukan PIHPS",
+  },
+  lapor: {
+    id: "lapor",
+    path: "/lapor",
+    title: "Lapor Harga Warga — Monitor Pangan",
+    description:
+      "Kirim satu harga yang Anda lihat di pasar atau ritel. Laporan ditinjau sebelum tampil dan bukan data PIHPS.",
+    keywords: "lapor harga, pasar, ritel, foto struk, tinjauan, bukan PIHPS",
   },
 }
 
@@ -154,8 +170,8 @@ function replaceMeta(
   return head.replace(pattern, `<meta ${attr}="${key}" content="${content}">`)
 }
 
-/** Replace home tags inside `<head>` with the tren or daya-beli tags. */
-export function stampRouteHtml(html: string, id: "tren" | "daya-beli"): string {
+/** Replace home tags inside `<head>` with another public route's tags. */
+export function stampRouteHtml(html: string, id: Exclude<SeoRouteId, "home">): string {
   const home = ROUTE_SEO.home
   const route = ROUTE_SEO[id]
   const headMatch = /<head>([\s\S]*?)<\/head>/.exec(html)

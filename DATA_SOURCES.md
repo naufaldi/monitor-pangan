@@ -81,3 +81,46 @@ Eceran traditional-market survey, Mon–Fri 09:00–11:00 WIB, published ~13:00.
 Province price = mean of surveyed kab/kota; national = mean of all.
 Units Rp/kg except cooking oil Rp/liter. Weekend/holiday UIs show the last
 trading day labeled as such.
+
+## Laporan harga warga
+
+Citizen reports live in `laporan_warga` and the R2 bucket
+`monitor-pangan-laporan`. They never enter `prices_daily`, the PIHPS map,
+Grafik, or Daya Beli.
+
+Secrets stay out of the repo. Set them with Wrangler, each value at least 32
+random bytes where noted:
+
+```sh
+wrangler secret put ADMIN_SECRET
+wrangler secret put TURNSTILE_SECRET
+wrangler secret put TURNSTILE_SITE_KEY
+wrangler secret put R2_ACCOUNT_ID
+wrangler secret put R2_ACCESS_KEY_ID
+wrangler secret put R2_SECRET_ACCESS_KEY
+```
+
+`ADMIN_SECRET` must be at least 32 bytes. `R2_BUCKET_NAME` is the non-secret
+var `monitor-pangan-laporan` in `wrangler.toml`. Local values belong in
+`.dev.vars`, which is gitignored.
+
+Photos land at `pending/<id>.jpg` and move to `decided/<id>.jpg` when a report
+is approved or rejected. One lifecycle rule, in `r2-lifecycle.json`, deletes
+objects under `decided/` 30 days after upload (2,592,000 seconds). Pending
+objects are not auto-deleted. There is no retention cron. Apply the rule
+yourself when the bucket exists; this change does not run it:
+
+```sh
+wrangler r2 bucket lifecycle set monitor-pangan-laporan --file r2-lifecycle.json
+```
+
+The browser PUTs the JPEG to R2, so the bucket also needs a CORS rule that
+allows `PUT` with `content-type` from `https://monitor.naufaldi.com`.
+`r2-cors.json` is that rule. Apply it yourself; this change does not run it:
+
+```sh
+wrangler r2 bucket cors set monitor-pangan-laporan --file r2-cors.json
+```
+
+A Free WAF rate limit on `POST /api/laporan` (per IP, 10 seconds, Block) is
+dashboard-only and is not applied here.

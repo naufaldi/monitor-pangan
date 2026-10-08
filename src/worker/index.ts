@@ -4,6 +4,8 @@ import { STATIC_LIVE_THROUGH } from "../data/fresh-prices.ts"
 import { d1PriceStoreLayer, type D1Database } from "./d1-store.ts"
 import { injectFreshScript } from "./html.ts"
 import { ingestRecent, PihpsHttpLive, PriceStore } from "./ingest.ts"
+import { handleLaporan, laporanEdgeFromEnv, laporanHttpError } from "./laporan-http.ts"
+import { laporanStoreLayer, type PhotoBucket } from "./laporan-store.ts"
 
 export interface AssetFetcher {
   fetch(request: Request): Promise<Response>
@@ -12,6 +14,14 @@ export interface AssetFetcher {
 export type WorkerEnv = {
   DB: D1Database
   ASSETS: AssetFetcher
+  PHOTOS: PhotoBucket
+  ADMIN_SECRET?: string
+  TURNSTILE_SECRET?: string
+  TURNSTILE_SITE_KEY?: string
+  R2_ACCOUNT_ID?: string
+  R2_ACCESS_KEY_ID?: string
+  R2_SECRET_ACCESS_KEY?: string
+  R2_BUCKET_NAME?: string
 }
 
 class AssetError extends Data.TaggedError("AssetError")<{
@@ -35,7 +45,13 @@ const assetsLayer = (assets: AssetFetcher) =>
   })
 
 export const workerLayer = (env: WorkerEnv) =>
-  Layer.mergeAll(d1PriceStoreLayer(env.DB), PihpsHttpLive, assetsLayer(env.ASSETS))
+  Layer.mergeAll(
+    d1PriceStoreLayer(env.DB),
+    PihpsHttpLive,
+    assetsLayer(env.ASSETS),
+    laporanStoreLayer(env.DB, env.PHOTOS),
+    laporanEdgeFromEnv(env),
+  )
 
 const isoDate = /^\d{4}-\d{2}-\d{2}$/
 
@@ -49,8 +65,19 @@ const freshJson = Effect.fn("Worker.freshJson")(function* (after: string) {
 })
 
 /** Serve the freshness API, and stamp HTML shells with the same payload. */
+const stampAdminRobots = (html: string): string =>
+  html.replace('name="robots" content="index, follow"', 'name="robots" content="noindex, nofollow"')
+
 export const handleRequest = Effect.fn("Worker.handleRequest")(function* (request: Request) {
   const url = new URL(request.url)
+  const laporan = yield* handleLaporan(request).pipe(
+    Effect.catchAll((error) => {
+      const response = laporanHttpError(error)
+      if (response != null) return Effect.succeed(response)
+      return Effect.fail(error)
+    }),
+  )
+  if (laporan != null) return laporan
   if (url.pathname === "/api/pihps/fresh") {
     const after = url.searchParams.get("after") ?? STATIC_LIVE_THROUGH
     if (!isoDate.test(after)) {
@@ -76,7 +103,10 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
   headers.set("content-type", "text/html; charset=utf-8")
   headers.set("cache-control", "no-store")
   headers.delete("content-length")
-  return new Response(injectFreshScript(html, payload), { status: asset.status, headers })
+  const admin = url.pathname === "/admin" || url.pathname === "/admin/"
+  if (admin) headers.set("x-robots-tag", "noindex, nofollow")
+  const stamped = admin ? stampAdminRobots(html) : html
+  return new Response(injectFreshScript(stamped, payload), { status: asset.status, headers })
 })
 
 /** One trading day per run. Weekday crons after the 13:00 WIB release cover the next day. */

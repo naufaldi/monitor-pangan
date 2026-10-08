@@ -17,5 +17,12 @@ binding = "DB"
 database_name = "monitor-pangan"
 database_id = "2bfc02d3-5eaf-4c7c-999b-e8e77544be21"
 
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "monitor-pangan-laporan"
+
+[vars]
+R2_BUCKET_NAME = "monitor-pangan-laporan"
+
 [triggers]
 crons = ["15 7 * * 1-5", "15 10 * * 1-5"]

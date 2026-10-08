@@ -45,6 +45,11 @@ export function nextIsoDay(iso: string): string {
   return isoFromEpochDay(epochDay(iso) + 1)
 }
 
+/** Shift a civil date by a number of days, with no clock and no timezone. */
+export function addIsoDays(iso: string, days: number): string {
+  return isoFromEpochDay(epochDay(iso) + days)
+}
+
 /** Monday–Friday. PIHPS does not survey Saturday or Sunday. */
 export function isTradingDay(iso: string): boolean {
   return weekdayMonday0(iso) < 5

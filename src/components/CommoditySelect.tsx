@@ -9,6 +9,8 @@ type CommoditySelectProps = {
   onChange: (id: string) => void
   /** Trailing preview text per commodity, e.g. the national average. */
   hintFor?: (commodity: Commodity) => string | undefined
+  /** Empty value means every commodity. Existing callers keep a selected commodity. */
+  allowEmpty?: boolean
 }
 
 /** Grouped commodity combobox with search. Scales past the tab strip. */
@@ -17,13 +19,14 @@ export function CommoditySelect({
   value,
   onChange,
   hintFor,
+  allowEmpty = false,
 }: CommoditySelectProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const rootRef = useRef<HTMLDivElement | null>(null)
   const searchRef = useRef<HTMLInputElement | null>(null)
   const listId = useId()
-  const active = commodities.find((c) => c.id === value) ?? commodities[0]
+  const active = commodities.find((c) => c.id === value) ?? (allowEmpty ? undefined : commodities[0])
 
   useEffect(() => {
     if (!open) return
@@ -73,7 +76,9 @@ export function CommoditySelect({
       >
         <span className="flex min-w-0 flex-col leading-tight">
           <span className="text-xs text-slate">Komoditas</span>
-          <span className="truncate text-sm font-bold">{active?.name ?? "Pilih"}</span>
+          <span className="truncate text-sm font-bold">
+            {active?.name ?? (allowEmpty ? "Semua komoditas" : "Pilih")}
+          </span>
         </span>
         {active != null && hintFor != null ? (
           <span className="tabular-nums ml-auto shrink-0 text-sm font-semibold text-slate">
@@ -118,6 +123,23 @@ export function CommoditySelect({
             aria-label="Komoditas"
             className="max-h-72 overflow-auto py-1"
           >
+            {allowEmpty ? (
+              <li>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={value === ""}
+                  onClick={() => {
+                    onChange("")
+                    setOpen(false)
+                    setQuery("")
+                  }}
+                  className="flex min-h-11 w-full items-center px-4 py-1.5 text-left text-sm font-medium"
+                >
+                  Semua komoditas
+                </button>
+              </li>
+            ) : null}
             {matchCount === 0 ? (
               <li className="px-4 py-3 text-sm text-slate">
                 Tidak ada komoditas yang cocok.
