@@ -1,4 +1,5 @@
-import { Card, Select } from "@monitor-pangan/ui"
+import { Card } from "@monitor-pangan/ui"
+import { FieldSelect } from "#/components/field-trigger.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import {
   MEDIAN_CAPTION,
@@ -27,17 +28,14 @@ const provinces = loadProvinces()
 export function LaporanProvince({ rows, commodityId, provinceCode, onProvince }: LaporanProvinceProps) {
   return (
     <Card padding="md" className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-slate">Provinsi</span>
-        <Select value={provinceCode ?? ""} onChange={(event) => onProvince(event.target.value)}>
-          <option value="">Pilih provinsi</option>
-          {provinces.map((province) => (
-            <option key={province.code} value={province.code}>
-              {province.name}
-            </option>
-          ))}
-        </Select>
-      </label>
+      <FieldSelect label="Provinsi" value={provinceCode ?? ""} onChange={(event) => onProvince(event.target.value)}>
+        <option value="">Pilih provinsi</option>
+        {provinces.map((province) => (
+          <option key={province.code} value={province.code}>
+            {province.name}
+          </option>
+        ))}
+      </FieldSelect>
       {provinceCode == null ? null : (
         <div className="grid gap-4 md:grid-cols-2">
           <OutletRollup rows={rows} provinceCode={provinceCode} commodityId={commodityId} outlet="pasar" />

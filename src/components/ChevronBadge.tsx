@@ -14,7 +14,10 @@ export function ChevronBadge({ flipped }: { flipped?: boolean }) {
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={cn("h-4 w-4 translate-y-px", flipped && "rotate-180")}
+        className={cn(
+          "h-4 w-4 translate-y-px transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none",
+          flipped && "rotate-180",
+        )}
       >
         <path d="m4 6 4 4 4-4" />
       </svg>

@@ -1,5 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react"
-import { Input, cardClass } from "@monitor-pangan/ui"
+import { Input } from "@monitor-pangan/ui"
+import { ChevronBadge } from "#/components/ChevronBadge.tsx"
+import { fieldMenuClass, fieldTriggerClass } from "#/components/field-trigger.tsx"
 import { cn } from "#/lib/utils.ts"
 import type { Commodity } from "#/data/catalog.ts"
 
@@ -26,6 +28,8 @@ export function CommoditySelect({
   const rootRef = useRef<HTMLDivElement | null>(null)
   const searchRef = useRef<HTMLInputElement | null>(null)
   const listId = useId()
+  const labelId = useId()
+  const valueId = useId()
   const active = commodities.find((c) => c.id === value) ?? (allowEmpty ? undefined : commodities[0])
 
   useEffect(() => {
@@ -61,51 +65,33 @@ export function CommoditySelect({
 
   const matchCount = groups.reduce((sum, [, items]) => sum + items.length, 0)
 
+  const valueLabel = active?.name ?? (allowEmpty ? "Semua komoditas" : "Pilih")
+
   return (
-    <div ref={rootRef} className="relative w-full">
+    <div ref={rootRef} className="relative flex w-full flex-col gap-1">
+      <span id={labelId} className="text-sm text-slate">
+        Komoditas
+      </span>
       <button
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
+        aria-labelledby={`${labelId} ${valueId}`}
         onClick={() => setOpen((v) => !v)}
-        className={cn(
-          cardClass("none", "flex min-h-11 w-full items-center gap-2 px-3 py-1.5 text-left"),
-          "transition-[scale,background-color,border-color] duration-150 ease-out active:scale-[0.96]",
-        )}
+        className={fieldTriggerClass()}
       >
-        <span className="flex min-w-0 flex-col leading-tight">
-          <span className="text-xs text-slate">Komoditas</span>
-          <span className="truncate text-sm font-bold">
-            {active?.name ?? (allowEmpty ? "Semua komoditas" : "Pilih")}
-          </span>
+        <span id={valueId} className="min-w-0 flex-1 truncate">
+          {valueLabel}
         </span>
         {active != null && hintFor != null ? (
-          <span className="tabular-nums ml-auto shrink-0 text-sm font-semibold text-slate">
-            {hintFor(active)}
-          </span>
+          <span className="tabular-nums shrink-0 text-sm font-semibold text-slate">{hintFor(active)}</span>
         ) : null}
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-slate">
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={cn(
-              "h-4 w-4 translate-y-px transition-transform duration-150 ease-out",
-              open && "rotate-180",
-            )}
-          >
-            <path d="m4 6 4 4 4-4" />
-          </svg>
-        </span>
+        <ChevronBadge flipped={open} />
       </button>
 
       {open ? (
-        <div className={cardClass("none", "absolute inset-x-0 top-full z-20 mt-1 overflow-hidden shadow-lg")}>
+        <div className={fieldMenuClass()}>
           <div className="border-b border-hairline p-2">
             <Input
               ref={searchRef}
@@ -114,7 +100,7 @@ export function CommoditySelect({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari komoditas…"
               aria-label="Cari komoditas"
-              className="min-h-11 w-full"
+              className="h-11 w-full py-0"
             />
           </div>
           <ul
@@ -134,7 +120,7 @@ export function CommoditySelect({
                     setOpen(false)
                     setQuery("")
                   }}
-                  className="flex min-h-11 w-full items-center px-4 py-1.5 text-left text-sm font-medium"
+                  className="flex h-11 w-full items-center px-3 text-left text-sm font-medium"
                 >
                   Semua komoditas
                 </button>
@@ -165,7 +151,7 @@ export function CommoditySelect({
                         setQuery("")
                       }}
                       className={cn(
-                        "flex min-h-11 w-full items-center gap-2 px-4 py-1.5 text-left",
+                        "flex h-11 w-full items-center gap-2 px-3 text-left",
                         "transition-[background-color] duration-150 ease-out",
                         selected ? "bg-ember-soft" : "hover:bg-muted",
                       )}
