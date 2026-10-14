@@ -2,7 +2,7 @@ import { DateTime, Effect } from "effect"
 import { assert, it } from "@effect/vitest"
 import { loadProvinces } from "#/data/geo.ts"
 import type { PublicReport } from "#/data/laporan.ts"
-import { PLACES, placeByCode } from "#/data/places.ts"
+import { PLACES, nearestPlace, placeByCode } from "#/data/places.ts"
 import { jpegHasExif, PHOTO_MAX_EDGE, fittedSize } from "#/lib/photo.ts"
 import {
   cityMedian,
@@ -233,6 +233,11 @@ it.effect("the place list is 514 kab/kota on the 38 province codes", () =>
     assert.ok(wakatobi)
     assert.ok(wakatobi.longitude > 100)
     assert.strictEqual(placeByCode("0000"), null)
+    const bandung = nearestPlace(-6.910656, 107.60987)
+    assert.strictEqual(bandung?.code, "3273")
+    const pusat = nearestPlace(-6.172913, 106.818696)
+    assert.strictEqual(pusat?.code, "3171")
+    assert.strictEqual(nearestPlace(0, 0, []), null)
   }),
 )
 

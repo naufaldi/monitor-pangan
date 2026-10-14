@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
 import { Effect, Schema } from "effect"
-import { Button, Card, Input, Select } from "@monitor-pangan/ui"
+import { Button, Card, Input } from "@monitor-pangan/ui"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
+import { FieldSelect } from "#/components/field-trigger.tsx"
 import { PlaceSelect } from "#/components/PlaceSelect.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { fetchTurnstileSiteKey, postReport, putPhoto, LaporanClientError } from "#/data/laporan-client.ts"
 import { SAVED_COPY, SubmitBodySchema, aliasHasUrl, type Outlet } from "#/data/laporan.ts"
+import { formatRupiahAmount, parseRupiahInput } from "#/lib/format.ts"
 import { downscaleToJpeg } from "#/lib/photo.ts"
 
 type TurnstileApi = {
@@ -24,7 +26,7 @@ type TurnstileApi = {
 export function LaporForm() {
   const [commodityId, setCommodityId] = useState(COMMODITIES[0]?.id ?? "beras")
   const [outlet, setOutlet] = useState<Outlet>("pasar")
-  const [price, setPrice] = useState("")
+  const [price, setPrice] = useState<number | null>(null)
   const [placeCode, setPlaceCode] = useState("")
   const [alias, setAlias] = useState("")
   const [file, setFile] = useState<File | null>(null)
@@ -73,7 +75,7 @@ export function LaporForm() {
     event.preventDefault()
     if (busy.current) return
     setError(null)
-    const parsedPrice = Number(price)
+    const parsedPrice = price ?? Number.NaN
     const aliasValue = alias.trim() === "" ? null : alias.trim()
     if (aliasValue != null && aliasHasUrl(aliasValue)) {
       setError("Alias tidak boleh berisi tautan.")
@@ -138,26 +140,29 @@ export function LaporForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <CommoditySelect commodities={COMMODITIES} value={commodityId} onChange={setCommodityId} />
+      <FieldSelect
+        label="Jenis tempat"
+        value={outlet}
+        onChange={(event) => setOutlet(event.target.value === "ritel" ? "ritel" : "pasar")}
+      >
+        <option value="pasar">Pasar</option>
+        <option value="ritel">Ritel</option>
+      </FieldSelect>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-slate">Jenis tempat</span>
-        <Select
-          value={outlet}
-          onChange={(event) => setOutlet(event.target.value === "ritel" ? "ritel" : "pasar")}
-          aria-label="Jenis tempat"
-        >
-          <option value="pasar">Pasar</option>
-          <option value="ritel">Ritel</option>
-        </Select>
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-slate">Harga (rupiah)</span>
-        <Input
-          inputMode="numeric"
-          value={price}
-          onChange={(event) => setPrice(event.target.value)}
-          aria-label="Harga"
-          className="min-h-11"
-        />
+        <span className="text-slate">Harga</span>
+        <div className="relative">
+          <span aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-semibold">
+            Rp
+          </span>
+          <Input
+            inputMode="numeric"
+            autoComplete="off"
+            value={price == null ? "" : formatRupiahAmount(price)}
+            onChange={(event) => setPrice(parseRupiahInput(event.target.value))}
+            aria-label="Harga"
+            className="h-11 w-full py-0 pr-3 pl-10 tabular-nums"
+          />
+        </div>
       </label>
       <PlaceSelect value={placeCode} onChange={setPlaceCode} />
       <label className="flex flex-col gap-1 text-sm">

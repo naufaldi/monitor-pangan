@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
-import { formatDateLong, formatDateShort, formatMonthYear, formatSeriesDate } from "./format.ts"
+import { formatDateLong, formatDateShort, formatMonthYear, formatRupiahAmount, formatSeriesDate, parseRupiahInput } from "./format.ts"
 
 it.effect("formats a month bucket as Indonesian Mon YYYY for long-range axes", () =>
   Effect.sync(() => {
@@ -14,5 +14,18 @@ it.effect("formats a month bucket as Indonesian Mon YYYY for long-range axes", (
     assert.notStrictEqual(formatSeriesDate("2026-09-01", "month"), "1 Sep 2026")
     assert.strictEqual(formatSeriesDate("2026-09-28", "day"), "28 Sep 2026")
     assert.strictEqual(formatSeriesDate("2026-09-14", "week"), "14 Sep 2026")
+  }),
+)
+
+it.effect("groups typed rupiah in id-ID and keeps an integer", () =>
+  Effect.sync(() => {
+    assert.strictEqual(formatRupiahAmount(10000), "10.000")
+    assert.strictEqual(formatRupiahAmount(1000000), "1.000.000")
+    assert.strictEqual(parseRupiahInput("10000"), 10000)
+    assert.strictEqual(parseRupiahInput("10.000"), 10000)
+    assert.strictEqual(parseRupiahInput("Rp 10.000"), 10000)
+    assert.strictEqual(parseRupiahInput(""), null)
+    assert.strictEqual(parseRupiahInput("Rp "), null)
+    assert.notStrictEqual(parseRupiahInput("10.000"), 10)
   }),
 )

@@ -69,6 +69,25 @@ export function formatMonthYear(iso: string): string {
   return `${MONTHS[m - 1] ?? m} ${y}`
 }
 
+const RUPIAH_DIGITS = 7
+
+/** Integer rupiah grouped in id-ID, without the Rp prefix. 10000 → "10.000". */
+export function formatRupiahAmount(value: number): string {
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(Math.trunc(Math.abs(value)))
+}
+
+/**
+ * Integer rupiah from typed text. Grouping separators and an Rp prefix are
+ * ignored, so "Rp 10.000" stays 10000 rather than 10.
+ */
+export function parseRupiahInput(text: string): number | null {
+  const digits = text.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, RUPIAH_DIGITS)
+  if (digits === "") return null
+  const value = Number(digits)
+  if (!Number.isSafeInteger(value)) return null
+  return value
+}
+
 /** Format a signed rupiah delta as "+Rp 2.000" / "-Rp 500" / "Rp 0". */
 export function formatRupiah(value: number, signed = false): string {
   const grouped = new Intl.NumberFormat("id-ID", {

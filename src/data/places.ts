@@ -538,3 +538,31 @@ export function placeByCode(code: string): Place | null {
   return byCode.get(code) ?? null
 }
 
+function distanceKm(latA: number, lngA: number, latB: number, lngB: number): number {
+  const toRad = (degrees: number) => (degrees * Math.PI) / 180
+  const dLat = toRad(latB - latA)
+  const dLng = toRad(lngB - lngA)
+  const lat1 = toRad(latA)
+  const lat2 = toRad(latB)
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2
+  return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
+}
+
+/** Nearest checked-in kota/kabupaten centroid. No network lookup. */
+export function nearestPlace(
+  latitude: number,
+  longitude: number,
+  places: readonly Place[] = PLACES,
+): Place | null {
+  let best: Place | null = null
+  let bestDistance = Number.POSITIVE_INFINITY
+  for (const place of places) {
+    const distance = distanceKm(latitude, longitude, place.latitude, place.longitude)
+    if (distance < bestDistance) {
+      best = place
+      bestDistance = distance
+    }
+  }
+  return best
+}
+

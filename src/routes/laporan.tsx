@@ -9,7 +9,7 @@ import { LaporanProvince } from "#/components/LaporanProvince.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { fetchReports } from "#/data/laporan-client.ts"
 import { EMPTY_WINDOW_COPY, NO_PIN_COPY, otherOutlet, outletLabel, type Outlet, type PublicReport, type ReportsPayload } from "#/data/laporan.ts"
-import { parseCommoditySearch } from "#/lib/commodity-search.ts"
+import { parseLaporanSearch } from "#/lib/laporan-search.ts"
 import { loadProvinces } from "#/data/geo.ts"
 import { LIST_PAGE_SIZE, mapAndProvinceRows } from "#/lib/laporan.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
@@ -44,18 +44,14 @@ export const Route = createFileRoute("/laporan")({
     links: seoLinks("laporan"),
     scripts: seoScripts("laporan"),
   }),
-  validateSearch: (search: Record<string, unknown>) => {
-    const outlet: Outlet = search.outlet === "ritel" ? "ritel" : "pasar"
-    const commodity = parseCommoditySearch(search).komoditas
-    const provinsi = typeof search.provinsi === "string" && provinces.has(search.provinsi) ? search.provinsi : undefined
-    return { outlet, komoditas: commodity, provinsi }
-  },
+  validateSearch: (search: Record<string, unknown>) => parseLaporanSearch(search, provinces),
   component: LaporanPage,
 })
 
 function LaporanPage() {
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
+  const outlet: Outlet = search.outlet === "ritel" ? "ritel" : "pasar"
   const commodityId = search.komoditas ?? null
   const [mapRows, setMapRows] = useState<readonly PublicReport[]>([])
   const [provinceRows, setProvinceRows] = useState<readonly PublicReport[]>([])
@@ -71,10 +67,10 @@ function LaporanPage() {
       Effect.gen(function* () {
         const [selected, other, listed] = yield* Effect.all(
           [
-            loadWindow(search.outlet, commodityId),
-            loadWindow(otherOutlet(search.outlet), commodityId),
+            loadWindow(outlet, commodityId),
+            loadWindow(otherOutlet(outlet), commodityId),
             fetchReports({
-              outlet: search.outlet,
+              outlet,
               commodityId,
               cursor: null,
               windowOnly: true,
@@ -116,7 +112,7 @@ function LaporanPage() {
     return () => {
       requestGen.current += 1
     }
-  }, [search.outlet, commodityId])
+  }, [outlet, commodityId])
 
   const loadOlder = () => {
     if (more == null) return
@@ -124,7 +120,7 @@ function LaporanPage() {
     const generation = requestGen.current
     void Effect.runPromise(
       fetchReports({
-        outlet: search.outlet,
+        outlet,
         commodityId,
         cursor: request.cursor,
         windowOnly: request.windowOnly,
@@ -143,7 +139,7 @@ function LaporanPage() {
             }
             setListRows((current) => [
               ...current,
-              ...page.rows.filter((row) => row.outlet === search.outlet && !current.some((item) => item.id === row.id)),
+              ...page.rows.filter((row) => row.outlet === outlet && !current.some((item) => item.id === row.id)),
             ])
             if (page.nextCursor != null) {
               setMore({ windowOnly: request.windowOnly, cursor: page.nextCursor })
@@ -167,14 +163,14 @@ function LaporanPage() {
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
-          active={search.outlet === "pasar"}
-          onClick={() => void navigate({ search: (prev) => ({ ...prev, outlet: "pasar" }) })}
+          active={outlet === "pasar"}
+          onClick={() => void navigate({ search: (prev) => ({ ...prev, outlet: undefined }) })}
         >
           {outletLabel("pasar")}
         </Button>
         <Button
           type="button"
-          active={search.outlet === "ritel"}
+          active={outlet === "ritel"}
           onClick={() => void navigate({ search: (prev) => ({ ...prev, outlet: "ritel" }) })}
         >
           {outletLabel("ritel")}
@@ -192,7 +188,7 @@ function LaporanPage() {
       />
       <LaporanMap
         rows={mapRows}
-        outlet={search.outlet}
+        outlet={outlet}
         commodityId={commodityId}
         onProvince={(code) => void navigate({ search: (prev) => ({ ...prev, provinsi: code }) })}
       />
