@@ -3,3 +3,5 @@ export type { BadgeProps, BadgeTone, ButtonProps, ButtonVariant, CardPadding, Ca
 export { color } from "./tokens.ts"
 export type { ColorToken } from "./tokens.ts"
 export { ChevronBadge, FieldSelect, FileInput, fieldMenuClass, fieldTriggerClass } from "./field.tsx"
+export { SegmentedControl } from "./segmented.tsx"
+export type { SegmentedOption } from "./segmented.tsx"
