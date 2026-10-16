@@ -1,7 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react"
-import { Input } from "@monitor-pangan/ui"
-import { ChevronBadge } from "#/components/ChevronBadge.tsx"
-import { fieldMenuClass, fieldTriggerClass } from "#/components/field-trigger.tsx"
+import { ChevronBadge, Input, fieldMenuClass, fieldTriggerClass } from "@monitor-pangan/ui"
 import { cn } from "#/lib/utils.ts"
 import type { Commodity } from "#/data/catalog.ts"
 

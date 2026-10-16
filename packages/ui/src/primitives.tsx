@@ -6,13 +6,25 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))
 }
 
-export type ButtonVariant = "pill" | "rect"
+/** Keyboard focus ring shared by every interactive primitive. */
+export const focusRing =
+  "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+
+export type ButtonVariant = "pill" | "rect" | "primary"
 
 export function buttonClass(variant: ButtonVariant = "pill", active = false, className?: string): string {
   return cn(
     "min-h-11 border text-sm font-semibold transition-transform active:scale-[0.96]",
-    variant === "pill" ? "rounded-full px-4 py-2" : "tabular-nums rounded-lg px-3 py-1.5",
-    active ? "border-ink bg-ink text-white" : "border-hairline bg-paper text-ink",
+    "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100",
+    focusRing,
+    variant === "pill" && "rounded-full px-4 py-2",
+    variant === "rect" && "tabular-nums rounded-lg px-3 py-1.5",
+    variant === "primary" && "rounded-lg px-4 py-2",
+    variant === "primary"
+      ? "border-leaf-deep bg-leaf-deep text-paper"
+      : active
+        ? "border-ink bg-ink text-white"
+        : "border-hairline bg-paper text-ink",
     className,
   )
 }
@@ -65,7 +77,7 @@ export function Badge({ tone = "ember", className, ...rest }: BadgeProps) {
 }
 
 export function inputClass(className?: string): string {
-  return cn("rounded-lg border border-input bg-paper px-3 py-1.5 text-sm", className)
+  return cn("min-h-11 rounded-lg border border-hairline bg-paper px-3 py-1.5 text-sm", focusRing, className)
 }
 
 export type InputProps = InputHTMLAttributes<HTMLInputElement> & {
@@ -77,7 +89,7 @@ export function Input({ className, ref, ...rest }: InputProps) {
 }
 
 export function selectClass(className?: string): string {
-  return cn("min-h-11 rounded-lg border border-input bg-paper px-3 py-1.5 text-sm font-semibold", className)
+  return cn("min-h-11 rounded-lg border border-hairline bg-paper px-3 py-1.5 text-sm font-semibold", focusRing, className)
 }
 
 export type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {

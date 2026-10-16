@@ -1,5 +1,4 @@
-import { Card } from "@monitor-pangan/ui"
-import { FieldSelect } from "#/components/field-trigger.tsx"
+import { Card, FieldSelect } from "@monitor-pangan/ui"
 import { COMMODITIES } from "#/data/catalog.ts"
 import {
   MEDIAN_CAPTION,

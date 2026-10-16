@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react"
-import { Input, Select, cardClass } from "@monitor-pangan/ui"
+import { ChevronBadge, Input, Select, cardClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPrice } from "#/lib/format.ts"
 import { cn } from "#/lib/utils.ts"
-import { ChevronBadge } from "#/components/ChevronBadge.tsx"
 import type { PriceUnit } from "#/data/catalog.ts"
 
 export type TableRow = {

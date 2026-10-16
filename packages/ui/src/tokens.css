@@ -7,9 +7,11 @@
   --card-foreground: oklch(0.153 0.006 107.1);
   --muted: oklch(0.967 0.001 286.375);
   --muted-foreground: oklch(0.58 0.031 107.3);
-  --border: oklch(0.93 0.007 106.5);
-  --input: oklch(0.93 0.007 106.5);
-  --ring: oklch(0.737 0.021 106.9);
+  --border: #e4e6df;
+  --input: #e4e6df;
+  --ring: #1a1c16;
+  --z-toolbar: 40;
+  --z-menu: 50;
   --radius: 0.625rem;
 }
 
@@ -38,6 +40,7 @@
   --color-leaf: #00bd7d;
   --color-leaf-soft: #e7f6ef;
   --color-leaf-deep: #00714c;
+  --color-selected: #e9ebe3;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);

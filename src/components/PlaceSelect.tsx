@@ -1,7 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react"
-import { Button, Input } from "@monitor-pangan/ui"
-import { ChevronBadge } from "#/components/ChevronBadge.tsx"
-import { fieldMenuClass, fieldTriggerClass } from "#/components/field-trigger.tsx"
+import { Button, ChevronBadge, Input, fieldMenuClass, fieldTriggerClass } from "@monitor-pangan/ui"
 import { PLACES, nearestPlace, type Place } from "#/data/places.ts"
 import { cn } from "#/lib/utils.ts"
 
