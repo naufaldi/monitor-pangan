@@ -13,6 +13,17 @@ TanStack Start + TanStack Router + React 19 + Vite 8 + Tailwind 4 + Leaflet, Clo
 - `tsconfig.json` maps `@monitor-pangan/ui` to `./packages/ui/src/index.ts` and `#/*` to `./src/*`.
 - Do not create a second button, card, badge, input, or select implementation in the app.
 
+## Reusable components (always)
+
+Always build UI from reusable components in `@monitor-pangan/ui`. Consistency comes from one implementation per pattern.
+
+- Before writing markup, check `packages/ui/src/index.ts` for a component or class helper that already does the job, and use it.
+- If one exists but doesn't fit, extend it with a prop or variant in `packages/ui`. Do not fork it or restyle it in the call site.
+- If a pattern has no shared component yet and shows up a second time (select, search box, option row, stat, delta, card header, table cell, page shell, toolbar, empty/error state), move it into `packages/ui`, export it from `index.ts`, and replace both copies in the same change.
+- Components in `packages/ui` take data through props and never import from `src/`. App-specific logic stays in `src/components`, composed from the shared pieces.
+- Style shared components only with tokens. Callers pass `className` for layout (spacing, width, grid), not for color, border, radius or typography.
+- Test shared class helpers with `@effect/vitest` beside the component (`packages/ui/src/*.test.ts`).
+
 ## Layout
 
 - `src/routes/` — file routes (`__root.tsx` owns header and `Navbar`, `index.tsx` owns map plus table, `tren.tsx` owns trends plus movers)
