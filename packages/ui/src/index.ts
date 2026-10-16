@@ -6,3 +6,5 @@ export { ChevronBadge, FieldSelect, FileInput, fieldMenuClass, fieldTriggerClass
 export { SegmentedControl } from "./segmented.tsx"
 export type { SegmentedOption } from "./segmented.tsx"
 export { PageHeader, SectionHeader, eyebrowClass, pageShellClass, selectedRowClass, stickyToolbarClass } from "./layout.tsx"
+export { StatusMessage } from "./status.tsx"
+export type { StatusTone } from "./status.tsx"
