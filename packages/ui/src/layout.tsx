@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { cn } from "./primitives.tsx"
+import { buttonClass, cn } from "./primitives.tsx"
 
 /** Main column for every route. */
 export const pageShellClass = "mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4"
@@ -49,4 +49,25 @@ export function SectionHeader({ title, description, className }: SectionHeaderPr
       {description != null ? <p className="text-sm text-slate">{description}</p> : null}
     </div>
   )
+}
+
+type ShellProps = { className?: string; children: ReactNode }
+
+/** <main> for every route. Pass `className="max-w-md"` for narrow forms. */
+export function PageShell({ className, children }: ShellProps) {
+  return <main className={cn(pageShellClass, className)}>{children}</main>
+}
+
+/** Sticky filter bar. Children lay out in a wrapping row. */
+export function StickyToolbar({ className, children }: ShellProps) {
+  return (
+    <div className={cn(stickyToolbarClass, className)}>
+      <div className="flex flex-wrap items-end gap-2">{children}</div>
+    </div>
+  )
+}
+
+/** Nav link pill. Apply to the router <Link> itself, so the hit area equals the pill. */
+export function navPillClass(active: boolean): string {
+  return buttonClass("pill", active, "inline-flex shrink-0 items-center whitespace-nowrap")
 }

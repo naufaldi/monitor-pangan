@@ -5,7 +5,19 @@ export type { ColorToken } from "./tokens.ts"
 export { ChevronBadge, FieldSelect, FileInput, fieldMenuClass, fieldTriggerClass } from "./field.tsx"
 export { SegmentedControl } from "./segmented.tsx"
 export type { SegmentedOption } from "./segmented.tsx"
-export { PageHeader, SectionHeader, eyebrowClass, pageShellClass, selectedRowClass, stickyToolbarClass } from "./layout.tsx"
+export {
+  PageHeader,
+  PageShell,
+  SectionHeader,
+  StickyToolbar,
+  eyebrowClass,
+  navPillClass,
+  pageShellClass,
+  selectedRowClass,
+  stickyToolbarClass,
+} from "./layout.tsx"
+export { tableClass, tdClass, thClass } from "./table.ts"
+export type { CellAlign } from "./table.ts"
 export { StatusMessage } from "./status.tsx"
 export type { StatusTone } from "./status.tsx"
 export { Delta, directionGlyph, directionTextClass } from "./delta.tsx"
