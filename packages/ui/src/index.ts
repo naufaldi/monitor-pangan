@@ -2,3 +2,4 @@ export { Badge, Button, Card, Input, Select, badgeClass, buttonClass, cardClass,
 export type { BadgeProps, BadgeTone, ButtonProps, ButtonVariant, CardPadding, CardProps, InputProps, SelectProps } from "./primitives.tsx"
 export { color } from "./tokens.ts"
 export type { ColorToken } from "./tokens.ts"
+export { ChevronBadge, FieldSelect, FileInput, fieldMenuClass, fieldTriggerClass } from "./field.tsx"

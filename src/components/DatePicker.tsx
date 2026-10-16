@@ -1,6 +1,5 @@
 import { useMemo } from "react"
-import { Button, Select, cardClass } from "@monitor-pangan/ui"
-import { ChevronBadge } from "#/components/ChevronBadge.tsx"
+import { Button, ChevronBadge, Select, cardClass } from "@monitor-pangan/ui"
 import { formatDateShort } from "#/lib/format.ts"
 import { cn } from "#/lib/utils.ts"
 

@@ -4,7 +4,6 @@ import { createFileRoute } from "@tanstack/react-router"
 import { ChartHighlights } from "#/components/ChartHighlights.tsx"
 import { ChartSummaryStrip } from "#/components/ChartSummaryStrip.tsx"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
-import { ChevronBadge } from "#/components/ChevronBadge.tsx"
 import { MoversList, type MoverItem } from "#/components/MoversList.tsx"
 import { TrendChart } from "#/components/TrendChart.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
@@ -21,7 +20,7 @@ import { DEFAULT_TIMEFRAME, TIMEFRAMES, type TimeframeId, timeframeById, windowR
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { formatDateShort, formatPct, formatPrice, formatSeriesDate } from "#/lib/format.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
-import { Button, Select } from "@monitor-pangan/ui"
+import { Button, ChevronBadge, Select } from "@monitor-pangan/ui"
 
 export const Route = createFileRoute("/tren")({
   ssr: false,
