@@ -8,17 +8,47 @@ deployment, new source scrape, report submission or live scheduled fetch ran.
 
 ## Gates
 
-After the runtime fix, sequential `rtk pnpm typecheck`, the 25 explicit affected
-Vitest files listed below, then `rtk pnpm build` passed: **190 tests**. Route and
+After the final parser boundary fix, sequential `rtk pnpm typecheck`, the 25
+previously affected Vitest files plus the new parser file listed below, then
+`rtk pnpm build` passed: **212 tests across 26 files**. Route and
 data generators produced no tracked diff. Existing Vite chunk-size and router
 circular-import warnings remain; the six prerendered routes completed.
 
 ```sh
 rtk pnpm typecheck
-rtk pnpm exec vitest run src/data/price-summary.test.ts src/data/provider.test.ts src/data/provider.effect.test.ts src/data/price-schema.test.ts src/data/api-client.test.ts src/data/price-request.test.ts src/lib/province-fill.test.ts src/lib/civil-date.test.ts src/lib/commodity-search.test.ts src/lib/source-copy.test.ts src/lib/chart-summary.test.ts src/lib/chart-marks.test.ts src/lib/chart-window.test.ts src/lib/daya-beli.test.ts src/worker/price-store.test.ts src/worker/price-http.test.ts src/worker/ingest-plan.test.ts src/worker/ingest-state.test.ts src/worker/ingest.test.ts src/worker/d1-store.test.ts src/worker/index.test.ts src/worker/pihps-health.test.ts src/worker/laporan-store.test.ts scripts/pihps-scrape.test.mjs scripts/price-import.test.mjs
+rtk pnpm exec vitest run src/data/price-summary.test.ts src/data/provider.test.ts src/data/provider.effect.test.ts src/data/price-schema.test.ts src/data/api-client.test.ts src/data/price-request.test.ts src/lib/province-fill.test.ts src/lib/civil-date.test.ts src/lib/commodity-search.test.ts src/lib/source-copy.test.ts src/lib/chart-summary.test.ts src/lib/chart-marks.test.ts src/lib/chart-window.test.ts src/lib/daya-beli.test.ts src/worker/price-store.test.ts src/worker/price-http.test.ts src/worker/ingest-plan.test.ts src/worker/ingest-state.test.ts src/worker/ingest.test.ts src/worker/d1-store.test.ts src/worker/index.test.ts src/worker/pihps-health.test.ts src/worker/laporan-store.test.ts scripts/pihps-scrape.test.mjs scripts/price-import.test.mjs src/data/pihps-grid.test.ts
 rtk pnpm build
 rtk pnpm exec wrangler dev --port 8787
 ```
+
+## Final source-boundary regression and read recheck
+
+The final review reproduced error envelopes becoming completed-empty days and
+zero/negative prices reaching storage. The new regressions first failed in 17
+cases. `parsePihpsGrid` now requires a valid `data` array and decodes present,
+selected commodity observations as finite positive prices. Empty arrays,
+null/blank/dash cells and omitted target-date cells remain legitimate absence.
+The shared number-format helper used by the CLI and its rounding are unchanged.
+
+Real SQLite ingestion regressions prove two rejected attempts leave an older
+date in `error` with error jobs, and the same date completes only after a valid
+empty response. Mixed-scope error envelopes and invalid prices reject a live
+refresh before any observation write, retaining the existing price and live
+marker while recording an error job. The focused parser, ingestion, store and
+CLI checks passed **54 tests across 5 files** before the full affected gate.
+
+The old local Wrangler process had ended; the same command above relaunched
+port 8787. Fresh read-only GET checks against the final build are retained in
+[`final-fix-http.json`](final-fix-http.json): the two historical snapshots still
+return 38 rows, 34 observations and the expected Rp 15,750/Rp 11,700 means;
+freshness returns 7,730 positive finite cells through 2026-10-19; health returns
+200 `ok`. Every response has `cache-control: no-store`. These checks repeat only
+those real reads; the fixture and browser evidence below remains the earlier
+capture. No scheduled source request or UI fixture was repeated.
+
+The read-only history verifier passed both before and after these GETs against
+`data/repairs/pr12-local-before.json`. Counts and full/recent hashes remain
+exactly those listed under Cleanup and boundaries below.
 
 ## Actual HTTP evidence
 

@@ -27,6 +27,66 @@ const JAKARTA_GRID = {
 
 const CLOCK = 1790579700000
 
+it.effect("error envelopes keep an older day unresolved until a valid empty retry", () => Effect.gen(function* () {
+  yield* TestClock.setTime(CLOCK)
+  const fixture = yield* sqliteFixture
+  let valid = false
+  const requested: string[] = []
+  const source = Layer.succeed(PihpsSource, { fetchGrid: (date) => Effect.sync(() => {
+    requested.push(date)
+    return valid ? { data: [] } : { error: "upstream unavailable" }
+  }) })
+  yield* Effect.gen(function* () {
+    const store = yield* PriceStore
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const failure = yield* Effect.flip(ingestRecent(1))
+      assert.strictEqual(failure._tag, "PihpsDecodeError")
+      assert.deepStrictEqual(yield* store.coverageSince("2026-09-16"), [{ date: "2026-09-17", status: "error" }])
+    }
+    const jobs = fixture.sqlite.prepare("SELECT status, rows_upserted, note FROM job_runs ORDER BY id").all()
+    assert.deepStrictEqual(jobs.map((job) => ({ ...job })), [
+      { status: "error", rows_upserted: 0, note: "target=2026-09-17 category=PihpsDecodeError" },
+      { status: "error", rows_upserted: 0, note: "target=2026-09-17 category=PihpsDecodeError" },
+    ])
+    assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM prices_daily").get()?.count, 0)
+    valid = true
+    assert.deepStrictEqual(yield* ingestRecent(1), { dates: ["2026-09-17"], rowsUpserted: 0 })
+    assert.ok(requested.every((date) => date === "2026-09-17"))
+    assert.deepStrictEqual(yield* store.coverageSince("2026-09-16"), [{ date: "2026-09-17", status: "empty" }])
+    assert.strictEqual(fixture.sqlite.prepare("SELECT status FROM job_runs ORDER BY id DESC LIMIT 1").get()?.status, "complete")
+  }).pipe(Effect.provide(Layer.mergeAll(d1PriceStoreLayer(fixture.db), source)))
+}))
+
+for (const [label, invalid] of [
+  ["error envelope", { error: "upstream unavailable" }],
+  ["zero price", { data: [{ name: "Beras", level: 1, "19/10/2026": 0 }] }],
+  ["negative price", { data: [{ name: "Beras", level: 1, "19/10/2026": -100 }] }],
+  ["nonfinite price", { data: [{ name: "Beras", level: 1, "19/10/2026": "Infinity" }] }],
+  ["nonnumeric price", { data: [{ name: "Beras", level: 1, "19/10/2026": "bad" }] }],
+] as const) {
+  it.effect(`one scope's ${label} rejects live refresh and preserves good observations`, () => Effect.gen(function* () {
+    yield* TestClock.setTime(1792401300000)
+    const fixture = yield* sqliteFixture
+    for (const date of tradingDaysFromThrough("2026-09-17", "2026-10-19")) yield* fixture.coverage(date, "live")
+    yield* fixture.price("2026-10-19", "11", 16000)
+    const source = Layer.succeed(PihpsSource, { fetchGrid: (_date, provinceId) => Effect.succeed(provinceId === "34"
+      ? invalid
+      : { data: [{ name: "Beras", level: 1, "19/10/2026": "18,000" }] }) })
+    yield* Effect.gen(function* () {
+      const store = yield* PriceStore
+      const failure = yield* Effect.flip(ingestRecent(1))
+      assert.strictEqual(failure._tag, "PihpsDecodeError")
+      assert.deepStrictEqual(yield* store.coverageSince("2026-10-18"), [{ date: "2026-10-19", status: "live" }])
+      assert.deepStrictEqual(yield* store.freshSince("2026-10-18"), {
+        latestDate: "2026-10-19", dates: ["2026-10-19"], prices: { "2026-10-19:beras:11": 16000 },
+      })
+      assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM prices_daily").get()?.count, 1)
+      const job = fixture.sqlite.prepare("SELECT status, rows_upserted, note FROM job_runs").get()
+      assert.deepStrictEqual({ ...job }, { status: "error", rows_upserted: 0, note: "target=2026-10-19 category=PihpsDecodeError" })
+    }).pipe(Effect.provide(Layer.mergeAll(d1PriceStoreLayer(fixture.db), source)))
+  }))
+}
+
 it.effect("decodes a PIHPS provincial grid into rupiah cells", () =>
   Effect.gen(function* () {
     const cells = yield* parsePihpsGrid("2026-09-28", "31", JAKARTA_GRID)
