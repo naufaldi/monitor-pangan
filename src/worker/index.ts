@@ -6,6 +6,8 @@ import { injectFreshScript } from "./html.ts"
 import { ingestRecent, PihpsHttpLive, PriceStore } from "./ingest.ts"
 import { handleLaporan, laporanEdgeFromEnv, laporanHttpError } from "./laporan-http.ts"
 import { laporanStoreLayer, type PhotoBucket } from "./laporan-store.ts"
+import { handlePriceRequest } from "./price-http.ts"
+import { priceReadStoreLayer } from "./price-store.ts"
 
 export interface AssetFetcher {
   fetch(request: Request): Promise<Response>
@@ -47,6 +49,7 @@ const assetsLayer = (assets: AssetFetcher) =>
 export const workerLayer = (env: WorkerEnv) =>
   Layer.mergeAll(
     d1PriceStoreLayer(env.DB),
+    priceReadStoreLayer(env.DB),
     PihpsHttpLive,
     assetsLayer(env.ASSETS),
     laporanStoreLayer(env.DB, env.PHOTOS),
@@ -78,6 +81,8 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
     }),
   )
   if (laporan != null) return laporan
+  const prices = yield* handlePriceRequest(request)
+  if (prices != null) return prices
   if (url.pathname === "/api/pihps/fresh") {
     const after = url.searchParams.get("after") ?? STATIC_LIVE_THROUGH
     if (!isoDate.test(after)) {

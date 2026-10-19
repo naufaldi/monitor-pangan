@@ -2,6 +2,13 @@ import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
 import { isTradingDay, mondayOf, monthBucket, nextIsoDay, tradingDaysFromThrough } from "./civil-date.ts"
 
+it.effect("classifies weekdays and week buckets before the Unix epoch", () => Effect.sync(() => {
+  assert.strictEqual(isTradingDay("1960-01-02"), false)
+  assert.strictEqual(isTradingDay("1960-01-03"), false)
+  assert.strictEqual(isTradingDay("1960-01-04"), true)
+  assert.strictEqual(mondayOf("1960-01-03"), "1959-12-28")
+}))
+
 it.effect("week and month buckets match the PIHPS calendar", () =>
   Effect.sync(() => {
     assert.strictEqual(mondayOf("2026-09-28"), "2026-09-28")

@@ -27,7 +27,7 @@ function isoFromEpochDay(day: number): string {
 
 /** 0 = Monday … 6 = Sunday. 1970-01-01 was a Thursday. */
 function weekdayMonday0(iso: string): number {
-  return (epochDay(iso) + 3) % 7
+  return ((epochDay(iso) + 3) % 7 + 7) % 7
 }
 
 /** Monday of the ISO week that contains this civil date. */
