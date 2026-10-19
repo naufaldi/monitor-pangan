@@ -101,3 +101,22 @@ it.effect("repeated execution resets confirmed counts for each failed attempt", 
     assert.strictEqual((yield* Effect.flip(write)).rowsUpserted, 0)
   }).pipe(Effect.provide(d1PriceStoreLayer(db)))
 }))
+
+it.effect("live retries update attempt timestamps without downgrading coverage or prices", () => Effect.gen(function* () {
+  const fixture = yield* sqliteFixture
+  yield* Effect.gen(function* () {
+    const store = yield* PriceStore
+    yield* store.upsertDay(date, "live", [cell], "2026-10-19T07:15:00Z")
+    for (const [status, attemptedAt] of [
+      ["empty", "2026-10-19T10:15:00Z"],
+      ["error", "2026-10-19T11:15:00Z"],
+      ["pending", "2026-10-19T12:15:00Z"],
+    ] as const) {
+      yield* store.upsertDay(date, status, [], attemptedAt)
+      const marker = fixture.sqlite.prepare("SELECT status, checked_at FROM source_days WHERE date = ?").get(date)
+      assert.strictEqual(marker?.checked_at, attemptedAt)
+      assert.strictEqual(marker?.status, "live")
+      assert.strictEqual((yield* store.freshSince("2026-10-18")).prices["2026-10-19:beras:31"], 16000)
+    }
+  }).pipe(Effect.provide(d1PriceStoreLayer(fixture.db)))
+}))

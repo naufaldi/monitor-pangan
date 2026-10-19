@@ -122,8 +122,9 @@ export const d1PriceStoreLayer = (db: D1Database) => {
   `).bind(JSON.stringify(rows))
   const marker = (date: string, status: CoverageDay["status"], checkedAt: string) => db.prepare(`
     INSERT INTO source_days (date, source_id, status, checked_at) VALUES (?, 'pihps', ?, ?)
-    ON CONFLICT (date, source_id) DO UPDATE SET status = excluded.status, checked_at = excluded.checked_at
-    WHERE source_days.status != 'live' OR excluded.status = 'live'
+    ON CONFLICT (date, source_id) DO UPDATE SET
+      status = CASE WHEN source_days.status = 'live' THEN 'live' ELSE excluded.status END,
+      checked_at = excluded.checked_at
   `).bind(date, status, checkedAt)
   const Changes = Schema.Array(Schema.Struct({ meta: Schema.Struct({ changes: Schema.Number.pipe(Schema.int(), Schema.nonNegative()) }) }))
 

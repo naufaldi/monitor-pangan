@@ -85,6 +85,7 @@ export const ingestRecent = Effect.fn("Pihps.ingestRecent")(function* (maxDays: 
   const startedAt = DateTime.formatIso(yield* DateTime.now)
   let target: string | null = null
   let rowsUpserted = 0
+  let dayOutcome: CoverageDay["status"] | "noop" = "noop"
   const outcome = yield* Effect.exit(Effect.gen(function* () {
     const coverage = yield* store.coverageSince(STATIC_LIVE_THROUGH)
     target = maxDays > 0 ? planIngestDate(today, STATIC_LIVE_THROUGH, coverage) : null
@@ -99,14 +100,15 @@ export const ingestRecent = Effect.fn("Pihps.ingestRecent")(function* (maxDays: 
       { concurrency: 5 },
     )
     const rows = batches.flat()
-    rowsUpserted = yield* store.upsertDay(date, classifySuccessfulDay(date, today, rows.length), rows, startedAt).pipe(
+    dayOutcome = classifySuccessfulDay(date, today, rows.length)
+    rowsUpserted = yield* store.upsertDay(date, dayOutcome, rows, startedAt).pipe(
       Effect.tapError((error) => Effect.sync(() => { rowsUpserted = error.rowsUpserted ?? 0 })),
     )
     return { dates: [date], rowsUpserted } satisfies IngestResult
   }))
   const failure = Exit.isFailure(outcome) ? Option.getOrNull(Cause.failureOption(outcome.cause)) : null
   const category = Exit.isSuccess(outcome) ? "complete" : failure?._tag ?? "Defect"
-  const details = { event: "pihps_ingest", targetDate: target, category, rowsUpserted }
+  const details = { event: "pihps_ingest", targetDate: target, outcome: Exit.isFailure(outcome) ? "error" : dayOutcome, category, rowsUpserted }
   if (Exit.isFailure(outcome)) {
     yield* Effect.logError(details)
     if (target != null) yield* store.upsertDay(target, "error", [], startedAt).pipe(
@@ -120,9 +122,10 @@ export const ingestRecent = Effect.fn("Pihps.ingestRecent")(function* (maxDays: 
     note: `target=${target ?? "none"} category=${category}`,
   }))
   if (Exit.isFailure(recorded)) {
-    yield* Effect.logError({ ...details, event: "pihps_job_record_failed", originalCategory: category, category: "StoreError" })
+    yield* Effect.logError({ ...details, event: "pihps_job_record_failed", outcome: "error", originalCategory: category, category: "StoreError", jobRecorded: false })
   }
   if (Exit.isFailure(outcome)) return yield* Effect.failCause(outcome.cause)
   if (Exit.isFailure(recorded)) return yield* Effect.failCause(recorded.cause)
+  yield* Effect.logInfo({ ...details, jobRecorded: true })
   return outcome.value
 })

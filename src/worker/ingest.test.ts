@@ -1,4 +1,4 @@
-import { Effect, Layer, TestClock } from "effect"
+import { Effect, Layer, Logger, LogLevel, TestClock } from "effect"
 import { assert, it } from "@effect/vitest"
 import { BI_TO_KEMENDAGRI } from "#/data/pihps-catalog.ts"
 import { parsePihpsGrid } from "#/data/pihps-grid.ts"
@@ -213,4 +213,49 @@ it.effect("a terminal-job write failure cannot hide the original source failure"
   )))
   assert.strictEqual(failure._tag, "PihpsFetchError")
   assert.strictEqual(failure.message, "source")
+}))
+
+it.effect("live, pending, empty and no-op runs log completion only after terminal persistence", () => Effect.gen(function* () {
+  const cases = [
+    { clock: CLOCK, covered: false, price: true, targetDate: "2026-09-17", outcome: "live", count: 34 },
+    { clock: CLOCK, covered: false, price: false, targetDate: "2026-09-17", outcome: "empty", count: 0 },
+    { clock: 1792401300000, covered: true, price: false, targetDate: "2026-10-19", outcome: "pending", count: 0 },
+    { clock: 1792304100000, covered: true, price: false, targetDate: null, outcome: "noop", count: 0 },
+  ] as const
+  for (const scenario of cases) {
+    yield* TestClock.setTime(scenario.clock)
+    const events: unknown[] = []
+    const logger = Logger.make(({ message }) => { events.push(message) })
+    yield* ingestRecent(1).pipe(Effect.provide(Layer.mergeAll(
+      Logger.add(logger), Logger.minimumLogLevel(LogLevel.Info),
+      Layer.succeed(PihpsSource, { fetchGrid: (date) => {
+        const [year, month, day] = date.split("-")
+        return Effect.succeed({ data: scenario.price ? [{ name: "Beras", level: 1, [`${day}/${month}/${year}`]: "16,000" }] : [] })
+      } }),
+      Layer.succeed(PriceStore, {
+        coverageSince: () => Effect.succeed(scenario.covered ? tradingDaysFromThrough("2026-09-17", "2026-10-16").map((date) => ({ date, status: "live" as const })) : []),
+        upsertDay: (_date, _status, rows) => Effect.succeed(rows.length),
+        recordJob: () => Effect.sync(() => { events.push("job persisted") }),
+        freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
+      }),
+    )))
+    assert.deepStrictEqual(events, ["job persisted", [{ event: "pihps_ingest", targetDate: scenario.targetDate, outcome: scenario.outcome, category: "complete", rowsUpserted: scenario.count, jobRecorded: true }]])
+  }
+}))
+
+it.effect("failed terminal persistence emits no completion claim", () => Effect.gen(function* () {
+  yield* TestClock.setTime(CLOCK)
+  const events: unknown[] = []
+  const failure = yield* Effect.flip(ingestRecent(1)).pipe(Effect.provide(Layer.mergeAll(
+    Logger.add(Logger.make(({ message }) => { events.push(message) })), Logger.minimumLogLevel(LogLevel.Info),
+    Layer.succeed(PihpsSource, { fetchGrid: () => Effect.succeed({ data: [] }) }),
+    Layer.succeed(PriceStore, {
+      coverageSince: () => Effect.succeed([]),
+      upsertDay: () => Effect.succeed(0),
+      recordJob: () => Effect.fail(new StoreError({ message: "private failed write details" })),
+      freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
+    }),
+  )))
+  assert.strictEqual(failure._tag, "StoreError")
+  assert.deepStrictEqual(events, [[{ event: "pihps_job_record_failed", targetDate: "2026-09-17", outcome: "error", category: "StoreError", originalCategory: "complete", rowsUpserted: 0, jobRecorded: false }]])
 }))
