@@ -102,8 +102,8 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
 
 **Definition of Done:** Remote coverage and local archive results are recorded separately. With account access, the audit has per-year counts, date gaps, recent day/job states, and configured trigger history; without access it explicitly remains unverified. Archive restoration/source comparisons are complete only when the two regression dates trace to actual observations. Unavailable archive/account access does not block independent implementation tasks.
 
-- [ ] Audit remote D1 read-only before deciding production needs historical seeds: count official provincial cells and distinct dates by year, inspect minimum/maximum dates, compare known fixture dates, inspect `source_days`, and inspect recent `job_runs`. Local archive restoration remains the selected source for fixtures; do not overwrite remote data based on local absence. Record missing access separately from missing data.
-- [ ] Use these read-only queries through the existing Wrangler/account session and save summarized counts and outcomes, never credentials:
+- [x] Audit remote D1 read-only before deciding production needs historical seeds: count official provincial cells and distinct dates by year, inspect minimum/maximum dates, compare known fixture dates, inspect `source_days`, and inspect recent `job_runs`. Local archive restoration remains the selected source for fixtures; do not overwrite remote data based on local absence. Record missing access separately from missing data.
+- [x] Use these read-only queries through the existing Wrangler/account session and save summarized counts and outcomes, never credentials:
 
   ```sql
   SELECT substr(date, 1, 4) AS year, COUNT(*) AS cells,
@@ -119,13 +119,13 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
   WHERE source_id = 'pihps' ORDER BY id DESC LIMIT 20;
   ```
 
-- [ ] Compare date membership against eligible weekdays, not just counts/maxima. Classify known empty dates, unresolved/error dates, missing markers, and rows lacking trustworthy coverage. A Friday gap must remain visible even when Monday has prices.
-- [ ] Inspect deployed Cron Triggers and recent execution outcomes separately from the public freshness response. Record the inspection timestamp and what could be verified.
-- [ ] Locate the existing archive. Check linked worktrees and bounded project/download locations; accept a user-provided path when available. Do not overwrite any existing raw files while locating/restoring it.
-- [ ] Inspect the archive file list before extraction. Restore into a temporary staging directory, then validate file dates, region codes, commodity IDs, positive finite prices, and raw scope statuses.
-- [ ] Count verified dates and provincial cells by year. Separate confirmed empty dates from unknown/error dates. Do not infer a successful empty scrape merely from missing rows.
-- [ ] Extract the two historical fixtures and document their provenance. Record all 38 expected snapshot cells, including null cells, from the actual source data.
-- [ ] Identify which historical dates have trustworthy day-level coverage markers for the import in Task 6. Create an explicit repair list only for proven production gaps; an empty repair list means no remote reseed. Keep this audit out of generated frontend bundles until explicitly regenerated.
+- [x] Compare date membership against eligible weekdays, not just counts/maxima. Classify known empty dates, unresolved/error dates, missing markers, and rows lacking trustworthy coverage. A Friday gap must remain visible even when Monday has prices.
+- [x] Inspect deployed Cron Triggers and recent execution outcomes separately from the public freshness response. Record the inspection timestamp and what could be verified.
+- [x] Locate the existing archive. Check linked worktrees and bounded project/download locations; accept a user-provided path when available. Do not overwrite any existing raw files while locating/restoring it.
+- [x] Inspect and stage the recovered archive; validate dates, region codes, commodities and positive finite observations. **Execution adaptation:** pinned derived files were recovered per the clarification above. Original raw HTTP scope statuses remain unavailable and were not invented.
+- [x] Count verified dates and provincial cells by year. Separate confirmed empty dates from unknown/error dates. Do not infer a successful empty scrape merely from missing rows.
+- [x] Extract the two historical fixtures and document their provenance. Record all 38 expected snapshot cells, including null cells, from the actual source data.
+- [x] Identify which historical dates have trustworthy day-level coverage markers for the import in Task 6. Create an explicit repair list only for proven production gaps; an empty repair list means no remote reseed. Keep this audit out of generated frontend bundles until explicitly regenerated.
 
 **Execution evidence:** Audit and derived-archive recovery reviewed and complete: `docs/qa/pr12/data-audit.md`, `repair-manifest.json`, commits `2fe6e96` and `d6f5f15`. The original raw archive remains unavailable; recovered observations cannot prove original HTTP scope completion. Proposed production repair remains unapplied.
 
@@ -212,13 +212,15 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
 
 **Definition of Done:** Historical dates load through D1, stale responses cannot replace the current selection, errors have a working retry, and no loading/error state renders as an official missing survey or `Rp 0`. Home header/footer/date picker agree on the viewed date.
 
-- [ ] Add failing client/state tests for response decoding, retry, and stale-result rejection. An action tagged with key A must not change ready data belonging to key B; test success and failure arrivals in both orders.
-- [ ] Implement Effect-based requests using `Effect.tryPromise`, typed failures, and schema decoding, with fetch interruption wired to cancellation where supported. Keep mutable presentation arrays behind the client conversion rather than forcing a broad readonly migration.
-- [ ] Choose bundle/fresh data only when present for the exact request. Fetch historical snapshots and day charts otherwise. API failures show a retry state; do not add an automatic offline substitute that hides failure. Existing week/month bundles and their fresh-period updates continue to serve those resolutions.
-- [ ] Store the home selection in `?tanggal`. An absent date follows the latest live day; an explicit historical date stays pinned when freshness updates. Reject invalid/unselectable query dates by replacing the URL with the canonical latest selection. Preserve commodity search and back/forward behavior.
-- [ ] Derive the home header badge from the same selected date as its data. Keep the existing latest-data badge behavior on other PIHPS routes and hide it on citizen/admin routes as today. Include freshness revision in any memo that reads the live overlay.
-- [ ] Render loading, unavailable/error, and confirmed-empty states through `StatusMessage` and shared retry `Button`. Show no relative statistics without a price. Omit unloaded commodity hints instead of issuing ten extra requests or showing zero hints.
-- [ ] Run `rtk pnpm exec vitest run src/data/api-client.test.ts src/data/price-request.test.ts src/lib/commodity-search.test.ts src/lib/source-copy.test.ts src/lib/chart-summary.test.ts src/lib/chart-marks.test.ts src/lib/daya-beli.test.ts` and `rtk pnpm typecheck`; commit the route integration.
+- [x] Add failing client/state tests for response decoding, retry, and stale-result rejection. An action tagged with key A must not change ready data belonging to key B; test success and failure arrivals in both orders.
+- [x] Implement Effect-based requests using `Effect.tryPromise`, typed failures, and schema decoding, with fetch interruption wired to cancellation where supported. Keep mutable presentation arrays behind the client conversion rather than forcing a broad readonly migration.
+- [x] Choose bundle/fresh data only when present for the exact request. Fetch historical snapshots and day charts otherwise. API failures show a retry state; do not add an automatic offline substitute that hides failure. Existing week/month bundles and their fresh-period updates continue to serve those resolutions.
+- [x] Store the home selection in `?tanggal`. An absent date follows the latest live day; an explicit historical date stays pinned when freshness updates. Reject invalid/unselectable query dates by replacing the URL with the canonical latest selection. Preserve commodity search and back/forward behavior.
+- [x] Derive the home header badge from the same selected date as its data. Keep the existing latest-data badge behavior on other PIHPS routes and hide it on citizen/admin routes as today. Include freshness revision in any memo that reads the live overlay.
+- [x] Render loading, unavailable/error, and confirmed-empty states through `StatusMessage` and shared retry `Button`. Show no relative statistics without a price. Omit unloaded commodity hints instead of issuing ten extra requests or showing zero hints.
+- [x] Run `rtk pnpm exec vitest run src/data/api-client.test.ts src/data/price-request.test.ts src/lib/commodity-search.test.ts src/lib/source-copy.test.ts src/lib/chart-summary.test.ts src/lib/chart-marks.test.ts src/lib/daya-beli.test.ts` and `rtk pnpm typecheck`; commit the route integration.
+
+**Execution evidence:** Historical client/state/URL integration reviewed, commit `2074298`; 42 targeted tests, typecheck and build passed. Mounted browser/history behavior remains Task 8.
 
 ## Task 5: Standardize scheduled ingestion, retries, and failure records
 
@@ -232,7 +234,7 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
 
 **Definition of Done:** The second daily invocation can recover delayed publication; later dates cannot conceal unresolved earlier weekdays after the static cutoff; failed work cannot advance completion or erase good prices; Cloudflare receives a rejected execution on failure and a successful execution on completion. Existing cron request/concurrency limits are retained.
 
-- [ ] Add failing pure planner/classification tests, including these assertions using a small explicit state list:
+- [x] Add failing pure planner/classification tests, including these assertions using a small explicit state list:
 
   ```ts
   assert.strictEqual(classifySuccessfulDay('2026-10-19', '2026-10-19', 0), 'pending')
@@ -247,13 +249,15 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
   ]), '2026-10-19')
   ```
 
-- [ ] Implement the planner from eligible civil weekdays and recorded state, using existing timezone/date helpers. Select one date; do not use `MAX(date)` as a substitute for a coverage scan. A fully caught-up weekend has no target. A caught-up weekday still allows its current date to refresh.
-- [ ] Make a successful all-empty current-day result pending. Permit the next trigger to recheck it. Only a successful check of an older all-empty date can finalize it as empty. A source/parse exception can never take the successful-empty branch.
-- [ ] Make the store's state transitions explicit and regression-test them against D1/SQLite: pending/error can become live or confirmed empty; existing live observations survive failed/empty retries; incomplete batches never produce a completed marker. Existing live and empty records are parsed with the same schema as new records. Legacy recent-empty markers identified by the audit get a targeted recheck, not a blanket reset of history.
-- [ ] Persist one sanitized terminal `job_runs` record per invocation when D1 is reachable, including no-op runs, target date, success/error, and confirmed write counts. Log error category and target date in structured form. If recording the job itself fails, log both failures; never claim a successful job row was written.
-- [ ] After logging, rethrow the original scheduled failure so Cloudflare marks the invocation failed. Keep an HTTP error mapped to the appropriate response in HTTP handlers; do not confuse that boundary with scheduled execution. Add an Effect failure assertion for the scheduled wrapper.
-- [ ] Read deployed triggers/history when account access exists. Set `crons = ["15 7 * * MON-FRI", "15 10 * * MON-FRI"]` on the implementation branch. Verify Friday is included and weekends excluded, preserving 14:15/17:15 WIB. Do not add immediate retries or a 60-second wait inside the Worker.
-- [ ] Run `rtk pnpm exec vitest run src/worker/ingest-plan.test.ts src/worker/ingest-state.test.ts src/worker/ingest.test.ts src/worker/d1-store.test.ts src/worker/index.test.ts`, inspect local D1 transition evidence, and run `rtk pnpm typecheck`; commit the scheduled-ingestion change.
+- [x] Implement the planner from eligible civil weekdays and recorded state, using existing timezone/date helpers. Select one date; do not use `MAX(date)` as a substitute for a coverage scan. A fully caught-up weekend has no target. A caught-up weekday still allows its current date to refresh.
+- [x] Make a successful all-empty current-day result pending. Permit the next trigger to recheck it. Only a successful check of an older all-empty date can finalize it as empty. A source/parse exception can never take the successful-empty branch.
+- [x] Make the store's state transitions explicit and regression-test them against D1/SQLite: pending/error can become live or confirmed empty; existing live observations survive failed/empty retries; incomplete batches never produce a completed marker. Existing live and empty records are parsed with the same schema as new records. Legacy recent-empty markers identified by the audit get a targeted recheck, not a blanket reset of history.
+- [x] Persist one sanitized terminal `job_runs` record per invocation when D1 is reachable, including no-op runs, target date, success/error, and confirmed write counts. Log error category and target date in structured form. If recording the job itself fails, log both failures; never claim a successful job row was written.
+- [x] After logging, rethrow the original scheduled failure so Cloudflare marks the invocation failed. Keep an HTTP error mapped to the appropriate response in HTTP handlers; do not confuse that boundary with scheduled execution. Add an Effect failure assertion for the scheduled wrapper.
+- [x] Read deployed triggers/history when account access exists. Set `crons = ["15 7 * * MON-FRI", "15 10 * * MON-FRI"]` on the implementation branch. Verify Friday is included and weekends excluded, preserving 14:15/17:15 WIB. Do not add immediate retries or a 60-second wait inside the Worker.
+- [x] Run `rtk pnpm exec vitest run src/worker/ingest-plan.test.ts src/worker/ingest-state.test.ts src/worker/ingest.test.ts src/worker/d1-store.test.ts src/worker/index.test.ts`, inspect local D1 transition evidence, and run `rtk pnpm typecheck`; commit the scheduled-ingestion change.
+
+**Execution evidence:** Scheduled ingestion reviewed, commits `3b4dae6` and `ff00491`. Expanded 57-test suite and 29-test fix suite passed with typecheck/build. Real Wrangler started and latest snapshot returned 200; production triggers remain unchanged.
 
 ## Task 6: Harden archive repair and prepare an auditable historical import
 
@@ -267,15 +271,17 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
 
 **Definition of Done:** Failed requests cannot be classified as confirmed source emptiness; good saved cells survive degraded retries; coverage and seed output agree; rerunning the historical import preserves row counts and values; no import changes the citizen lane or newer observations.
 
-- [ ] Add failing isolated tests: exhausted HTTP retries, partial failure, all-empty degraded retry over a good file, and repeat import. Capture writes and injected sleeps instead of waiting 60 seconds in tests.
-- [ ] Port PR #12's per-scope status reporting and coverage report. Surface HTTP failures to the process exit while retaining resumable results and diagnostics. A full-date HTTP outage waits 60 seconds before the next date in the CLI; do not put that sleep inside the production Worker cron.
-- [ ] Write raw results atomically. Preserve existing observed cells when a new scope fails or returns a degraded empty response. An explicit force option may bypass the skip-existing rule, but may not silently erase good observations after a failed request.
-- [ ] Generate coverage for every processed date, including partial-error dates with some live cells. Record partial failure even when `liveCells > 0`; do not collapse that case to `ok`.
-- [ ] Update seed generation to filter/validate PIHPS eceran observations and emit day markers only from verified archive coverage. Do not stamp failed/unknown days as successfully surveyed. Scope the import to the restored historical range, leaving subsequent D1 rows intact.
-- [ ] Require an explicit inclusive date range for repair/import and produce a dry-run report with planned inserts, updates, existing preserved rows, coverage changes, and unresolved errors before applying SQL. Abort on conflict with a non-PIHPS record sharing the existing primary key. Audit results, not absence of local files, determine whether a production repair is necessary.
-- [ ] Inspect local D1 query plans for the trend query. Add a named `(commodity_id, source_id, level, date)` index in both schema entry points only when the measured plan needs it; verify the query uses it.
-- [ ] Apply schema and historical seeds to local D1. Compare all 38 snapshot cells for 2025-10-30 and 2018-10-09 to archive fixtures, then rerun the import and compare counts/checksums. Document exact commands and counts in `DATA_SOURCES.md`.
-- [ ] Run `rtk pnpm exec vitest run scripts/pihps-scrape.test.mjs scripts/price-import.test.mjs src/worker/d1-store.test.ts src/worker/ingest.test.ts` and `rtk pnpm typecheck`; commit ingestion/import changes.
+- [x] Add failing isolated tests: exhausted HTTP retries, partial failure, all-empty degraded retry over a good file, and repeat import. Capture writes and injected sleeps instead of waiting 60 seconds in tests.
+- [x] Port PR #12's per-scope status reporting and coverage report. Surface HTTP failures to the process exit while retaining resumable results and diagnostics. A full-date HTTP outage waits 60 seconds before the next date in the CLI; do not put that sleep inside the production Worker cron.
+- [x] Write raw results atomically. Preserve existing observed cells when a new scope fails or returns a degraded empty response. An explicit force option may bypass the skip-existing rule, but may not silently erase good observations after a failed request.
+- [x] Generate coverage for every processed date, including partial-error dates with some live cells. Record partial failure even when `liveCells > 0`; do not collapse that case to `ok`.
+- [x] Update seed generation to filter/validate PIHPS eceran observations and emit day markers only from verified archive coverage. Do not stamp failed/unknown days as successfully surveyed. Scope the import to the restored historical range, leaving subsequent D1 rows intact.
+- [x] Require an explicit inclusive date range for repair/import and produce a dry-run report with planned inserts, updates, existing preserved rows, coverage changes, and unresolved errors before applying SQL. Abort on conflict with a non-PIHPS record sharing the existing primary key. Audit results, not absence of local files, determine whether a production repair is necessary.
+- [x] Inspect local D1 query plans for the trend query. Add a named `(commodity_id, source_id, level, date)` index in both schema entry points only when the measured plan needs it; verify the query uses it.
+- [x] Apply schema and historical seeds to local D1. Compare all 38 snapshot cells for 2025-10-30 and 2018-10-09 to archive fixtures, then rerun the import and compare counts/checksums. Document exact commands and counts in `DATA_SOURCES.md`.
+- [x] Run `rtk pnpm exec vitest run scripts/pihps-scrape.test.mjs scripts/price-import.test.mjs src/worker/d1-store.test.ts src/worker/ingest.test.ts` and `rtk pnpm typecheck`; commit ingestion/import changes.
+
+**Execution evidence:** Repair tooling reviewed through `c62ccc1`. Full local import and zero-write repeat are captured in `docs/qa/pr12/history-import.json`: 791,426 historical observations added, 8,040 recent rows and existing day/job metadata preserved. Two 38-cell fixtures match. Original raw scope evidence remains unavailable.
 
 ## Task 7: Expose pipeline health and write the current operations runbook
 
@@ -289,14 +295,16 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
 
 **Definition of Done:** The endpoint and documented queries distinguish recent prices from a healthy ingestion process; observed counts, latest checked date, latest priced date, and run outcomes agree with fixture data. The runbook covers both a clean checkout and operational repair, with UTC/WIB times and dated evidence. Historical design text cannot be mistaken for current production instructions.
 
-- [ ] Add failing health tests with `TestClock`: today's pending date before 17:45 is waiting; the same state after 17:45 is degraded; an older unresolved date is degraded at either time; all eligible dates finalized with an older confirmed-empty holiday can be healthy. A last failed attempt is degraded until a successful invocation, even when older prices remain readable. Missing successful job evidence yields degraded status with null successful-run time, rather than verified healthy automation.
-- [ ] Implement the health query through the existing D1 read service. Read bounded recent job history and scheduled-period coverage; do not scan the entire historical price table on each health request. Derive latest checked date only from completed live/empty markers and latest priced date only from actual official observations. A newer maximum date cannot conceal an older unresolved weekday.
-- [ ] Keep `/api/pihps/fresh` failures observable too: DB failures return non-2xx JSON rather than an indistinguishable empty-success payload. Preserve HTML asset delivery, but log an unavailable freshness overlay; the browser must not treat a failed refresh as a newly confirmed empty survey.
+- [x] Add failing health tests with `TestClock`: today's pending date before 17:45 is waiting; the same state after 17:45 is degraded; an older unresolved date is degraded at either time; all eligible dates finalized with an older confirmed-empty holiday can be healthy. A last failed attempt is degraded until a successful invocation, even when older prices remain readable. Missing successful job evidence yields degraded status with null successful-run time, rather than verified healthy automation.
+- [x] Implement the health query through the existing D1 read service. Read bounded recent job history and scheduled-period coverage; do not scan the entire historical price table on each health request. Derive latest checked date only from completed live/empty markers and latest priced date only from actual official observations. A newer maximum date cannot conceal an older unresolved weekday.
+- [x] Keep `/api/pihps/fresh` failures observable too: DB failures return non-2xx JSON rather than an indistinguishable empty-success payload. Preserve HTML asset delivery, but log an unavailable freshness overlay; the browser must not treat a failed refresh as a newly confirmed empty survey.
 - [ ] Verify the endpoint against local Worker/D1 fixtures for waiting, live, holiday-empty, error, and unavailable states. Capture status codes and sanitized responses in `docs/qa/pr12/pipeline-health.json`. A public freshness response and a successful cron execution remain separate claims in the evidence.
-- [ ] Write `docs/operations/pihps.md` with these concrete sections: storage ownership; historical backfill versus daily ingestion; UTC and Asia/Jakarta schedule; day-state definitions; one-date/34-request limits; clean-checkout setup; read-only coverage and job queries; archive location/provenance; explicit-range repair with dry run; safe local/remote command distinctions; deployment trigger verification; and troubleshooting for 503, stale prices, pending/empty days, and missing archives/account access.
-- [ ] Standardize documented commands to pnpm and the current custom Worker. Include the audit SQL from Task 1 and exact commands exercised during implementation. For every local/remote Wrangler command label its target explicitly; default examples to local and never infer remote readiness from local success.
-- [ ] Update `DATA_SOURCES.md` to remove stale claims that all current prices are samples or that the daily pipeline is merely proposed. Label historical backfill counts with their original verification date; add newly verified remote counts only after the audit. Link the operations runbook. Label the old design document as historical without rewriting its original decisions as if they had always matched production.
-- [ ] Run `rtk pnpm exec vitest run src/worker/pihps-health.test.ts src/worker/price-http.test.ts src/worker/index.test.ts src/worker/ingest.test.ts` and `rtk pnpm typecheck`; verify runbook links/commands and commit the health/documentation change.
+- [x] Write `docs/operations/pihps.md` with these concrete sections: storage ownership; historical backfill versus daily ingestion; UTC and Asia/Jakarta schedule; day-state definitions; one-date/34-request limits; clean-checkout setup; read-only coverage and job queries; archive location/provenance; explicit-range repair with dry run; safe local/remote command distinctions; deployment trigger verification; and troubleshooting for 503, stale prices, pending/empty days, and missing archives/account access.
+- [x] Standardize documented commands to pnpm and the current custom Worker. Include the audit SQL from Task 1 and exact commands exercised during implementation. For every local/remote Wrangler command label its target explicitly; default examples to local and never infer remote readiness from local success.
+- [x] Update `DATA_SOURCES.md` to remove stale claims that all current prices are samples or that the daily pipeline is merely proposed. Label historical backfill counts with their original verification date; add newly verified remote counts only after the audit. Link the operations runbook. Label the old design document as historical without rewriting its original decisions as if they had always matched production.
+- [x] Run `rtk pnpm exec vitest run src/worker/pihps-health.test.ts src/worker/price-http.test.ts src/worker/index.test.ts src/worker/ingest.test.ts` and `rtk pnpm typecheck`; verify runbook links/commands and commit the health/documentation change.
+
+**Execution evidence:** Health/runbook reviewed through `16ff40d`. 93 targeted tests, typecheck/build, links, audit SQL and indexed query-plan checks passed. `pipeline-health.json` currently labels dispatcher/SQLite fixture evidence; actual Wrangler/browser captures remain below.
 
 ## Task 8: Verify the full application and prepare the replacement PR
 
