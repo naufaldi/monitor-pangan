@@ -179,3 +179,19 @@ for (const schema of ["worker-migration", "schema-file"]) it.effect(`seeks bound
     assert.ok(!details.some((detail) => /SCAN job_runs|TEMP B-TREE/.test(detail)), details.join("\n"))
   }
 }))
+
+it.effect("keeps health readable under D1's compound SELECT limit", () => Effect.gen(function* () {
+  const db = yield* fixture
+  yield* db.coverage("2026-10-19", "live")
+  yield* db.price("2026-10-19", "31", 32000, "telur-ayam")
+  const boundedDb = { ...db.db, prepare: (sql: string) => {
+    if (sql.split(/\bUNION\s+ALL\b/i).length > 5) throw new Error("D1_ERROR: too many terms in compound SELECT: SQLITE_ERROR")
+    return db.db.prepare(sql)
+  } }
+  yield* TestClock.setTime("2026-10-19T11:00:00Z")
+  const response = yield* request(boundedDb)
+  assert.strictEqual(response.status, 200)
+  const body = yield* json(response)
+  assert.strictEqual(body.status, "ok")
+  assert.strictEqual(body.latestPricedDate, "2026-10-19")
+}))

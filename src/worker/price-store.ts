@@ -118,17 +118,16 @@ export const priceReadStoreLayer = (db: D1Database) => {
   })
   const evidence = Effect.fn("PriceReadStore.healthEvidence")(function* (after: string, through: string) {
     const coverage = yield* query("SELECT date, status, checked_at FROM source_days WHERE source_id = 'pihps' AND date > ? AND date <= ? ORDER BY date", [after, through])
-    // One indexed backwards seek per commodity, rather than aggregating the historical table.
-    const latest = yield* query(COMMODITIES.map(() => `SELECT date, region_code, price FROM (SELECT date, region_code, price FROM prices_daily
+    // Separate indexed seeks avoid D1's five-term compound SELECT limit and historical scans.
+    const latest = (yield* Effect.forEach(COMMODITIES, (commodity) => query(`SELECT date, region_code, price FROM prices_daily
       WHERE commodity_id = ? AND source_id = 'pihps' AND level = 'eceran' AND date <= ?
-      AND price IS NOT NULL ORDER BY date DESC LIMIT 1)`).join(" UNION ALL "), COMMODITIES.flatMap((commodity) => [commodity.id, through])).pipe(
-      Effect.flatMap(Schema.decodeUnknown(Schema.Array(Schema.Struct({ date: CivilDateSchema, region_code: RegionCodeSchema, price: Price })))), Effect.mapError(readError),
-    )
+      AND price IS NOT NULL ORDER BY date DESC LIMIT 1`, [commodity.id, through]))).flat()
+    const validatedLatest = yield* Schema.decodeUnknown(Schema.Array(Schema.Struct({ date: CivilDateSchema, region_code: RegionCodeSchema, price: Price })))(latest).pipe(Effect.mapError(readError))
     // Separate bounded reads retain the last success even after many consecutive failures.
     // Sort instants, not mixed-precision strings; malformed times surface first and fail decoding.
     const attempts = yield* query("SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1", [])
     const successes = yield* query("SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' AND status = 'complete' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1", [])
-    return yield* Schema.decodeUnknown(HealthEvidenceSchema)({ coverage, latestPricedDate: latest.map((row) => row.date).sort().at(-1) ?? null, attempts, successes }).pipe(Effect.mapError(readError))
+    return yield* Schema.decodeUnknown(HealthEvidenceSchema)({ coverage, latestPricedDate: validatedLatest.map((row) => row.date).sort().at(-1) ?? null, attempts, successes }).pipe(Effect.mapError(readError))
   })
   return Layer.merge(Layer.succeed(PriceReadStore, { snapshot, trendPage }), Layer.succeed(PihpsHealthReadStore, { evidence }))
 }
