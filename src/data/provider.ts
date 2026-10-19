@@ -3,6 +3,7 @@ import { formatDateLong, trendDirection } from "#/lib/format.ts"
 import { COMMODITIES, MOCK_DATES, type Commodity, type PriceUnit } from "./catalog.ts"
 import { freshDates, freshPrice } from "./fresh-prices.ts"
 import { loadProvinces } from "./geo.ts"
+import { summarizePrices } from "./price-summary.ts"
 import { LIVE_PRICES } from "./prices.gen.ts"
 import { SNAPSHOT_META } from "./snapshot.gen.ts"
 import { TREND_MONTHLY, TREND_MONTHS, TREND_WEEKLY, TREND_WEEKS } from "./trends.gen.ts"
@@ -15,7 +16,8 @@ export type PriceRow = {
 export type Snapshot = {
   date: string
   commodity: Commodity
-  nationalAvg: number
+  nationalAvg: number | null
+  pricedCount: number
   rows: PriceRow[]
 }
 
@@ -96,6 +98,21 @@ function usesLivePrices(date: string): boolean {
   return isFreshDate(date) || (SNAPSHOT_META.pricesLive && SNAPSHOT_META.liveDates.includes(date))
 }
 
+/** Metadata alone does not load prices. Partial observed coverage counts as loaded. */
+export function isSnapshotLoaded(date: string, commodityId?: string): boolean {
+  const commodities = commodityId == null
+    ? COMMODITIES
+    : COMMODITIES.filter((commodity) => commodity.id === commodityId)
+  if (commodities.length === 0) return false
+  if (!usesLivePrices(date)) return availableDates().includes(date)
+  const fresh = isFreshDate(date)
+  return commodities.some((commodity) => provinces.some((province) => {
+    const key = `${date}:${commodity.id}:${province.code}`
+    const price = fresh ? freshPrice(key) : LIVE_PRICES[key]
+    return price != null && Number.isFinite(price) && price > 0
+  }))
+}
+
 /** Newest date with at least one live price. Empty survey days are skipped. */
 export function latestLiveDate(): string {
   const live = liveSurveyDates()
@@ -123,12 +140,7 @@ function buildSnapshot(date: string, commodityId: string): Snapshot {
       price: fromLive ?? (live ? null : mockPrice(commodity, p.code, dateIndex)),
     }
   })
-  const priced = rows.filter((r): r is { regionCode: string; price: number } => r.price != null)
-  const nationalAvg =
-    priced.length === 0
-      ? 0
-      : Math.round(priced.reduce((sum, r) => sum + r.price, 0) / priced.length / 50) * 50
-  return { date, commodity, nationalAvg, rows }
+  return { date, commodity, ...summarizePrices(rows), rows }
 }
 
 /**
@@ -215,7 +227,7 @@ function foldFreshPeriods(
     const selectedValues: number[] = []
     for (const day of days) {
       const snap = buildSnapshot(day, commodity.id)
-      if (snap.nationalAvg > 0) nationalValues.push(snap.nationalAvg)
+      if (snap.nationalAvg != null) nationalValues.push(snap.nationalAvg)
       if (!wantSelected) continue
       const price = snap.rows.find((row) => row.regionCode === regionCode)?.price
       if (price != null) selectedValues.push(price)
@@ -274,7 +286,7 @@ function buildTrend(
   const wantSelected = regionCode != null && regionCode !== ""
   for (const date of dates) {
     const snap = buildSnapshot(date, commodity.id)
-    if (snap.rows.every((r) => r.price == null)) continue
+    if (snap.nationalAvg == null) continue
     national.push({ date, price: snap.nationalAvg })
     if (wantSelected) {
       const row = snap.rows.find((r) => r.regionCode === regionCode)

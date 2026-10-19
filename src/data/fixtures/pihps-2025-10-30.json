@@ -1,0 +1,167 @@
+{
+  "provenance": {
+    "kind": "derived-git-year-series",
+    "commit": "ef85f27904b044bd343a56dcdd77a46d28eb1205",
+    "path": "public/series/2025.json"
+  },
+  "date": "2025-10-30",
+  "commodityId": "beras",
+  "rows": [
+    {
+      "regionCode": "11",
+      "price": 14600
+    },
+    {
+      "regionCode": "12",
+      "price": 14550
+    },
+    {
+      "regionCode": "13",
+      "price": 17050
+    },
+    {
+      "regionCode": "14",
+      "price": 16300
+    },
+    {
+      "regionCode": "15",
+      "price": 15400
+    },
+    {
+      "regionCode": "16",
+      "price": 15500
+    },
+    {
+      "regionCode": "17",
+      "price": 15500
+    },
+    {
+      "regionCode": "18",
+      "price": 14750
+    },
+    {
+      "regionCode": "19",
+      "price": 15300
+    },
+    {
+      "regionCode": "21",
+      "price": 14950
+    },
+    {
+      "regionCode": "31",
+      "price": 16300
+    },
+    {
+      "regionCode": "32",
+      "price": 14850
+    },
+    {
+      "regionCode": "33",
+      "price": 15050
+    },
+    {
+      "regionCode": "34",
+      "price": 14200
+    },
+    {
+      "regionCode": "35",
+      "price": 14700
+    },
+    {
+      "regionCode": "36",
+      "price": 15200
+    },
+    {
+      "regionCode": "51",
+      "price": 15450
+    },
+    {
+      "regionCode": "52",
+      "price": 13950
+    },
+    {
+      "regionCode": "53",
+      "price": 15350
+    },
+    {
+      "regionCode": "61",
+      "price": 16400
+    },
+    {
+      "regionCode": "62",
+      "price": 17600
+    },
+    {
+      "regionCode": "63",
+      "price": 17450
+    },
+    {
+      "regionCode": "64",
+      "price": 16350
+    },
+    {
+      "regionCode": "65",
+      "price": 17250
+    },
+    {
+      "regionCode": "71",
+      "price": 16050
+    },
+    {
+      "regionCode": "72",
+      "price": 15600
+    },
+    {
+      "regionCode": "73",
+      "price": 14200
+    },
+    {
+      "regionCode": "74",
+      "price": 15750
+    },
+    {
+      "regionCode": "75",
+      "price": 16150
+    },
+    {
+      "regionCode": "76",
+      "price": 14450
+    },
+    {
+      "regionCode": "81",
+      "price": 16900
+    },
+    {
+      "regionCode": "82",
+      "price": 17150
+    },
+    {
+      "regionCode": "91",
+      "price": 18950
+    },
+    {
+      "regionCode": "92",
+      "price": 16950
+    },
+    {
+      "regionCode": "93",
+      "price": null
+    },
+    {
+      "regionCode": "94",
+      "price": null
+    },
+    {
+      "regionCode": "95",
+      "price": null
+    },
+    {
+      "regionCode": "96",
+      "price": null
+    }
+  ],
+  "expected": {
+    "nationalAvg": 15750,
+    "pricedCount": 34
+  }
+}

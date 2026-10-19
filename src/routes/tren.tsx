@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { ChartHighlights } from "#/components/ChartHighlights.tsx"
@@ -7,7 +7,9 @@ import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { MoversList, type MoverItem } from "#/components/MoversList.tsx"
 import { TrendChart } from "#/components/TrendChart.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { latestLiveDate, liveSurveyDates, provider } from "#/data/provider.ts"
+import { fetchTrend } from "#/data/api-client.ts"
+import { usePriceRequest } from "#/data/price-request.ts"
+import { isSnapshotLoaded, latestLiveDate, liveSurveyDates, provider } from "#/data/provider.ts"
 import { usePageSourceNote, useVintage } from "#/data/vintage.tsx"
 import {
   chartHighlights,
@@ -20,7 +22,7 @@ import { DEFAULT_TIMEFRAME, TIMEFRAMES, type TimeframeId, timeframeById, windowR
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { formatDateShort, formatPct, formatPrice, formatSeriesDate } from "#/lib/format.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
-import { Button, ChevronBadge, Select } from "@monitor-pangan/ui"
+import { Button, ChevronBadge, Select, StatusMessage } from "@monitor-pangan/ui"
 
 export const Route = createFileRoute("/tren")({
   ssr: false,
@@ -53,23 +55,25 @@ function TrenPage() {
     void navigate({ search: (prev) => ({ ...prev, komoditas: id }) })
   }
 
-  const series = useMemo(
-    () =>
-      provider.trend(commodityId, regionCode, {
-        from,
-        to,
-        resolution: chip.resolution,
-      }),
-    [commodityId, regionCode, from, to, chip.resolution],
-  )
+  const cached = useMemo(() => {
+    const requestedDates = dates.filter((date) => date >= from && date <= to)
+    const loaded = requestedDates.length > 0 && requestedDates.every((date) => isSnapshotLoaded(date, commodityId))
+    return chip.resolution !== "day" || loaded
+      ? provider.trend(commodityId, regionCode, { from, to, resolution: chip.resolution })
+      : null
+  }, [commodityId, regionCode, from, to, chip.resolution, dates, rev])
+  const load = useCallback(() => fetchTrend(commodityId, regionCode, { from, to, resolution: chip.resolution }),
+    [commodityId, regionCode, from, to, chip.resolution])
+  const { request, retry } = usePriceRequest(`${commodityId}:${regionCode ?? ""}:${from}:${to}:${chip.resolution}:${rev}`, cached, load)
+  const series = request.status === "ready" ? request.data : null
 
   const province = provinces.find((p) => p.code === regionCode) ?? null
   const focusPoints =
-    series.selected != null && realPoints(series.selected).length > 0 ? series.selected : series.national
+    series?.selected != null && realPoints(series.selected).length > 0 ? series.selected : series?.national ?? []
   const strip = useMemo(() => chartStrip(focusPoints), [focusPoints])
   const highlights = useMemo(() => chartHighlights(focusPoints), [focusPoints])
   const limitedCopy =
-    province != null && isThinProvince(series.selected, series.national)
+    province != null && series != null && isThinProvince(series.selected, series.national)
       ? limitedProvinceCopy(province.name)
       : null
 
@@ -80,21 +84,24 @@ function TrenPage() {
 
   const movers = useMemo<MoverItem[]>(
     () =>
-      COMMODITIES.map((c) => {
+      COMMODITIES.flatMap((c) => {
         const s = provider.trend(c.id, null, { resolution: "month" })
-        return {
+        const lastPrice = s.national.at(-1)?.price
+        if (lastPrice == null) return []
+        return [{
           commodityId: c.id,
           name: c.name,
           unit: c.unit,
-          lastPrice: s.national.at(-1)?.price ?? 0,
+          lastPrice,
           changePct: s.changePct,
           direction: s.direction,
-        }
+        }]
       }),
     [rev],
   )
   const moverById = useMemo(() => new Map(movers.map((m) => [m.commodityId, m])), [movers])
   const tableRows = useMemo(() => {
+    if (series == null) return []
     const selectedByDate = new Map((series.selected ?? []).map((p) => [p.date, p.price]))
     return series.national.map((point) => ({
       date: point.date,
@@ -160,6 +167,16 @@ function TrenPage() {
         </div>
       </div>
 
+      {request.status === "loading" ? (
+        <StatusMessage tone="loading" title="Memuat tren…">Mengambil seluruh harga PIHPS untuk rentang ini.</StatusMessage>
+      ) : request.status === "error" ? (
+        <StatusMessage tone="error" title={request.kind === "coverage" ? "Riwayat tren belum tersedia" : "Tren gagal dimuat"}
+          action={<Button onClick={retry}>Coba lagi</Button>}>
+          {request.kind === "coverage" ? "Cakupan survei untuk rentang ini belum dapat dipastikan." : "Periksa koneksi lalu coba lagi."}
+        </StatusMessage>
+      ) : series == null || series.national.length === 0 ? (
+        <StatusMessage tone="empty" title="Tidak ada data">Survei PIHPS tidak memuat harga untuk rentang dan komoditas ini.</StatusMessage>
+      ) : <>
       <ChartSummaryStrip
         strip={strip}
         unit={series.unit}
@@ -168,8 +185,9 @@ function TrenPage() {
       />
       <TrendChart series={series} />
       <ChartHighlights highlights={highlights} unit={series.unit} resolution={series.range.resolution} />
+      </>}
 
-      {tableRows.length > 0 ? (
+      {series != null && tableRows.length > 0 ? (
         <details className="text-sm">
           <summary className="cursor-pointer text-sm font-semibold text-slate">Lihat semua</summary>
           <table className="mt-2 w-full text-left text-sm">

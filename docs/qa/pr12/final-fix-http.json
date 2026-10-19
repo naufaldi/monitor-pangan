@@ -1,0 +1,80 @@
+{
+  "environment": "local Wrangler 8787; read-only GET recheck after parser boundary fix",
+  "requests": [
+    {
+      "path": "/api/snapshot?date=2025-10-30&commodity=beras",
+      "status": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "date": "2025-10-30",
+        "rows": 38,
+        "pricedCount": 34,
+        "nationalAvg": 15750
+      }
+    },
+    {
+      "path": "/api/snapshot?date=2018-10-09&commodity=beras",
+      "status": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "date": "2018-10-09",
+        "rows": 38,
+        "pricedCount": 34,
+        "nationalAvg": 11700
+      }
+    },
+    {
+      "path": "/api/pihps/fresh",
+      "status": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "latestDate": "2026-10-19",
+        "dates": 23,
+        "cells": 7730,
+        "allPositiveFinite": true
+      }
+    },
+    {
+      "path": "/api/pihps/health",
+      "status": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "status": "ok",
+        "checkedAt": "2026-10-19T09:39:03.006Z",
+        "latestCheckedDate": "2026-10-19",
+        "latestPricedDate": "2026-10-19",
+        "oldestUnresolvedDate": null,
+        "lastAttemptAt": "2026-10-19T07:15:48.830Z",
+        "lastAttemptOutcome": "complete",
+        "lastSuccessfulRunAt": "2026-10-19T07:15:48.830Z"
+      }
+    }
+  ],
+  "historyAfterReads": {
+    "full": {
+      "cells": 799466,
+      "sha256": "b631938aca4c5cfe514b73f29b512bef9a7270504c343e51e9f9e855f12c3274"
+    },
+    "recent": {
+      "cells": 8040,
+      "sha256": "dfe4dc08f27bf4cff81d98d444acf4a8ac9a042fba03b4942443e98a6c26cdee"
+    },
+    "dates": 2473,
+    "coverage": 23,
+    "jobs": 55,
+    "fixtures": [
+      {
+        "date": "2018-10-09",
+        "canonicalCells": 38,
+        "pricedCount": 34,
+        "nationalAvg": 11700
+      },
+      {
+        "date": "2025-10-30",
+        "canonicalCells": 38,
+        "pricedCount": 34,
+        "nationalAvg": 15750
+      }
+    ]
+  }
+}

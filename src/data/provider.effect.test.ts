@@ -40,6 +40,13 @@ it.effect("snapshot fails typed on unknown date", () =>
     assert.strictEqual(failure._tag, "UnknownDateError")
   }))
 
+it.effect("metadata-only historical snapshot preserves absence through Effect", () =>
+  Effect.gen(function*() {
+    const snapshot = yield* getSnapshot("2017-03-27", "beras").pipe(Effect.provide(Live))
+    assert.strictEqual(snapshot.nationalAvg, null)
+    assert.strictEqual(snapshot.pricedCount, 0)
+  }))
+
 it.effect("snapshot and trend fail typed on unknown commodity", () =>
   Effect.gen(function*() {
     const snapshotFailure = yield* Effect.flip(

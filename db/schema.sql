@@ -30,6 +30,12 @@ CREATE TABLE IF NOT EXISTS job_runs (
   note TEXT
 );
 
+CREATE INDEX IF NOT EXISTS prices_daily_trend ON prices_daily (commodity_id, source_id, level, date);
+
+CREATE INDEX IF NOT EXISTS job_runs_health_attempt ON job_runs (source_id, COALESCE(julianday(started_at), 1e99) DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS job_runs_health_success ON job_runs (source_id, status, COALESCE(julianday(started_at), 1e99) DESC, id DESC);
+
 CREATE TABLE IF NOT EXISTS source_days (
   date TEXT NOT NULL,
   source_id TEXT NOT NULL,

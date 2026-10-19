@@ -4,6 +4,10 @@ import { applyFreshPrices, clearFreshPrices } from "#/data/fresh-prices.ts"
 import { SNAPSHOT_META } from "#/data/snapshot.gen.ts"
 import { dataBadge, latestLiveDate, pageSourceNote } from "#/data/provider.ts"
 import { todayInJakarta } from "#/lib/jakarta-today.ts"
+import { homeSelectedDate } from "#/lib/commodity-search.ts"
+import { createElement } from "react"
+import { renderToStaticMarkup } from "react-dom/server"
+import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 
 const JAKARTA_28_SEP = 1790579700000
 
@@ -20,6 +24,24 @@ it.effect("live PIHPS page notes never claim sample data", () =>
     assert.ok(note.includes("PIHPS"))
   }),
 )
+
+it.effect("a pinned home selection produces matching PIHPS header and footer dates", () => Effect.sync(() => {
+  const date = homeSelectedDate({ tanggal: "2017-03-27" }, ["2017-03-27", latestLiveDate()], latestLiveDate())
+  assert.ok(dataBadge(date).includes("27 Maret 2017"))
+  assert.ok(pageSourceNote(date, "2026-10-19").includes("27 Maret 2017"))
+  assert.ok(!dataBadge(date).includes("Data contoh"))
+}))
+
+it.effect("an unpriced province shows no price comparison or relative statistics", () => Effect.sync(() => {
+  const html = renderToStaticMarkup(createElement(ProvincePanel, {
+    commodityName: "Beras", provinceName: "Papua", price: null, average: 15000,
+    min: 10000, max: 20000, unit: "kg", date: "2026-09-16",
+  }))
+  assert.ok(html.includes("Tidak ada data"))
+  assert.ok(!html.includes("vs nasional"))
+  assert.ok(!html.includes("Termurah"))
+  assert.ok(!html.includes("Rp 0"))
+}))
 
 it.effect("page note denies today only when the PIHPS day is older", () =>
   Effect.gen(function* () {

@@ -1,77 +1,80 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { Effect, Schema } from 'effect'
+import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { DatabaseSync } from 'node:sqlite'
+import { dirname } from 'node:path'
+import { derivedObservations, rawObservations, snapshotObservations, planImport, validateRange, RecoveryManifestSchema, ProvenanceSchema, ExistingCoverageSchema } from './price-import.mjs'
+import { ArchiveError, io, readRaw, timestamp } from './pihps-scrape.mjs'
+import { tradingDaysFromThrough } from '../src/lib/civil-date.ts'
 
-const COMMODITIES = [
-  ["beras", "Beras", "kg"],
-  ["bawang-merah", "Bawang Merah", "kg"],
-  ["bawang-putih", "Bawang Putih", "kg"],
-  ["cabai-merah", "Cabai Merah", "kg"],
-  ["cabai-rawit", "Cabai Rawit", "kg"],
-  ["daging-ayam", "Daging Ayam Ras", "kg"],
-  ["daging-sapi", "Daging Sapi", "kg"],
-  ["telur-ayam", "Telur Ayam Ras", "kg"],
-  ["gula-pasir", "Gula Pasir", "kg"],
-  ["minyak-goreng", "Minyak Goreng", "liter"],
-];
-
-const PROVINCES = [
-  ["11", "Aceh"], ["12", "Sumatera Utara"], ["13", "Sumatera Barat"],
-  ["14", "Riau"], ["15", "Jambi"], ["16", "Sumatera Selatan"],
-  ["17", "Bengkulu"], ["18", "Lampung"], ["19", "Kepulauan Bangka Belitung"],
-  ["21", "Kepulauan Riau"], ["31", "DKI Jakarta"], ["32", "Jawa Barat"],
-  ["33", "Jawa Tengah"], ["34", "D.I Yogyakarta"], ["35", "Jawa Timur"],
-  ["36", "Banten"], ["51", "Bali"], ["52", "Nusa Tenggara Barat"],
-  ["53", "Nusa Tenggara Timur"], ["61", "Kalimantan Barat"],
-  ["62", "Kalimantan Tengah"], ["63", "Kalimantan Selatan"],
-  ["64", "Kalimantan Timur"], ["65", "Kalimantan Utara"],
-  ["71", "Sulawesi Utara"], ["72", "Sulawesi Tengah"],
-  ["73", "Sulawesi Selatan"], ["74", "Sulawesi Tenggara"],
-  ["75", "Gorontalo"], ["76", "Sulawesi Barat"], ["81", "Maluku"],
-  ["82", "Maluku Utara"], ["91", "Papua"], ["92", "Papua Barat"],
-  ["93", "Papua Selatan"], ["94", "Papua Tengah"],
-  ["95", "Papua Pegunungan"], ["96", "Papua Barat Daya"],
-];
-
-const esc = (v) => `'${String(v).replaceAll("'", "''")}'`;
-
-const preamble = () => {
-  const sql = [];
-  for (const [id, name, unit] of COMMODITIES)
-    sql.push(`INSERT OR IGNORE INTO commodities (id, name, unit) VALUES (${esc(id)}, ${esc(name)}, ${esc(unit)});`);
-  for (const [code, name] of PROVINCES)
-    sql.push(`INSERT OR IGNORE INTO regions (code, name, level) VALUES (${esc(code)}, ${esc(name)}, 'province');`);
-  return sql;
-};
-
-const priceRow = (r) =>
-  `INSERT OR REPLACE INTO prices_daily (date, commodity_id, region_code, level, price, source_id) VALUES (${esc(r.date)}, ${esc(r.commodity_id)}, ${esc(r.region_code)}, ${esc(r.level)}, ${r.price}, ${esc(r.source_id)});`;
-
-const yearArg = process.argv[2];
-
-if (yearArg != null) {
-  const snap = JSON.parse(await readFile(`data/snapshots/${yearArg}.json`, "utf8"));
-  const sql = preamble();
-  let priced = 0;
-  for (const r of snap.rows) {
-    if (r.price == null) continue;
-    priced++;
-    sql.push(priceRow(r));
+const args = process.argv.slice(2)
+const option = (key) => { const i = args.indexOf(key); return i < 0 ? undefined : args[i + 1] }
+const jsonFile = (path) => io(() => readFile(path, 'utf8')).pipe(Effect.flatMap(Schema.decodeUnknown(Schema.parseJson(Schema.Unknown))))
+Effect.runPromise(Effect.gen(function* () {
+  const from = option('--from'), to = option('--to'), target = option('--target'), output = option('--out')
+  validateRange(from, to)
+  if (!['local', 'remote'].includes(target) || !args.includes('--dry-run') || !output) return yield* Effect.fail(new ArchiveError({ message: 'required: --target local|remote --dry-run --out <sql-path>; generator never applies SQL' }))
+  const baselineJson = option('--existing-json'), baselineDb = option('--existing-db')
+  if (Boolean(baselineJson) === Boolean(baselineDb)) return yield* Effect.fail(new ArchiveError({ message: 'provide exactly one --existing-json <Wrangler SELECT export> or --existing-db <SQLite file>' }))
+  let existing, existingCoverage = [], baselineSha256
+  if (baselineJson) {
+    const text = yield* io(() => readFile(baselineJson, 'utf8'))
+    baselineSha256 = createHash('sha256').update(text).digest('hex')
+    const query = yield* Schema.decodeUnknown(Schema.parseJson(Schema.Array(Schema.Struct({ success: Schema.Literal(true), results: Schema.Array(Schema.Unknown) }))))(text)
+    if (query.length !== 1) return yield* Effect.fail(new ArchiveError({ message: 'existing JSON must contain exactly one complete SELECT * FROM prices_daily result' }))
+    existing = query[0].results
+    if (option('--coverage-json')) {
+      const coverage = yield* jsonFile(option('--coverage-json')).pipe(Effect.flatMap(Schema.decodeUnknown(Schema.Array(Schema.Struct({ success: Schema.Literal(true), results: ExistingCoverageSchema })))))
+      existingCoverage = coverage[0].results.filter((r) => r.source_id === 'pihps')
+    }
+  } else {
+    const db = yield* Effect.try({ try: () => new DatabaseSync(baselineDb, { readOnly: true }), catch: (cause) => new ArchiveError({ message: String(cause) }) })
+    const out = yield* Effect.try({ try: () => ({ prices: db.prepare('SELECT * FROM prices_daily').all(), days: db.prepare("SELECT * FROM source_days WHERE source_id='pihps'").all() }), catch: (cause) => new ArchiveError({ message: String(cause) }) }).pipe(Effect.ensuring(Effect.sync(() => db.close())))
+    existing = out.prices; existingCoverage = out.days
   }
-  sql.push(
-    `INSERT INTO job_runs (started_at, source_id, status, rows_upserted, note) VALUES (${esc(new Date().toISOString())}, 'pihps', 'complete', ${priced}, ${esc(`seed ${yearArg}: ${snap.dates.length} dates live=${snap.liveRows}`)});`,
-  );
-  await writeFile(`data/seed-${yearArg}.sql`, sql.join("\n") + "\n");
-  console.log(`wrote data/seed-${yearArg}.sql statements=${sql.length} pricedRows=${priced}`);
-  console.log(`apply locally: npx wrangler d1 execute monitor-pangan --local --file=./data/seed-${yearArg}.sql`);
-} else {
-  const snap = JSON.parse(await readFile("data/snapshots/latest.json", "utf8"));
-  const sql = preamble();
-  let priced = 0;
-  for (const r of snap.rows) {
-    if (r.price == null) continue;
-    priced++;
-    sql.push(priceRow(r));
+  const observations = [], coverage = [], inputs = []
+  const inputDir = option('--input-dir'), rawDir = option('--raw-dir')
+  if (inputDir && rawDir) return yield* Effect.fail(new ArchiveError({ message: 'choose --input-dir (derived) or --raw-dir' }))
+  if (inputDir) {
+    const provenance = yield* jsonFile(`${inputDir}/provenance.json`).pipe(Effect.flatMap(Schema.decodeUnknown(ProvenanceSchema)))
+    const manifest = yield* jsonFile('docs/qa/pr12/repair-manifest.json').pipe(Effect.flatMap(Schema.decodeUnknown(RecoveryManifestSchema)))
+    if (from < manifest.repairRange.from || to > manifest.repairRange.to) return yield* Effect.fail(new ArchiveError({ message: 'derived archive import must stay inside audited 2017-03-27..2026-09-15 range' }))
+    for (let year = Number(from.slice(0, 4)); year <= Number(to.slice(0, 4)); year++) {
+      const path = `${inputDir}/${year}.json`
+      const text = yield* io(() => readFile(path, 'utf8'))
+      const sha256 = createHash('sha256').update(text).digest('hex')
+      if (manifest.years.find((y) => y.year === year)?.sha256 !== sha256) return yield* Effect.fail(new ArchiveError({ message: `hash mismatch ${path}` }))
+      const raw_ref = `git:${provenance.sourceCommit}:public/series/${year}.json`
+      const doc = yield* Schema.decodeUnknown(Schema.parseJson(Schema.Unknown))(text)
+      observations.push(...(yield* derivedObservations(doc, raw_ref)))
+      inputs.push({ path, sha256, raw_ref })
+    }
+  } else if (rawDir) {
+    for (const file of (yield* io(() => readdir(rawDir))).filter((f) => /^pihps-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort()) {
+      const date = file.slice(6, 16)
+      if (date < from || date > to) continue
+      const parsed = yield* rawObservations(yield* readRaw(`${rawDir}/${file}`), `${rawDir}/${file}`)
+      observations.push(...parsed.observations); coverage.push(parsed.coverage)
+      inputs.push({ path: `${rawDir}/${file}` })
+    }
+  } else {
+    const year = args.find((s) => /^\d{4}$/.test(s))
+    const path = option('--snapshot') ?? (year ? `data/snapshots/${year}.json` : 'data/snapshots/latest.json')
+    observations.push(...snapshotObservations(yield* jsonFile(path), path)); inputs.push({ path })
+    // Snapshot prices alone carry no independently verified scope completion.
   }
-  await writeFile("data/seed.sql", sql.join("\n") + "\n");
-  console.log(`wrote data/seed.sql statements=${sql.length} pricedRows=${priced}`);
-  console.log("apply locally: npx wrangler d1 execute monitor-pangan --local --file=./db/schema.sql && npx wrangler d1 execute monitor-pangan --local --file=./data/seed.sql");
-}
+  if (coverage.some((d) => d.verified) && baselineJson && !option('--coverage-json')) return yield* Effect.fail(new ArchiveError({ message: 'verified raw input requires --coverage-json for exact coverage-change counts with a price export' }))
+  const plan = yield* Effect.try({ try: () => planImport({ from, to, observations, existing, coverage, existingCoverage }), catch: (cause) => new ArchiveError({ message: String(cause) }) })
+  const dates = new Set(observations.filter((r) => r.date >= from && r.date <= to).map((r) => r.date))
+  const unknownWeekdays = tradingDaysFromThrough(from, to).filter((d) => !dates.has(d) && !coverage.some((c) => c.iso === d && c.verified))
+  const report = { ...plan.report, generatedAt: yield* timestamp, target, applied: false, baseline: baselineJson ?? baselineDb, baselineSha256, baselineCoverageKnown: Boolean(baselineDb || option('--coverage-json')),
+    baselineLimit: baselineJson ? 'Static SELECT export: regenerate immediately before applying; runtime guard rejects non-PIHPS key collisions. Coverage counts require --coverage-json.' : 'Read-only local SQLite snapshot; concurrent writes after planning are not included.',
+    inputs, unknownWeekdays, observedDates: dates.size, unverifiedObservedDates: [...dates].filter((date) => !coverage.some((d) => d.iso === date && d.verified)).length,
+    coverageEvidence: inputDir ? 'Derived observations only: original HTTP scopes are unknown for every imported date.' : 'Only original raw scopes with successful responses and no preserved fallback cells establish completion.',
+    newestVerifiedLiveDate: coverage.filter((d) => d.verified && d.liveCells > 0).map((d) => d.iso).sort().at(-1) ?? null,
+    sqlSha256: createHash('sha256').update(plan.sql).digest('hex') }
+  yield* io(() => mkdir(dirname(output), { recursive: true }))
+  yield* io(() => writeFile(`${output}.report.json`, JSON.stringify(report, null, 2)))
+  yield* io(() => writeFile(output, plan.sql))
+  console.log(JSON.stringify({ sql: output, report: `${output}.report.json`, inserts: report.inserts, updates: report.updates, unchanged: report.unchanged, preserved: report.existingPreserved, coverageChanges: report.coverageChanges, unresolvedErrors: report.unresolvedErrors.length, unknownWeekdays: unknownWeekdays.length }))
+})).catch((error) => { console.error(String(error)); process.exitCode = 1 })

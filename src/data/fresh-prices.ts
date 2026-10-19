@@ -44,7 +44,8 @@ export function freshDates(): readonly string[] {
   return current == null ? [] : current.dates
 }
 
-/** One provincial cell from the live store, if this date was overlaid. */
+/** Missing or invalid observations never escape the overlay as displayed prices. */
 export function freshPrice(key: string): number | undefined {
-  return current?.prices[key]
+  const price = current?.prices[key]
+  return price != null && Number.isFinite(price) && price > 0 ? price : undefined
 }

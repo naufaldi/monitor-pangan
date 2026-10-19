@@ -51,6 +51,7 @@ export function useVintage(): number {
 }
 
 /** Header badge. Stays neutral until mount so prerender does not bake a stale day. */
-export function useDataBadge(): string {
-  return useContext(VintageContext).badge
+export function useDataBadge(date?: string): string {
+  const { badge } = useContext(VintageContext)
+  return date == null ? badge : dataBadge(date)
 }

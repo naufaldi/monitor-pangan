@@ -31,3 +31,12 @@ it.effect("keeps priced provinces on the existing average bands", () =>
     })
   }),
 )
+
+it.effect("does not assign an average band without a national average", () =>
+  Effect.sync(() => {
+    assert.deepStrictEqual(provinceFill(16950, null), {
+      fillColor: "#1a1c16",
+      fillOpacity: 0.9,
+    })
+  }),
+)

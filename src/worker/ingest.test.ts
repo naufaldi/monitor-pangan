@@ -1,9 +1,12 @@
-import { Effect, Layer, TestClock } from "effect"
+import { Effect, Layer, Logger, LogLevel, TestClock } from "effect"
 import { assert, it } from "@effect/vitest"
 import { BI_TO_KEMENDAGRI } from "#/data/pihps-catalog.ts"
 import { parsePihpsGrid } from "#/data/pihps-grid.ts"
-import { ingestRecent, PihpsSource, PriceStore, type JobRecord } from "#/worker/ingest.ts"
+import { ingestRecent, PihpsFetchError, PihpsSource, StoreError, PriceStore, type JobRecord } from "#/worker/ingest.ts"
 import type { PihpsPriceCell } from "#/data/pihps-grid.ts"
+import { sqliteFixture } from "./sqlite-test.ts"
+import { d1PriceStoreLayer, ensureMigrated, type D1Database } from "./d1-store.ts"
+import { tradingDaysFromThrough } from "../lib/civil-date.ts"
 import { injectFreshScript } from "#/worker/html.ts"
 
 const JAKARTA_GRID = {
@@ -23,6 +26,66 @@ const JAKARTA_GRID = {
 }
 
 const CLOCK = 1790579700000
+
+it.effect("error envelopes keep an older day unresolved until a valid empty retry", () => Effect.gen(function* () {
+  yield* TestClock.setTime(CLOCK)
+  const fixture = yield* sqliteFixture
+  let valid = false
+  const requested: string[] = []
+  const source = Layer.succeed(PihpsSource, { fetchGrid: (date) => Effect.sync(() => {
+    requested.push(date)
+    return valid ? { data: [] } : { error: "upstream unavailable" }
+  }) })
+  yield* Effect.gen(function* () {
+    const store = yield* PriceStore
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const failure = yield* Effect.flip(ingestRecent(1))
+      assert.strictEqual(failure._tag, "PihpsDecodeError")
+      assert.deepStrictEqual(yield* store.coverageSince("2026-09-16"), [{ date: "2026-09-17", status: "error" }])
+    }
+    const jobs = fixture.sqlite.prepare("SELECT status, rows_upserted, note FROM job_runs ORDER BY id").all()
+    assert.deepStrictEqual(jobs.map((job) => ({ ...job })), [
+      { status: "error", rows_upserted: 0, note: "target=2026-09-17 category=PihpsDecodeError" },
+      { status: "error", rows_upserted: 0, note: "target=2026-09-17 category=PihpsDecodeError" },
+    ])
+    assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM prices_daily").get()?.count, 0)
+    valid = true
+    assert.deepStrictEqual(yield* ingestRecent(1), { dates: ["2026-09-17"], rowsUpserted: 0 })
+    assert.ok(requested.every((date) => date === "2026-09-17"))
+    assert.deepStrictEqual(yield* store.coverageSince("2026-09-16"), [{ date: "2026-09-17", status: "empty" }])
+    assert.strictEqual(fixture.sqlite.prepare("SELECT status FROM job_runs ORDER BY id DESC LIMIT 1").get()?.status, "complete")
+  }).pipe(Effect.provide(Layer.mergeAll(d1PriceStoreLayer(fixture.db), source)))
+}))
+
+for (const [label, invalid] of [
+  ["error envelope", { error: "upstream unavailable" }],
+  ["zero price", { data: [{ name: "Beras", level: 1, "19/10/2026": 0 }] }],
+  ["negative price", { data: [{ name: "Beras", level: 1, "19/10/2026": -100 }] }],
+  ["nonfinite price", { data: [{ name: "Beras", level: 1, "19/10/2026": "Infinity" }] }],
+  ["nonnumeric price", { data: [{ name: "Beras", level: 1, "19/10/2026": "bad" }] }],
+] as const) {
+  it.effect(`one scope's ${label} rejects live refresh and preserves good observations`, () => Effect.gen(function* () {
+    yield* TestClock.setTime(1792401300000)
+    const fixture = yield* sqliteFixture
+    for (const date of tradingDaysFromThrough("2026-09-17", "2026-10-19")) yield* fixture.coverage(date, "live")
+    yield* fixture.price("2026-10-19", "11", 16000)
+    const source = Layer.succeed(PihpsSource, { fetchGrid: (_date, provinceId) => Effect.succeed(provinceId === "34"
+      ? invalid
+      : { data: [{ name: "Beras", level: 1, "19/10/2026": "18,000" }] }) })
+    yield* Effect.gen(function* () {
+      const store = yield* PriceStore
+      const failure = yield* Effect.flip(ingestRecent(1))
+      assert.strictEqual(failure._tag, "PihpsDecodeError")
+      assert.deepStrictEqual(yield* store.coverageSince("2026-10-18"), [{ date: "2026-10-19", status: "live" }])
+      assert.deepStrictEqual(yield* store.freshSince("2026-10-18"), {
+        latestDate: "2026-10-19", dates: ["2026-10-19"], prices: { "2026-10-19:beras:11": 16000 },
+      })
+      assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM prices_daily").get()?.count, 1)
+      const job = fixture.sqlite.prepare("SELECT status, rows_upserted, note FROM job_runs").get()
+      assert.deepStrictEqual({ ...job }, { status: "error", rows_upserted: 0, note: "target=2026-10-19 category=PihpsDecodeError" })
+    }).pipe(Effect.provide(Layer.mergeAll(d1PriceStoreLayer(fixture.db), source)))
+  }))
+}
 
 it.effect("decodes a PIHPS provincial grid into rupiah cells", () =>
   Effect.gen(function* () {
@@ -45,7 +108,7 @@ it.effect("ingest stores the next trading day after the baked snapshot", () => {
   const days: Array<{ date: string; status: string; rows: readonly PihpsPriceCell[] }> = []
   const jobs: JobRecord[] = []
   const store = Layer.succeed(PriceStore, {
-    latestCheckedDate: Effect.succeed(null),
+    coverageSince: () => Effect.succeed([]),
     upsertDay: (date, status, rows) =>
       Effect.sync(() => {
         days.push({ date, status, rows })
@@ -102,3 +165,157 @@ it.effect("injects the freshness payload before </head> and escapes markup", () 
     assert.ok(hostile.includes("\\u003cscript>"))
   }),
 )
+
+it.effect("source failures persist one sanitized terminal job and remain failed", () => {
+  const jobs: JobRecord[] = []
+  const days: string[] = []
+  const error = new PihpsFetchError({ message: "private upstream URL with token=secret" })
+  return Effect.gen(function* () {
+    yield* TestClock.setTime(CLOCK)
+    const failure = yield* Effect.flip(ingestRecent(1))
+    assert.strictEqual(failure._tag, "PihpsFetchError")
+    assert.strictEqual(failure.message, error.message)
+    assert.strictEqual(jobs.length, 1)
+    assert.strictEqual(jobs[0]?.status, "error")
+    assert.strictEqual(jobs[0]?.rowsUpserted, 0)
+    assert.ok(jobs[0]?.note.includes("2026-09-17"))
+    assert.ok(jobs[0]?.note.includes("PihpsFetchError"))
+    assert.ok(!jobs[0]?.note.includes("secret"))
+    assert.deepStrictEqual(days, ["error"])
+  }).pipe(Effect.provide(Layer.mergeAll(
+    Layer.succeed(PihpsSource, { fetchGrid: () => Effect.fail(error) }),
+    Layer.succeed(PriceStore, {
+      coverageSince: () => Effect.succeed([]),
+      upsertDay: (_date, status) => Effect.sync(() => { days.push(status); return 0 }),
+      recordJob: (job) => Effect.sync(() => { jobs.push(job) }),
+      freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
+    }),
+  )))
+})
+
+it.effect("a second trigger recovers current-day publication with 34 requests and concurrency five", () => Effect.gen(function* () {
+  yield* TestClock.setTime(1792401300000)
+  const db = yield* sqliteFixture
+  yield* Effect.sync(() => {
+    db.sqlite.prepare("INSERT INTO source_days (date, source_id, status, checked_at) VALUES (?, 'pihps', 'live', ?)").run("2026-10-16", "2026-10-16T10:15:00Z")
+    for (const date of tradingDaysFromThrough("2026-09-17", "2026-10-15")) db.sqlite.prepare("INSERT INTO source_days VALUES (?, 'pihps', 'live', ?)").run(date, "2026-10-19T00:00:00Z")
+  })
+  let published = false
+  let calls = 0
+  let active = 0
+  let maximum = 0
+  const source = Layer.succeed(PihpsSource, { fetchGrid: () => Effect.gen(function* () {
+    yield* Effect.sync(() => { calls++; active++; maximum = Math.max(maximum, active) })
+    yield* Effect.yieldNow()
+    yield* Effect.sync(() => { active-- })
+    return { data: published ? [{ name: "Beras", level: 1, "19/10/2026": "16,000" }] : [] }
+  }) })
+  yield* Effect.gen(function* () {
+    const store = yield* PriceStore
+    const first = yield* ingestRecent(1)
+    assert.deepStrictEqual(first, { dates: ["2026-10-19"], rowsUpserted: 0 })
+    assert.strictEqual((yield* store.coverageSince("2026-10-18"))[0]?.status, "pending")
+    published = true
+    const second = yield* ingestRecent(1)
+    assert.deepStrictEqual(second, { dates: ["2026-10-19"], rowsUpserted: 34 })
+    assert.strictEqual((yield* store.coverageSince("2026-10-18"))[0]?.status, "live")
+    assert.strictEqual(calls, 68)
+    assert.strictEqual(maximum, 5)
+    assert.strictEqual(db.sqlite.prepare("SELECT COUNT(*) AS count FROM job_runs WHERE status = 'complete'").get()?.count, 2)
+  }).pipe(Effect.provide(Layer.mergeAll(d1PriceStoreLayer(db.db), source)))
+}))
+
+it.effect("caught-up weekends record a no-op without fetching source data", () => Effect.gen(function* () {
+  yield* TestClock.setTime(1792304100000)
+  const jobs: JobRecord[] = []
+  const result = yield* ingestRecent(1).pipe(Effect.provide(Layer.mergeAll(
+    Layer.succeed(PihpsSource, { fetchGrid: () => Effect.die("no-op must not fetch") }),
+    Layer.succeed(PriceStore, {
+      coverageSince: () => Effect.succeed(tradingDaysFromThrough("2026-09-17", "2026-10-16").map((date) => ({ date, status: "live" as const }))),
+      upsertDay: () => Effect.die("no-op must not write a day"),
+      recordJob: (job) => Effect.sync(() => { jobs.push(job) }),
+      freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
+    }),
+  )))
+  assert.deepStrictEqual(result, { dates: [], rowsUpserted: 0 })
+  assert.strictEqual(jobs.length, 1)
+  assert.strictEqual(jobs[0]?.note, "target=none category=complete")
+}))
+
+it.effect("a partial database failure records confirmed cells and an unresolved error day", () => Effect.gen(function* () {
+  yield* TestClock.setTime(CLOCK)
+  const fixture = yield* sqliteFixture
+  let batches = 0
+  const db: D1Database = { ...fixture.db, batch: (statements) => ++batches === 2 ? Promise.reject(new Error("private DB details")) : fixture.db.batch(statements) }
+  yield* ensureMigrated(db)
+  batches = 0
+  const source = Layer.succeed(PihpsSource, { fetchGrid: () => Effect.succeed({ data: JAKARTA_GRID.data.map((row) => ({ ...row, "17/09/2026": row["28/09/2026"] })) }) })
+  const failure = yield* Effect.flip(ingestRecent(1)).pipe(Effect.provide(Layer.mergeAll(d1PriceStoreLayer(db), source)))
+  assert.strictEqual(failure._tag, "StoreError")
+  assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM prices_daily").get()?.count, 40)
+  const job = fixture.sqlite.prepare("SELECT status, rows_upserted, note FROM job_runs").get()
+  assert.strictEqual(job?.status, "error")
+  assert.strictEqual(job?.rows_upserted, 40)
+  assert.strictEqual(job?.note, "target=2026-09-17 category=StoreError")
+  assert.strictEqual(fixture.sqlite.prepare("SELECT status FROM source_days WHERE date = '2026-09-17'").get()?.status, "error")
+}))
+
+it.effect("a terminal-job write failure cannot hide the original source failure", () => Effect.gen(function* () {
+  yield* TestClock.setTime(CLOCK)
+  const failure = yield* Effect.flip(ingestRecent(1)).pipe(Effect.provide(Layer.mergeAll(
+    Layer.succeed(PihpsSource, { fetchGrid: () => Effect.fail(new PihpsFetchError({ message: "source" })) }),
+    Layer.succeed(PriceStore, {
+      coverageSince: () => Effect.succeed([]),
+      upsertDay: () => Effect.fail(new StoreError({ message: "marker write" })),
+      recordJob: () => Effect.fail(new StoreError({ message: "job write" })),
+      freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
+    }),
+  )))
+  assert.strictEqual(failure._tag, "PihpsFetchError")
+  assert.strictEqual(failure.message, "source")
+}))
+
+it.effect("live, pending, empty and no-op runs log completion only after terminal persistence", () => Effect.gen(function* () {
+  const cases = [
+    { clock: CLOCK, covered: false, price: true, targetDate: "2026-09-17", outcome: "live", count: 34 },
+    { clock: CLOCK, covered: false, price: false, targetDate: "2026-09-17", outcome: "empty", count: 0 },
+    { clock: 1792401300000, covered: true, price: false, targetDate: "2026-10-19", outcome: "pending", count: 0 },
+    { clock: 1792304100000, covered: true, price: false, targetDate: null, outcome: "noop", count: 0 },
+  ] as const
+  for (const scenario of cases) {
+    yield* TestClock.setTime(scenario.clock)
+    const events: unknown[] = []
+    const logger = Logger.make(({ message }) => { events.push(message) })
+    yield* ingestRecent(1).pipe(Effect.provide(Layer.mergeAll(
+      Logger.add(logger), Logger.minimumLogLevel(LogLevel.Info),
+      Layer.succeed(PihpsSource, { fetchGrid: (date) => {
+        const [year, month, day] = date.split("-")
+        return Effect.succeed({ data: scenario.price ? [{ name: "Beras", level: 1, [`${day}/${month}/${year}`]: "16,000" }] : [] })
+      } }),
+      Layer.succeed(PriceStore, {
+        coverageSince: () => Effect.succeed(scenario.covered ? tradingDaysFromThrough("2026-09-17", "2026-10-16").map((date) => ({ date, status: "live" as const })) : []),
+        upsertDay: (_date, _status, rows) => Effect.succeed(rows.length),
+        recordJob: () => Effect.sync(() => { events.push("job persisted") }),
+        freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
+      }),
+    )))
+    assert.deepStrictEqual(events, ["job persisted", [{ event: "pihps_ingest", targetDate: scenario.targetDate, outcome: scenario.outcome, category: "complete", rowsUpserted: scenario.count, jobRecorded: true }]])
+  }
+}))
+
+it.effect("failed terminal persistence emits no completion claim", () => Effect.gen(function* () {
+  yield* TestClock.setTime(CLOCK)
+  const events: unknown[] = []
+  const failure = yield* Effect.flip(ingestRecent(1)).pipe(Effect.provide(Layer.mergeAll(
+    Logger.add(Logger.make(({ message }) => { events.push(message) })), Logger.minimumLogLevel(LogLevel.Info),
+    Layer.succeed(PihpsSource, { fetchGrid: () => Effect.succeed({ data: [] }) }),
+    Layer.succeed(PriceStore, {
+      coverageSince: () => Effect.succeed([]),
+      upsertDay: () => Effect.succeed(0),
+      recordJob: () => Effect.fail(new StoreError({ message: "private failed write details" })),
+      freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
+    }),
+  )))
+  assert.strictEqual(failure._tag, "StoreError")
+  assert.deepStrictEqual(events, [[{ event: "pihps_job_record_failed", targetDate: "2026-09-17", outcome: "error", category: "StoreError", originalCategory: "complete", rowsUpserted: 0, jobRecorded: false }]])
+}))

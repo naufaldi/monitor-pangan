@@ -1,0 +1,61 @@
+{
+  "target": "local D1 only",
+  "productionChanged": false,
+  "repair": {
+    "from": "2017-03-27",
+    "to": "2026-09-15",
+    "insertedCells": 791426,
+    "derivedCoverageMarkers": 0
+  },
+  "firstApply": {
+    "statements": 1139,
+    "allSucceeded": true
+  },
+  "repeatApply": {
+    "statements": 1139,
+    "allSucceeded": true,
+    "identicalCountsAndChecksums": true
+  },
+  "verified": {
+    "full": {
+      "cells": 799466,
+      "sha256": "b631938aca4c5cfe514b73f29b512bef9a7270504c343e51e9f9e855f12c3274"
+    },
+    "recent": {
+      "cells": 8040,
+      "sha256": "dfe4dc08f27bf4cff81d98d444acf4a8ac9a042fba03b4942443e98a6c26cdee"
+    },
+    "dates": 2473,
+    "coverage": 23,
+    "jobs": 55,
+    "fixtures": [
+      {
+        "date": "2018-10-09",
+        "canonicalCells": 38,
+        "pricedCount": 34,
+        "nationalAvg": 11700
+      },
+      {
+        "date": "2025-10-30",
+        "canonicalCells": 38,
+        "pricedCount": 34,
+        "nationalAvg": 15750
+      }
+    ]
+  },
+  "trendQueryPlan": "SEARCH prices_daily USING INDEX prices_daily_trend (commodity_id=? AND source_id=? AND level=? AND date>? AND date<?)",
+  "warning": "Earlier bulk Wrangler imports emitted a KJ hash-table-collision warning despite exit0 and all1139success. Final no-op SQL repeat emitted no warning, changed0rows and retained identical hashes.",
+  "commands": [
+    "rtk proxy node scripts/recover-pihps-history.mjs --out data/archive/pihps-derived",
+    "rtk proxy node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-json .superpowers/sdd/2026-10-19-pr12-historical-prices/local-prices-before.json --out data/repairs/historical.sql",
+    "rtk pnpm exec wrangler d1 execute monitor-pangan --local --file data/repairs/historical.sql --json",
+    "rtk pnpm exec wrangler d1 execute monitor-pangan --local --file db/schema.sql --json",
+    "rtk proxy node docs/qa/pr12/verify-history.mjs <local-d1.sqlite> <ordered-before-wrangler.json>"
+  ],
+  "finalRepeat": {
+    "statements": 1140,
+    "allSucceeded": true,
+    "effectiveChanges": 0,
+    "identicalCountsAndChecksums": true
+  }
+}

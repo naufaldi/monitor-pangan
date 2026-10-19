@@ -1,0 +1,168 @@
+{
+  "kind": "Production handleScheduled and HTTP dispatcher, controlled Effect services and real isolated SQLite; not Wrangler cron HTTP or production event",
+  "noSourceHttp": true,
+  "productionWrites": false,
+  "reports": [
+    {
+      "name": "Friday live",
+      "clock": "Effect TestClock",
+      "source": "synthetic controlled source service",
+      "sourceCalls": 34,
+      "target": "2026-10-16",
+      "invocations": [
+        {
+          "triggerAt": "2026-10-16T07:15:00Z",
+          "outcome": "resolved",
+          "day": {
+            "date": "2026-10-16",
+            "status": "live"
+          },
+          "job": {
+            "started_at": "2026-10-16T07:15:00.000Z",
+            "status": "complete",
+            "rows_upserted": 34,
+            "note": "target=2026-10-16 category=complete"
+          },
+          "healthStatus": 200,
+          "health": {
+            "status": "ok",
+            "checkedAt": "2026-10-16T07:15:00.000Z",
+            "latestCheckedDate": "2026-10-16",
+            "latestPricedDate": "2026-10-16",
+            "oldestUnresolvedDate": null,
+            "lastAttemptAt": "2026-10-16T07:15:00.000Z",
+            "lastAttemptOutcome": "complete",
+            "lastSuccessfulRunAt": "2026-10-16T07:15:00.000Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Monday live skips weekend",
+      "clock": "Effect TestClock",
+      "source": "synthetic controlled source service",
+      "sourceCalls": 34,
+      "target": "2026-10-19",
+      "invocations": [
+        {
+          "triggerAt": "2026-10-19T07:15:00Z",
+          "outcome": "resolved",
+          "day": {
+            "date": "2026-10-19",
+            "status": "live"
+          },
+          "job": {
+            "started_at": "2026-10-19T07:15:00.000Z",
+            "status": "complete",
+            "rows_upserted": 34,
+            "note": "target=2026-10-19 category=complete"
+          },
+          "healthStatus": 200,
+          "health": {
+            "status": "ok",
+            "checkedAt": "2026-10-19T07:15:00.000Z",
+            "latestCheckedDate": "2026-10-19",
+            "latestPricedDate": "2026-10-19",
+            "oldestUnresolvedDate": null,
+            "lastAttemptAt": "2026-10-19T07:15:00.000Z",
+            "lastAttemptOutcome": "complete",
+            "lastSuccessfulRunAt": "2026-10-19T07:15:00.000Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Monday delayed publication",
+      "clock": "Effect TestClock",
+      "source": "synthetic controlled source service",
+      "sourceCalls": 68,
+      "target": "2026-10-19",
+      "invocations": [
+        {
+          "triggerAt": "2026-10-19T07:15:00Z",
+          "outcome": "resolved",
+          "day": {
+            "date": "2026-10-19",
+            "status": "pending"
+          },
+          "job": {
+            "started_at": "2026-10-19T07:15:00.000Z",
+            "status": "complete",
+            "rows_upserted": 0,
+            "note": "target=2026-10-19 category=complete"
+          },
+          "healthStatus": 200,
+          "health": {
+            "status": "waiting",
+            "checkedAt": "2026-10-19T07:15:00.000Z",
+            "latestCheckedDate": "2026-10-16",
+            "latestPricedDate": "2026-10-16",
+            "oldestUnresolvedDate": "2026-10-19",
+            "lastAttemptAt": "2026-10-19T07:15:00.000Z",
+            "lastAttemptOutcome": "complete",
+            "lastSuccessfulRunAt": "2026-10-19T07:15:00.000Z"
+          }
+        },
+        {
+          "triggerAt": "2026-10-19T10:15:00Z",
+          "outcome": "resolved",
+          "day": {
+            "date": "2026-10-19",
+            "status": "live"
+          },
+          "job": {
+            "started_at": "2026-10-19T10:15:00.000Z",
+            "status": "complete",
+            "rows_upserted": 34,
+            "note": "target=2026-10-19 category=complete"
+          },
+          "healthStatus": 200,
+          "health": {
+            "status": "ok",
+            "checkedAt": "2026-10-19T10:15:00.000Z",
+            "latestCheckedDate": "2026-10-19",
+            "latestPricedDate": "2026-10-19",
+            "oldestUnresolvedDate": null,
+            "lastAttemptAt": "2026-10-19T10:15:00.000Z",
+            "lastAttemptOutcome": "complete",
+            "lastSuccessfulRunAt": "2026-10-19T10:15:00.000Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Monday failed source",
+      "clock": "Effect TestClock",
+      "source": "synthetic controlled source service",
+      "sourceCalls": 5,
+      "target": "2026-10-19",
+      "invocations": [
+        {
+          "triggerAt": "2026-10-19T10:15:00Z",
+          "outcome": "PihpsFetchError",
+          "day": {
+            "date": "2026-10-19",
+            "status": "error"
+          },
+          "job": {
+            "started_at": "2026-10-19T10:15:00.000Z",
+            "status": "error",
+            "rows_upserted": 0,
+            "note": "target=2026-10-19 category=PihpsFetchError"
+          },
+          "healthStatus": 503,
+          "health": {
+            "status": "degraded",
+            "checkedAt": "2026-10-19T10:15:00.000Z",
+            "latestCheckedDate": "2026-10-16",
+            "latestPricedDate": "2026-10-16",
+            "oldestUnresolvedDate": "2026-10-19",
+            "lastAttemptAt": "2026-10-19T10:15:00.000Z",
+            "lastAttemptOutcome": "error",
+            "lastSuccessfulRunAt": "2026-10-15T10:15:00Z"
+          }
+        }
+      ]
+    }
+  ]
+}

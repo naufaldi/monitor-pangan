@@ -1,0 +1,168 @@
+{
+  "recordedOn": "2026-10-19",
+  "evidenceKind": "Isolated in-memory SQLite executing production D1 SQL through the Worker HTTP dispatcher with TestClock",
+  "captureCommand": "rtk pnpm exec node --experimental-strip-types data/repairs/capture-pipeline-health.mjs",
+  "captureScript": "Ignored local fixture driver; reproducible assertions live in src/worker/pihps-health.test.ts",
+  "verificationCommand": "rtk pnpm exec vitest run src/worker/pihps-health.test.ts",
+  "noSourceHttp": true,
+  "productionWrites": false,
+  "localQueryPlan": {
+    "target": "Wrangler local D1, restored combined database",
+    "command": "rtk pnpm exec wrangler d1 execute monitor-pangan --local --command \"EXPLAIN QUERY PLAN SELECT date, region_code, price FROM prices_daily WHERE commodity_id = 'beras' AND source_id = 'pihps' AND level = 'eceran' AND date <= '2026-10-19' AND price IS NOT NULL ORDER BY date DESC LIMIT 1\" --json",
+    "detail": "SEARCH prices_daily USING INDEX prices_daily_trend (commodity_id=? AND source_id=? AND level=? AND date<?)"
+  },
+  "reports": [
+    {
+      "name": "waiting-before-deadline",
+      "statusCode": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "status": "waiting",
+        "checkedAt": "2026-10-19T10:44:59.000Z",
+        "latestCheckedDate": "2026-10-16",
+        "latestPricedDate": "2026-10-16",
+        "oldestUnresolvedDate": "2026-10-19",
+        "lastAttemptAt": "2026-10-16T10:15:00Z",
+        "lastAttemptOutcome": "complete",
+        "lastSuccessfulRunAt": "2026-10-16T10:15:00Z"
+      }
+    },
+    {
+      "name": "pending-at-deadline",
+      "statusCode": 503,
+      "cacheControl": "no-store",
+      "body": {
+        "status": "degraded",
+        "checkedAt": "2026-10-19T10:45:00.000Z",
+        "latestCheckedDate": "2026-10-16",
+        "latestPricedDate": "2026-10-16",
+        "oldestUnresolvedDate": "2026-10-19",
+        "lastAttemptAt": "2026-10-16T10:15:00Z",
+        "lastAttemptOutcome": "complete",
+        "lastSuccessfulRunAt": "2026-10-16T10:15:00Z"
+      }
+    },
+    {
+      "name": "live",
+      "statusCode": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "status": "ok",
+        "checkedAt": "2026-10-19T11:00:00.000Z",
+        "latestCheckedDate": "2026-10-19",
+        "latestPricedDate": "2026-10-19",
+        "oldestUnresolvedDate": null,
+        "lastAttemptAt": "2026-10-19T10:15:00Z",
+        "lastAttemptOutcome": "complete",
+        "lastSuccessfulRunAt": "2026-10-19T10:15:00Z"
+      }
+    },
+    {
+      "name": "holiday-empty-weekend",
+      "statusCode": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "status": "ok",
+        "checkedAt": "2026-10-17T11:00:00.000Z",
+        "latestCheckedDate": "2026-10-16",
+        "latestPricedDate": "2026-10-15",
+        "oldestUnresolvedDate": null,
+        "lastAttemptAt": "2026-10-16T10:15:00Z",
+        "lastAttemptOutcome": "complete",
+        "lastSuccessfulRunAt": "2026-10-16T10:15:00Z"
+      }
+    },
+    {
+      "name": "legacy-failed-after-success",
+      "statusCode": 503,
+      "cacheControl": "no-store",
+      "body": {
+        "status": "degraded",
+        "checkedAt": "2026-10-19T11:00:00.000Z",
+        "latestCheckedDate": "2026-10-19",
+        "latestPricedDate": "2026-10-19",
+        "oldestUnresolvedDate": null,
+        "lastAttemptAt": "2026-10-19T10:15:00Z",
+        "lastAttemptOutcome": "error",
+        "lastSuccessfulRunAt": "2026-10-16T10:15:00Z"
+      }
+    },
+    {
+      "name": "unavailable",
+      "statusCode": 503,
+      "cacheControl": "no-store",
+      "body": {
+        "status": "unavailable",
+        "checkedAt": "2026-10-19T11:00:00.000Z",
+        "latestCheckedDate": null,
+        "latestPricedDate": null,
+        "oldestUnresolvedDate": null,
+        "lastAttemptAt": null,
+        "lastAttemptOutcome": null,
+        "lastSuccessfulRunAt": null
+      }
+    }
+  ],
+  "remainingVerification": {
+    "actualWranglerHealthResponses": "passed Task8; actualWrangler capture and runtime-http.json",
+    "browserRefreshAndAssets": "passed Task8 through Worker8787; screenshots and runtime-verification.md",
+    "productionDeployment": "not performed",
+    "actualCorrectedScheduledEvent": "pending separately authorized deployment and future observation"
+  },
+  "jobQueryPlans": {
+    "evidenceKind": "Isolated SQLite fixture capturing actual Worker health SQL, both schema entry points",
+    "captureCommand": "rtk pnpm exec node --experimental-strip-types data/repairs/capture-job-query-plans.mjs",
+    "plans": [
+      {
+        "entryPoint": "worker-migration",
+        "query": "SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1",
+        "details": [
+          "SEARCH job_runs USING INDEX job_runs_health_attempt (source_id=?)"
+        ]
+      },
+      {
+        "entryPoint": "worker-migration",
+        "query": "SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' AND status = 'complete' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1",
+        "details": [
+          "SEARCH job_runs USING INDEX job_runs_health_success (source_id=? AND status=?)"
+        ]
+      },
+      {
+        "entryPoint": "schema-file",
+        "query": "SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1",
+        "details": [
+          "SEARCH job_runs USING INDEX job_runs_health_attempt (source_id=?)"
+        ]
+      },
+      {
+        "entryPoint": "schema-file",
+        "query": "SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' AND status = 'complete' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1",
+        "details": [
+          "SEARCH job_runs USING INDEX job_runs_health_success (source_id=? AND status=?)"
+        ]
+      }
+    ]
+  },
+  "actualWrangler": {
+    "kind": "Actual local Wrangler8787 HTTP; combined seeded local D1; no production writes",
+    "statusCode": 200,
+    "cacheControl": "no-store",
+    "body": {
+      "status": "ok",
+      "checkedAt": "2026-10-19T09:21:28.293Z",
+      "latestCheckedDate": "2026-10-19",
+      "latestPricedDate": "2026-10-19",
+      "oldestUnresolvedDate": null,
+      "lastAttemptAt": "2026-10-19T07:15:48.830Z",
+      "lastAttemptOutcome": "complete",
+      "lastSuccessfulRunAt": "2026-10-19T07:15:48.830Z"
+    },
+    "preFix": {
+      "statusCode": 503,
+      "status": "unavailable",
+      "cause": "D1_ERROR: too many terms in compound SELECT: SQLITE_ERROR",
+      "reproduction": "five SELECT terms succeed; six terms fail in actual Wrangler local D1"
+    },
+    "fix": "Separate sequential indexed latest-date seeks per canonical commodity; regression in pihps-health.test.ts"
+  }
+}

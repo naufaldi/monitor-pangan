@@ -1,0 +1,931 @@
+{
+  "kind": "Actual local Wrangler HTTP on port8787; seeded local D1",
+  "productionWrites": false,
+  "requests": [
+    {
+      "path": "/api/snapshot?date=2025-10-30&commodity=beras",
+      "method": "GET",
+      "status": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "date": "2025-10-30",
+        "commodity": {
+          "id": "beras",
+          "name": "Beras",
+          "unit": "kg",
+          "group": "Bahan pokok",
+          "anchor": 13500
+        },
+        "nationalAvg": 15750,
+        "pricedCount": 34,
+        "rows": [
+          {
+            "regionCode": "11",
+            "price": 14600
+          },
+          {
+            "regionCode": "12",
+            "price": 14550
+          },
+          {
+            "regionCode": "13",
+            "price": 17050
+          },
+          {
+            "regionCode": "14",
+            "price": 16300
+          },
+          {
+            "regionCode": "15",
+            "price": 15400
+          },
+          {
+            "regionCode": "16",
+            "price": 15500
+          },
+          {
+            "regionCode": "17",
+            "price": 15500
+          },
+          {
+            "regionCode": "18",
+            "price": 14750
+          },
+          {
+            "regionCode": "19",
+            "price": 15300
+          },
+          {
+            "regionCode": "21",
+            "price": 14950
+          },
+          {
+            "regionCode": "31",
+            "price": 16300
+          },
+          {
+            "regionCode": "32",
+            "price": 14850
+          },
+          {
+            "regionCode": "33",
+            "price": 15050
+          },
+          {
+            "regionCode": "34",
+            "price": 14200
+          },
+          {
+            "regionCode": "35",
+            "price": 14700
+          },
+          {
+            "regionCode": "36",
+            "price": 15200
+          },
+          {
+            "regionCode": "51",
+            "price": 15450
+          },
+          {
+            "regionCode": "52",
+            "price": 13950
+          },
+          {
+            "regionCode": "53",
+            "price": 15350
+          },
+          {
+            "regionCode": "61",
+            "price": 16400
+          },
+          {
+            "regionCode": "62",
+            "price": 17600
+          },
+          {
+            "regionCode": "63",
+            "price": 17450
+          },
+          {
+            "regionCode": "64",
+            "price": 16350
+          },
+          {
+            "regionCode": "65",
+            "price": 17250
+          },
+          {
+            "regionCode": "71",
+            "price": 16050
+          },
+          {
+            "regionCode": "72",
+            "price": 15600
+          },
+          {
+            "regionCode": "73",
+            "price": 14200
+          },
+          {
+            "regionCode": "74",
+            "price": 15750
+          },
+          {
+            "regionCode": "75",
+            "price": 16150
+          },
+          {
+            "regionCode": "76",
+            "price": 14450
+          },
+          {
+            "regionCode": "81",
+            "price": 16900
+          },
+          {
+            "regionCode": "82",
+            "price": 17150
+          },
+          {
+            "regionCode": "91",
+            "price": 18950
+          },
+          {
+            "regionCode": "92",
+            "price": 16950
+          },
+          {
+            "regionCode": "93",
+            "price": null
+          },
+          {
+            "regionCode": "94",
+            "price": null
+          },
+          {
+            "regionCode": "95",
+            "price": null
+          },
+          {
+            "regionCode": "96",
+            "price": null
+          }
+        ]
+      }
+    },
+    {
+      "path": "/api/snapshot?date=2018-10-09&commodity=beras",
+      "method": "GET",
+      "status": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "date": "2018-10-09",
+        "commodity": {
+          "id": "beras",
+          "name": "Beras",
+          "unit": "kg",
+          "group": "Bahan pokok",
+          "anchor": 13500
+        },
+        "nationalAvg": 11700,
+        "pricedCount": 34,
+        "rows": [
+          {
+            "regionCode": "11",
+            "price": 10300
+          },
+          {
+            "regionCode": "12",
+            "price": 10700
+          },
+          {
+            "regionCode": "13",
+            "price": 13400
+          },
+          {
+            "regionCode": "14",
+            "price": 12250
+          },
+          {
+            "regionCode": "15",
+            "price": 12100
+          },
+          {
+            "regionCode": "16",
+            "price": 11450
+          },
+          {
+            "regionCode": "17",
+            "price": 11850
+          },
+          {
+            "regionCode": "18",
+            "price": 11300
+          },
+          {
+            "regionCode": "19",
+            "price": 11500
+          },
+          {
+            "regionCode": "21",
+            "price": 13300
+          },
+          {
+            "regionCode": "31",
+            "price": 13200
+          },
+          {
+            "regionCode": "32",
+            "price": 11100
+          },
+          {
+            "regionCode": "33",
+            "price": 10650
+          },
+          {
+            "regionCode": "34",
+            "price": 11450
+          },
+          {
+            "regionCode": "35",
+            "price": 10700
+          },
+          {
+            "regionCode": "36",
+            "price": 11350
+          },
+          {
+            "regionCode": "51",
+            "price": 11200
+          },
+          {
+            "regionCode": "52",
+            "price": 9750
+          },
+          {
+            "regionCode": "53",
+            "price": 11450
+          },
+          {
+            "regionCode": "61",
+            "price": 13100
+          },
+          {
+            "regionCode": "62",
+            "price": 13050
+          },
+          {
+            "regionCode": "63",
+            "price": 12400
+          },
+          {
+            "regionCode": "64",
+            "price": 12650
+          },
+          {
+            "regionCode": "65",
+            "price": 13100
+          },
+          {
+            "regionCode": "71",
+            "price": 11400
+          },
+          {
+            "regionCode": "72",
+            "price": 11150
+          },
+          {
+            "regionCode": "73",
+            "price": 9950
+          },
+          {
+            "regionCode": "74",
+            "price": 10800
+          },
+          {
+            "regionCode": "75",
+            "price": 10650
+          },
+          {
+            "regionCode": "76",
+            "price": 9900
+          },
+          {
+            "regionCode": "81",
+            "price": 13050
+          },
+          {
+            "regionCode": "82",
+            "price": 13150
+          },
+          {
+            "regionCode": "91",
+            "price": 12150
+          },
+          {
+            "regionCode": "92",
+            "price": 12550
+          },
+          {
+            "regionCode": "93",
+            "price": null
+          },
+          {
+            "regionCode": "94",
+            "price": null
+          },
+          {
+            "regionCode": "95",
+            "price": null
+          },
+          {
+            "regionCode": "96",
+            "price": null
+          }
+        ]
+      }
+    },
+    {
+      "path": "/api/snapshot?date=2018-02-30&commodity=beras",
+      "method": "GET",
+      "status": 400,
+      "cacheControl": "no-store",
+      "body": {
+        "error": "invalid"
+      }
+    },
+    {
+      "path": "/api/trend?from=2025-10-01&to=2025-10-30&commodity=beras&limit=no",
+      "method": "GET",
+      "status": 400,
+      "cacheControl": "no-store",
+      "body": {
+        "error": "invalid"
+      }
+    },
+    {
+      "path": "/api/snapshot?date=2025-10-30&commodity=beras",
+      "method": "POST",
+      "status": 405,
+      "cacheControl": "no-store",
+      "body": {
+        "error": "method"
+      }
+    },
+    {
+      "path": "/api/snapshot?date=2017-03-28&commodity=beras",
+      "method": "GET",
+      "status": 503,
+      "cacheControl": "no-store",
+      "body": {
+        "error": "coverage_unavailable"
+      }
+    },
+    {
+      "path": "/api/pihps/fresh",
+      "method": "GET",
+      "status": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "latestDate": "2026-10-19",
+        "dates": [
+          "2026-09-17",
+          "2026-09-18",
+          "2026-09-21",
+          "2026-09-22",
+          "2026-09-23",
+          "2026-09-24",
+          "2026-09-25",
+          "2026-09-28",
+          "2026-09-29",
+          "2026-09-30",
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19"
+        ],
+        "priceCells": 7730
+      }
+    },
+    {
+      "path": "/api/pihps/health",
+      "method": "GET",
+      "status": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "status": "ok",
+        "checkedAt": "2026-10-19T09:17:28.716Z",
+        "latestCheckedDate": "2026-10-19",
+        "latestPricedDate": "2026-10-19",
+        "oldestUnresolvedDate": null,
+        "lastAttemptAt": "2026-10-19T07:15:48.830Z",
+        "lastAttemptOutcome": "complete",
+        "lastSuccessfulRunAt": "2026-10-19T07:15:48.830Z"
+      }
+    },
+    {
+      "path": "/api/laporan/meta",
+      "method": "GET",
+      "status": 200,
+      "cacheControl": "no-store",
+      "body": {
+        "turnstileSiteKey": null
+      }
+    },
+    {
+      "path": "/api/admin/queue",
+      "method": "GET",
+      "status": 401,
+      "cacheControl": "no-store",
+      "body": {
+        "error": "unauthorized"
+      }
+    },
+    {
+      "fixture": "synthetic local completed-empty survey; restored",
+      "status": 200,
+      "body": {
+        "date": "2025-10-29",
+        "commodity": {
+          "id": "beras",
+          "name": "Beras",
+          "unit": "kg",
+          "group": "Bahan pokok",
+          "anchor": 13500
+        },
+        "nationalAvg": null,
+        "pricedCount": 0,
+        "rows": [
+          {
+            "regionCode": "11",
+            "price": null
+          },
+          {
+            "regionCode": "12",
+            "price": null
+          },
+          {
+            "regionCode": "13",
+            "price": null
+          },
+          {
+            "regionCode": "14",
+            "price": null
+          },
+          {
+            "regionCode": "15",
+            "price": null
+          },
+          {
+            "regionCode": "16",
+            "price": null
+          },
+          {
+            "regionCode": "17",
+            "price": null
+          },
+          {
+            "regionCode": "18",
+            "price": null
+          },
+          {
+            "regionCode": "19",
+            "price": null
+          },
+          {
+            "regionCode": "21",
+            "price": null
+          },
+          {
+            "regionCode": "31",
+            "price": null
+          },
+          {
+            "regionCode": "32",
+            "price": null
+          },
+          {
+            "regionCode": "33",
+            "price": null
+          },
+          {
+            "regionCode": "34",
+            "price": null
+          },
+          {
+            "regionCode": "35",
+            "price": null
+          },
+          {
+            "regionCode": "36",
+            "price": null
+          },
+          {
+            "regionCode": "51",
+            "price": null
+          },
+          {
+            "regionCode": "52",
+            "price": null
+          },
+          {
+            "regionCode": "53",
+            "price": null
+          },
+          {
+            "regionCode": "61",
+            "price": null
+          },
+          {
+            "regionCode": "62",
+            "price": null
+          },
+          {
+            "regionCode": "63",
+            "price": null
+          },
+          {
+            "regionCode": "64",
+            "price": null
+          },
+          {
+            "regionCode": "65",
+            "price": null
+          },
+          {
+            "regionCode": "71",
+            "price": null
+          },
+          {
+            "regionCode": "72",
+            "price": null
+          },
+          {
+            "regionCode": "73",
+            "price": null
+          },
+          {
+            "regionCode": "74",
+            "price": null
+          },
+          {
+            "regionCode": "75",
+            "price": null
+          },
+          {
+            "regionCode": "76",
+            "price": null
+          },
+          {
+            "regionCode": "81",
+            "price": null
+          },
+          {
+            "regionCode": "82",
+            "price": null
+          },
+          {
+            "regionCode": "91",
+            "price": null
+          },
+          {
+            "regionCode": "92",
+            "price": null
+          },
+          {
+            "regionCode": "93",
+            "price": null
+          },
+          {
+            "regionCode": "94",
+            "price": null
+          },
+          {
+            "regionCode": "95",
+            "price": null
+          },
+          {
+            "regionCode": "96",
+            "price": null
+          }
+        ]
+      }
+    },
+    {
+      "fixture": "synthetic broken local prices view; restored",
+      "path": "/api/snapshot?date=2025-10-30&commodity=beras",
+      "status": 500,
+      "body": {
+        "error": "price_read_failed"
+      }
+    },
+    {
+      "fixture": "synthetic broken local prices view; restored",
+      "path": "/api/pihps/fresh",
+      "status": 503,
+      "body": {
+        "error": "freshness_unavailable"
+      }
+    },
+    {
+      "fixture": "synthetic broken local prices view; restored",
+      "path": "/api/pihps/health",
+      "status": 503,
+      "body": {
+        "status": "unavailable",
+        "checkedAt": "2026-10-19T09:18:25.746Z",
+        "latestCheckedDate": null,
+        "latestPricedDate": null,
+        "oldestUnresolvedDate": null,
+        "lastAttemptAt": null,
+        "lastAttemptOutcome": null,
+        "lastSuccessfulRunAt": null
+      }
+    }
+  ],
+  "trendPages": [
+    {
+      "national": [
+        {
+          "date": "2026-09-16",
+          "price": 16350
+        },
+        {
+          "date": "2026-09-17",
+          "price": 16350
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-09-16",
+          "price": 17200
+        },
+        {
+          "date": "2026-09-17",
+          "price": 17200
+        }
+      ],
+      "nextCursor": "2026-09-17"
+    },
+    {
+      "national": [
+        {
+          "date": "2026-09-18",
+          "price": 16350
+        },
+        {
+          "date": "2026-09-21",
+          "price": 16400
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-09-18",
+          "price": 17200
+        },
+        {
+          "date": "2026-09-21",
+          "price": 17200
+        }
+      ],
+      "nextCursor": "2026-09-21"
+    },
+    {
+      "national": [
+        {
+          "date": "2026-09-22",
+          "price": 16400
+        },
+        {
+          "date": "2026-09-23",
+          "price": 16350
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-09-22",
+          "price": 17200
+        },
+        {
+          "date": "2026-09-23",
+          "price": 17200
+        }
+      ],
+      "nextCursor": "2026-09-23"
+    },
+    {
+      "national": [
+        {
+          "date": "2026-09-24",
+          "price": 16350
+        },
+        {
+          "date": "2026-09-25",
+          "price": 16400
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-09-24",
+          "price": 17200
+        },
+        {
+          "date": "2026-09-25",
+          "price": 17200
+        }
+      ],
+      "nextCursor": "2026-09-25"
+    },
+    {
+      "national": [
+        {
+          "date": "2026-09-28",
+          "price": 16400
+        },
+        {
+          "date": "2026-09-29",
+          "price": 16400
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-09-28",
+          "price": 17200
+        },
+        {
+          "date": "2026-09-29",
+          "price": 17200
+        }
+      ],
+      "nextCursor": "2026-09-29"
+    },
+    {
+      "national": [
+        {
+          "date": "2026-09-30",
+          "price": 16350
+        },
+        {
+          "date": "2026-10-01",
+          "price": 16400
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-09-30",
+          "price": 17200
+        },
+        {
+          "date": "2026-10-01",
+          "price": 17200
+        }
+      ],
+      "nextCursor": "2026-10-01"
+    },
+    {
+      "national": [
+        {
+          "date": "2026-10-02",
+          "price": 16400
+        },
+        {
+          "date": "2026-10-05",
+          "price": 16400
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-10-02",
+          "price": 17200
+        },
+        {
+          "date": "2026-10-05",
+          "price": 17200
+        }
+      ],
+      "nextCursor": "2026-10-05"
+    },
+    {
+      "national": [
+        {
+          "date": "2026-10-06",
+          "price": 16400
+        },
+        {
+          "date": "2026-10-07",
+          "price": 16450
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-10-06",
+          "price": 17200
+        },
+        {
+          "date": "2026-10-07",
+          "price": 17200
+        }
+      ],
+      "nextCursor": "2026-10-07"
+    },
+    {
+      "national": [
+        {
+          "date": "2026-10-08",
+          "price": 16450
+        },
+        {
+          "date": "2026-10-09",
+          "price": 16400
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-10-08",
+          "price": 17200
+        },
+        {
+          "date": "2026-10-09",
+          "price": 17200
+        }
+      ],
+      "nextCursor": "2026-10-09"
+    },
+    {
+      "national": [
+        {
+          "date": "2026-10-12",
+          "price": 16400
+        },
+        {
+          "date": "2026-10-13",
+          "price": 16400
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-10-12",
+          "price": 17200
+        },
+        {
+          "date": "2026-10-13",
+          "price": 17200
+        }
+      ],
+      "nextCursor": "2026-10-13"
+    },
+    {
+      "national": [
+        {
+          "date": "2026-10-14",
+          "price": 16400
+        },
+        {
+          "date": "2026-10-15",
+          "price": 16400
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-10-15",
+          "price": 17200
+        }
+      ],
+      "nextCursor": "2026-10-15"
+    },
+    {
+      "national": [
+        {
+          "date": "2026-10-16",
+          "price": 16400
+        },
+        {
+          "date": "2026-10-19",
+          "price": 16400
+        }
+      ],
+      "selected": [
+        {
+          "date": "2026-10-16",
+          "price": 17200
+        }
+      ],
+      "nextCursor": null
+    }
+  ],
+  "pagination": {
+    "national": 24,
+    "selected": 22,
+    "duplicates": 0
+  }
+}

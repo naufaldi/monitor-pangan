@@ -12,8 +12,10 @@ const PihpsRow = Schema.Struct(
 )
 
 const PihpsGridSchema = Schema.Struct({
-  data: Schema.optional(Schema.Array(PihpsRow)),
+  data: Schema.Array(PihpsRow),
 })
+
+const PihpsPrice = Schema.Number.pipe(Schema.finite(), Schema.positive())
 
 export class PihpsDecodeError extends Data.TaggedError("PihpsDecodeError")<{
   readonly message: string
@@ -54,12 +56,16 @@ export const parsePihpsGrid = Effect.fn("Pihps.parseGrid")(function* (
   )
   const column = columnKey(date)
   const cells: PihpsPriceCell[] = []
-  for (const row of grid.data ?? []) {
+  for (const row of grid.data) {
     if (row.level !== 1) continue
     const commodityId = GRUP_BY_PIHPS_NAME[row.name]
     if (commodityId == null) continue
-    const price = parsePihpsNumber(row[column])
-    if (price == null) continue
+    const raw = row[column]
+    // Only documented missing values are absence. Malformed observations fail the source check.
+    if (raw == null || (typeof raw === "string" && ["", "-"].includes(raw.trim()))) continue
+    const price = yield* Schema.decodeUnknown(PihpsPrice)(parsePihpsNumber(raw)).pipe(
+      Effect.mapError(() => new PihpsDecodeError({ message: `Invalid PIHPS price for ${date}/${regionCode}/${commodityId}` })),
+    )
     cells.push({ date, commodityId, regionCode, price })
   }
   return cells
