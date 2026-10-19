@@ -135,6 +135,16 @@ dashboard-only and is not applied here.
 
 ## Audited historical recovery (19 October 2026)
 
+Daily repository synchronization now has a separate
+[incremental archive runbook](docs/operations/pihps-archive-sync.md).
+It preserves the audited base described below and exports new/changed official
+D1 observations into reviewed `data/history/pihps/updates/` files. Corrections
+use a change sequence rather than a latest-survey-date cursor. Export retries
+do not fetch PIHPS again. Source completion, successful ingestion, publication
+to a PR and merge into `main` remain distinct evidence. The workflow is disabled
+until explicitly configured and activated; production deployment and actual
+scheduled-event verification remain pending.
+
 The production audit found 8,040 official provincial observations on 24 dates,
 2026-09-16 through 2026-10-19, and no earlier rows. This is dated production
 evidence, not a current remote query. The tracked recovery archive now lives in

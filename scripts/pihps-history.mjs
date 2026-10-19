@@ -5,6 +5,7 @@ import { COMMODITY_ROWS, REGION_ROWS } from '../src/data/pihps-catalog.ts'
 import { isTradingDay, tradingDaysFromThrough } from '../src/lib/civil-date.ts'
 import { ArchiveError, DateSchema } from './pihps-scrape.mjs'
 import { observationsFromSeries } from './price-import.mjs'
+import { foldObservationUpdates } from './pihps-history-updates.mjs'
 
 export const SOURCE_COMMIT = 'ef85f27904b044bd343a56dcdd77a46d28eb1205'
 export const RANGE = { from: '2017-03-27', to: '2026-09-15' }
@@ -28,7 +29,11 @@ const YearSchema = Schema.Struct({
 export const decodeYear = Schema.decodeUnknown(YearSchema, { onExcessProperty: 'error' })
 export const sha256 = (text) => createHash('sha256').update(text).digest('hex')
 export const sourceRef = (year) => `git:${SOURCE_COMMIT}:public/series/${year}.json`
-export const historyObservations = ({ years }) => years.flatMap((doc) => observationsFromSeries(doc, sourceRef(doc.year)))
+export const historyObservations = ({ years, updates }) => {
+  const base = years.flatMap((doc) => observationsFromSeries(doc, sourceRef(doc.year)))
+  // The audited base is already deterministic and unique; avoid indexing/sorting 791k rows for an empty update log.
+  return updates?.events.length ? foldObservationUpdates(base, updates.events) : base
+}
 
 /** One provincial array per line keeps yearly diffs readable without repeating observation keys. */
 export const serializeYear = (doc) => {

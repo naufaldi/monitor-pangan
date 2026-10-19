@@ -1,0 +1,52 @@
+{
+  "target": "controlled-local-fixture",
+  "sourceRequests": 68,
+  "jobs": [
+    {
+      "status": "complete",
+      "rows_upserted": 0
+    },
+    {
+      "status": "complete",
+      "rows_upserted": 34
+    }
+  ],
+  "outboxEvents": 1,
+  "exported": {
+    "outcome": "updated",
+    "epoch": "82eda9609386a15e337a68fd9e422bf6",
+    "fromSequence": 0,
+    "throughSequence": 1,
+    "remainingEvents": 0,
+    "events": 1,
+    "dates": [
+      "2026-10-19"
+    ],
+    "bytes": 1877
+  },
+  "repeated": {
+    "outcome": "unchanged",
+    "epoch": "82eda9609386a15e337a68fd9e422bf6",
+    "throughSequence": 1,
+    "remainingEvents": 0,
+    "events": 0
+  },
+  "restoration": {
+    "from": "2018-10-09",
+    "to": "2026-10-19",
+    "inputObservations": 714,
+    "inserts": 714,
+    "updates": 0,
+    "unchanged": 0,
+    "existingPreserved": 0,
+    "differingOfficial": [],
+    "coverageChanges": 0,
+    "unresolvedErrors": [],
+    "statements": 4
+  },
+  "dates": [
+    "2018-10-09",
+    "2025-10-30",
+    "2026-10-19"
+  ]
+}

@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path'
 import { ArchiveError, io } from './pihps-scrape.mjs'
 import { derivedObservations } from './price-import.mjs'
 import { AUDIT_YEARS, decodeYear, archiveFiles, serializeYear, serializeManifest, sha256, validateAudit } from './pihps-history.mjs'
+import { readUpdates, updateArchiveFiles } from './pihps-history-updates.mjs'
 
 export { io }
 const json = (text) => Schema.decodeUnknown(Schema.parseJson(Schema.Unknown))(text)
@@ -11,7 +12,7 @@ const absent = (error) => error.message.includes('ENOENT')
 const optionalRead = (path) => io(() => readFile(path, 'utf8')).pipe(Effect.catchIf(absent, () => Effect.succeed(null)))
 
 export const readHistory = (directory = 'data/history/pihps') => Effect.gen(function* () {
-  const allowed = new Set([...AUDIT_YEARS.map(({ year }) => `${year}.json`), 'manifest.json', 'README.md'])
+  const allowed = new Set([...AUDIT_YEARS.map(({ year }) => `${year}.json`), 'manifest.json', 'README.md', 'updates'])
   const names = yield* io(() => readdir(directory))
   if (names.some((name) => !allowed.has(name))) return yield* Effect.fail(new ArchiveError({ message: 'unexpected archive file' }))
   const years = []
@@ -29,7 +30,9 @@ export const readHistory = (directory = 'data/history/pihps') => Effect.gen(func
   // Parse JSON before the canonical byte comparison, which also rejects missing/extra fields and schema versions.
   yield* json(text)
   if (text !== serializeManifest(manifest)) return yield* Effect.fail(new ArchiveError({ message: 'manifest schema, hashes or statistics mismatch' }))
-  return { manifest, years }
+  const updates = yield* readUpdates(directory, sha256(text))
+  const dates = [manifest.range.from, manifest.range.to, ...updates.events.map((event) => event.date)].sort()
+  return { manifest, years, updates, range: { from: dates[0], to: dates.at(-1) } }
 })
 
 /** Exclusive writer, complete sibling staging, validate-before-rename and rollback on publication failure. */
@@ -42,7 +45,8 @@ export const publishHistory = (directory, files, validate = readHistory) => Effe
       io(() => mkdtemp(`${destination}.stage-`)),
       (stage) => Effect.gen(function* () {
         for (const [name, text] of files) {
-          if (!/^(?:\d{4}\.json|manifest\.json|README\.md)$/.test(name)) return yield* Effect.fail(new ArchiveError({ message: 'invalid publication filename' }))
+          if (!/^(?:\d{4}\.json|manifest\.json|README\.md|updates\/(?:manifest\.json|\d{4}\.jsonl))$/.test(name)) return yield* Effect.fail(new ArchiveError({ message: 'invalid publication filename' }))
+          yield* io(() => mkdir(dirname(join(stage, name)), { recursive: true }))
           yield* io(() => writeFile(join(stage, name), text, { flag: 'wx' }))
         }
         yield* validate(stage)
@@ -76,6 +80,8 @@ export const buildHistory = (input, output = 'data/history/pihps') => Effect.gen
   }
   yield* validateAudit(years)
   const files = archiveFiles(years)
+  const updates = yield* readUpdates(output, sha256(files.get('manifest.json')))
+  if (updates.manifest) for (const [name, text] of yield* updateArchiveFiles(updates.events, sha256(files.get('manifest.json')))) files.set(name, text)
   const readme = yield* optionalRead(join(output, 'README.md'))
   if (readme !== null) files.set('README.md', readme)
   yield* publishHistory(output, files)
@@ -83,8 +89,9 @@ export const buildHistory = (input, output = 'data/history/pihps') => Effect.gen
 })
 
 export const rebuildHistory = (directory = 'data/history/pihps') => Effect.gen(function* () {
-  const { years, manifest } = yield* readHistory(directory)
+  const { years, manifest, updates } = yield* readHistory(directory)
   const files = archiveFiles(years)
+  if (updates.manifest) for (const [name, text] of yield* updateArchiveFiles(updates.events, sha256(files.get('manifest.json')))) files.set(name, text)
   const readme = yield* optionalRead(join(directory, 'README.md'))
   if (readme !== null) files.set('README.md', readme)
   yield* publishHistory(directory, files)

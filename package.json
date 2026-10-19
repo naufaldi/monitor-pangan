@@ -30,7 +30,11 @@
     "history:pihps:restore": "node scripts/seed-d1.mjs --history-dir data/history/pihps",
     "db:apply": "wrangler d1 execute monitor-pangan --local --file=./db/schema.sql",
     "db:seed": "wrangler d1 execute monitor-pangan --local --file=./data/seed.sql",
-    "db:setup": "pnpm run db:apply && pnpm run db:seed"
+    "db:setup": "pnpm run db:apply && pnpm run db:seed",
+    "history:pihps:sync": "node scripts/pihps-history-cli.mjs sync",
+    "history:pihps:reconcile": "node scripts/pihps-history-cli.mjs reconcile",
+    "history:pihps:status": "node scripts/pihps-history-cli.mjs status",
+    "history:pihps:publish": "node scripts/pihps-history-cli.mjs publish"
   },
   "dependencies": {
     "@monitor-pangan/ui": "workspace:*",

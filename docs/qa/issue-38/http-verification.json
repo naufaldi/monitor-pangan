@@ -1,0 +1,58 @@
+{
+  "origin": "http://localhost:8798",
+  "target": "controlled-local-Wrangler-D1",
+  "fixtures": [
+    {
+      "date": "2018-10-09",
+      "rows": 38,
+      "pricedCount": 34,
+      "nationalAvg": 11700
+    },
+    {
+      "date": "2025-10-30",
+      "rows": 38,
+      "pricedCount": 34,
+      "nationalAvg": 15750
+    }
+  ],
+  "latest": {
+    "date": "2026-10-19",
+    "pricedCount": 34,
+    "nationalAvg": 16000
+  },
+  "freshness": {
+    "latestDate": "2026-10-19",
+    "observations": 34
+  },
+  "trend": {
+    "national": [
+      {
+        "date": "2018-10-09",
+        "price": 11700
+      },
+      {
+        "date": "2025-10-30",
+        "price": 15750
+      },
+      {
+        "date": "2026-10-19",
+        "price": 16000
+      }
+    ],
+    "selected": [
+      {
+        "date": "2018-10-09",
+        "price": 13200
+      },
+      {
+        "date": "2025-10-30",
+        "price": 16300
+      },
+      {
+        "date": "2026-10-19",
+        "price": 16000
+      }
+    ],
+    "nextCursor": null
+  }
+}

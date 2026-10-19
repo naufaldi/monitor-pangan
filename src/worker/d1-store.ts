@@ -6,6 +6,7 @@ import type { PihpsPriceCell } from "../data/pihps-grid.ts"
 import { PriceStore, StoreError, type JobRecord } from "./ingest.ts"
 import { CoverageDaySchema, type CoverageDay } from "./ingest-plan.ts"
 import { LAPORAN_MIGRATION_SQL } from "./laporan-schema.ts"
+import { ARCHIVE_OUTBOX_SQL, capturePublishedDay } from "./archive-outbox.ts"
 
 export interface D1Prepared {
   bind(...values: unknown[]): D1Prepared
@@ -64,7 +65,8 @@ INSERT OR IGNORE INTO commodities (id, name, unit) VALUES
 ${COMMODITY_ROWS.map(([id, name, unit]) => `(${sqlString(id)}, ${sqlString(name)}, ${sqlString(unit)})`).join(",\n")};
 INSERT OR IGNORE INTO regions (code, name, level) VALUES
 ${REGION_ROWS.map(([code, name]) => `(${sqlString(code)}, ${sqlString(name)}, 'province')`).join(",\n")};
-${LAPORAN_MIGRATION_SQL}
+${LAPORAN_MIGRATION_SQL};
+${ARCHIVE_OUTBOX_SQL}
 `
 
 const storeError = (cause: unknown) => new StoreError({ message: String(cause) })
@@ -118,11 +120,12 @@ export const d1PriceStoreLayer = (db: D1Database) => {
 
   // JSON input keeps each SQL statement below D1's 100 bound-parameter limit.
   const insertPrices = (rows: readonly PihpsPriceCell[], replace: boolean) => db.prepare(`
-    INSERT INTO prices_daily (date, commodity_id, region_code, level, price, source_id)
+    INSERT INTO prices_daily (date, commodity_id, region_code, level, price, source_id, raw_ref)
     SELECT json_extract(value, '$.date'), json_extract(value, '$.commodityId'),
-      json_extract(value, '$.regionCode'), 'eceran', json_extract(value, '$.price'), 'pihps'
+      json_extract(value, '$.regionCode'), 'eceran', json_extract(value, '$.price'), 'pihps',
+      'pihps-grid:' || json_extract(value, '$.date') || ':' || json_extract(value, '$.regionCode')
     FROM json_each(?) WHERE true
-    ON CONFLICT (date, commodity_id, region_code, level) ${replace ? "DO UPDATE SET price = excluded.price, source_id = excluded.source_id" : "DO NOTHING"}
+    ON CONFLICT (date, commodity_id, region_code, level) ${replace ? "DO UPDATE SET price = excluded.price, source_id = excluded.source_id, raw_ref = excluded.raw_ref" : "DO NOTHING"}
   `).bind(JSON.stringify(rows))
   const marker = (date: string, status: CoverageDay["status"], checkedAt: string) => db.prepare(`
     INSERT INTO source_days (date, source_id, status, checked_at) VALUES (?, 'pihps', ?, ?)
@@ -147,7 +150,7 @@ export const d1PriceStoreLayer = (db: D1Database) => {
       // D1 batches are transactional: refresh existing cells and publish completion together.
       yield* Effect.tryPromise({
         try: () => rows.length > 0 && status === "live"
-          ? db.batch([insertPrices(rows, true), marker(date, status, checkedAt)])
+          ? db.batch([insertPrices(rows, true), marker(date, status, checkedAt), capturePublishedDay(db, date, checkedAt)])
           : marker(date, status, checkedAt).run(),
         catch: storeError,
       })

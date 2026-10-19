@@ -1,0 +1,63 @@
+name: PIHPS archive synchronization
+
+on:
+  schedule:
+    - cron: '45 7 * * MON-FRI'
+    - cron: '45 10 * * MON-FRI'
+  workflow_dispatch:
+    inputs:
+      max_events:
+        description: Maximum outbox events (1-100)
+        default: '100'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pihps-history-sync
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main' && vars.PIHPS_ARCHIVE_SYNC_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: pihps-archive
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        id: app
+        with:
+          app-id: ${{ vars.PIHPS_ARCHIVE_APP_ID }}
+          private-key: ${{ secrets.PIHPS_ARCHIVE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Export validated D1 changes and publish archive PR
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.PIHPS_ARCHIVE_D1_READ_TOKEN }}
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          PIHPS_ARCHIVE_BOT_LOGIN: ${{ vars.PIHPS_ARCHIVE_BOT_LOGIN }}
+          MAX_EVENTS: ${{ inputs.max_events || '100' }}
+        run: pnpm history:pihps:publish --target remote --max-events "$MAX_EVENTS"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: pihps-archive-receipt
+          path: data/repairs/pihps-archive-receipt.json
+          retention-days: 30
+          if-no-files-found: warn

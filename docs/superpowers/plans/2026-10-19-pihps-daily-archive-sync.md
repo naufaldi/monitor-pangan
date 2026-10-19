@@ -1,6 +1,14 @@
 # PIHPS daily repository archive synchronization implementation plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. This is a draft for review, not authorization to deploy or enable production automation.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. This plan authorizes local implementation, not production deployment or automation activation.
+
+**Execution status (19 October 2026):** Local implementation, automated checks,
+actual Worker/D1 end-to-end verification, desktop/mobile screenshots and two
+independent subagent reviews are complete. Review regressions were reproduced
+and fixed. See [verification and screenshots](../../qa/issue-38/verification.md)
+and the [operations runbook](../../operations/pihps-archive-sync.md). The
+conditional production rollout in Task 6 remains pending authorization and live
+event evidence; the workflow is disabled by default.
 
 **Goal:** Keep reviewed repository history current with validated PIHPS observations in D1, including corrections, without repeating successful source ingestion.
 
