@@ -1,7 +1,8 @@
 # DATA_SOURCES.md — Monitor Pangan provenance
 
-Non-official mirror for development. Numbers are shown as sample data until a
-sanctioned feed lands. Official sources:
+Unofficial dashboard of published food-price observations. PIHPS prices and
+sample data have separate provenance; sample data must never be labeled official.
+Source sites:
 
 - Panel Harga Pangan, Badan Pangan Nasional — https://panelharga.badanpangan.go.id/
 - NFA Web API docs / registration — https://webapi.badanpangan.go.id/documentasi
@@ -10,7 +11,7 @@ sanctioned feed lands. Official sources:
 
 ## What the scrapers do (2026-09-16)
 
-`npm run ingest` runs two public, keyless scrapers — the same calls the public
+`pnpm run ingest` runs two public, keyless scrapers — the same calls the public
 sites make — rate-limited one-shot, cached to `data/raw/`:
 
 **PIHPS BI (live daily prices, primary)** — `scripts/scrape-pihps.mjs [YYYY-MM-DD]`
@@ -26,24 +27,20 @@ sites make — rate-limited one-shot, cached to `data/raw/`:
 - History depth (verified 2026-09-17): earliest served date is 2017-03-27.
   2014 through mid-March 2017 return `{"data":[]}`. Format is stable across
   years: same ten `level == 1` categories, same `d/m/yyyy` column header.
-- Full backfill (completed 2026-09-17): 2,474/2,474 trading days from
-  2017-03-27 through 2026-09-17 scraped — ~791.7k live provincial cells in
-  `data/raw/pihps-*.json` (git-ignored; coverage travels via the derived
-  snapshots plus `src/data/*.gen.ts`). 24 dates are source-empty, all
-  accounted for: national holidays (Nyepi, Idul Fitri/Adha blocks, Natal,
-  Tahun Baru, Pancasila, Pilkada, cuti bersama) plus 2026-09-17, not yet
-  published at scrape time (~13:00 WIB release). Mar–Jul 2017 is a partial
-  rollout ramp (national + few provinces); from ~Jul 2017 onward a normal
-  date is 350/350 (national + all 34 surveyed provinces), with sporadic
-  single-province source gaps (~8% of dates per province, spread evenly).
-  One full 35-scope date takes about 21s (~14h sequential for the whole
-  range), so it was run as 6 parallel disjoint date-range jobs
-  (`node scripts/scrape-pihps.mjs <from-YYYY-MM-DD> <to-YYYY-MM-DD>`,
-  skip-existing so every chunk is resumable) with zero HTTP retries —
-  no rate-limit pressure observed. Year manifests
-  (`data/raw/manifest-<YYYY>.json`) are rebuilt after range scrapes with
-  `npm run manifests` (`scripts/build-manifests.mjs`, same schema as the
-  single-year mode, which stays race-free by writing no manifest).
+- Historical coverage was previously described as a complete raw backfill, with
+  omitted dates classified as holidays. The October audit could not recover
+  those raw HTTP responses, so that completion claim is withdrawn. The pinned
+  derived archive proves observations, not successful checks of every scope.
+  Its 23 omitted weekdays remain unknown. See the audited recovery workflow below.
+- The CLI accepts a date, inclusive date pair, or year. It skips saved dates
+  unless `--force` is supplied. Forced retries retain previously observed cells
+  when a scope fails or loses cells. Exhausted HTTP/JSON retries are errors,
+  never confirmed emptiness; failures leave resumable results and exit nonzero.
+  A full-date HTTP outage waits 60 seconds before the next date in this CLI only.
+  `pnpm run manifests` rebuilds per-date status from validated raw files.
+  `pnpm run normalize` writes `data/snapshots/coverage.json`, including partial
+  failures and the newest fully verified live date. Legacy files without scope
+  statuses remain unverified. Corrupt raw files stop processing before replacement.
 - Panel catalog API (`api-panelhargav2.badanpangan.go.id`) times out from some
   networks. When it does, `scripts/scrape-panelharga.mjs` synthesizes
   `provinces` (in-repo 38-province list) and `cms_eceran` (join-relevant ids)
@@ -70,7 +67,7 @@ server-side. The scraper records the 401 and continues; no credential bypass.
    `X-Authorization` key. Daily cron filters `level=eceran` for consumer prices.
 2. Or download the monthly "Rata-rata Harga Pangan Bulanan Tingkat Konsumen
    Provinsi" CSV from Open Data (survey form + SAPA gated) into
-   `data/raw/manual-*.csv`, then `npm run normalize`.
+   `data/raw/manual-*.csv`, then `pnpm run normalize`.
 3. When either lands, `data/snapshots/latest.json` carries real prices and the
    header badge flips from `Data contoh` to `Data <date> · Panel Harga eceran`
    with zero UI changes.
@@ -124,3 +121,107 @@ wrangler r2 bucket cors set monitor-pangan-laporan --file r2-cors.json
 
 A Free WAF rate limit on `POST /api/laporan` (per IP, 10 seconds, Block) is
 dashboard-only and is not applied here.
+
+## Audited historical recovery (19 October 2026)
+
+The production audit found 8,040 official provincial observations on 24 dates,
+2026-09-16 through 2026-10-19, and no earlier rows. The existing repository-derived
+archive is pinned to commit `ef85f27904b044bd343a56dcdd77a46d28eb1205`, paths
+`public/series/2017.json` through `2026.json`. Recovery checks the committed
+[repair manifest](docs/qa/pr12/repair-manifest.json) SHA-256 for each file and
+validates dates, commodity/province columns, lengths and positive integer prices
+with Effect Schema. It does not merge code from that commit. Use Node 24 for
+these CLI commands (`node:sqlite` reads explicitly selected local databases).
+
+The repair interval is **2017-03-27 through 2026-09-15 inclusive**: 2,449 observed
+dates and 791,426 provincial cells. September 16 onward is excluded because ten
+region-64 observations disagree with the current bundle. Archived national
+columns are ignored. Current national values still use the mean of observed
+provinces rounded to Rp 50. Every recovered observation retains its original
+`git:<commit>:public/series/<year>.json` provenance in `raw_ref`.
+
+Recover into ignored local storage, then generate SQL and a JSON dry-run report:
+
+```sh
+rtk proxy node scripts/recover-pihps-history.mjs --out data/archive/pihps-derived
+rtk proxy node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-json .superpowers/sdd/2026-10-19-pr12-historical-prices/local-prices-before.json --out data/repairs/historical.sql
+```
+
+The supplied baseline is one complete `SELECT * FROM prices_daily` Wrangler
+`--json` result, not an empty stand-in. The actual audit baseline hash is
+`dfe4dc08f27bf4cff81d98d444acf4a8ac9a042fba03b4942443e98a6c26cdee`.
+For another environment, export its complete table with an explicit
+`wrangler d1 execute monitor-pangan --local` or `--remote` target and
+`--command 'SELECT * FROM prices_daily ORDER BY date, commodity_id, region_code, level' --json`.
+Use the exported JSON as `--existing-json`. A static export describes only the
+snapshot time; regenerate immediately before any separately authorized apply.
+`--target remote` labels a dry run for a remote baseline and never applies SQL.
+
+Inspect `data/repairs/historical.sql.report.json` before applying locally:
+791,426 planned inserts, zero updates, 8,040 existing rows preserved, zero
+coverage changes and 23 unknown omitted weekdays. Derived observations have no
+original request statuses, so **none of the 2,449 dates creates `source_days`
+completion markers**. Current ingestion owns existing source-day/job metadata.
+There is no weekly full-history cron.
+
+Local validation commands (already exercised; no production writes):
+
+```sh
+rtk pnpm exec wrangler d1 execute monitor-pangan --local --file db/schema.sql --json
+rtk pnpm exec wrangler d1 execute monitor-pangan --local --file data/repairs/historical.sql --json
+rtk pnpm exec wrangler d1 execute monitor-pangan --local --file data/repairs/historical.sql --json
+```
+
+The combined local database has **799,466 cells on 2,473 dates**, with the original
+8,040 newer rows, 23 source-day markers and 55 jobs unchanged. Both historical
+beras fixtures match all 38 province cells, including four nulls each:
+2018-10-09 has 34 prices and national Rp 11,700; 2025-10-30 has 34 prices and
+national Rp 15,750. Applying the same SQL again preserves counts and canonical
+row checksum `b631938aca4c5cfe514b73f29b512bef9a7270504c343e51e9f9e855f12c3274`.
+See [local import evidence](docs/qa/pr12/history-import.json) for hashes and results.
+Wrangler emitted a workerd hash-table-collision warning during bulk imports;
+all statements succeeded and row/fixture checks found no mismatch. The final
+SQL replay changed zero rows and emitted no warning.
+
+Discover the intended local SQLite file, then reproduce the complete checksum
+and both 38-cell fixture comparisons with the read-only QA helper:
+
+```sh
+rtk proxy rg --files --hidden --no-ignore .wrangler/state/v3/d1 -g '*.sqlite'
+rtk proxy node docs/qa/pr12/verify-history.mjs /absolute/path/to/local-d1.sqlite .superpowers/sdd/2026-10-19-pr12-historical-prices/local-prices-before.json
+```
+
+A dry run against an explicit SQLite file reads prices and source-day metadata
+without writing the file. Locate the intended `.sqlite` file under the local
+Wrangler state directory and supply its full path:
+
+```sh
+rtk proxy node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-db /absolute/path/to/local-d1.sqlite --out data/repairs/historical-repeat.sql
+```
+
+After the local import this reports zero inserts/updates and 791,426 unchanged
+observations. SQL uses multirow statements below 90 KB, preserving a margin under
+D1's 100 KB statement limit. Existing PIHPS values win, including any disagreement
+listed in `differingOfficial`; other-source primary-key conflicts abort planning.
+The emitted SQL also rejects later other-source collisions atomically within
+each statement, using an intentional invalid-JSON expression in that conflict
+branch. A runtime `malformed JSON` error here means stop and regenerate the
+conflict audit. Earlier completed chunks remain safely resumable. Reapplying
+known official keys causes no price updates.
+
+Other supported seed inputs use the same mandatory `--from`, `--to`, `--target`,
+`--dry-run`, baseline and `--out` options: `--raw-dir data/raw`,
+`--snapshot <file>`, a positional year for `data/snapshots/<year>.json`, or the
+latest snapshot when no input selector is supplied. Only official PIHPS eceran
+observations pass validation. Verified original raw scopes can generate
+`live`/`empty` source-day metadata; partial errors and preserved fallback cells
+cannot. A price-JSON baseline requires a separate `--coverage-json` complete
+`SELECT * FROM source_days` export for exact coverage-change counts. Snapshots
+without original scopes import observations only. No repair touches
+`laporan_warga`, deletes observations, updates newer dates, or appends job runs.
+
+The trend query previously used the date-leading primary key, scanning every
+commodity/source in the range. Local `EXPLAIN QUERY PLAN` now selects
+`prices_daily_trend (commodity_id, source_id, level, date)` with equality on the
+first three columns and a date range. Both `db/schema.sql` and the Worker cold
+migration create this measured index.

@@ -1,4 +1,12 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { Effect, Schema } from "effect";
+import { ArchiveError, io, readRaw, summarizeRaw, timestamp } from "./pihps-scrape.mjs";
+import { mondayOf, monthBucket } from "../src/lib/civil-date.ts";
+
+Effect.runPromise(Effect.gen(function* () {
+const now = yield* timestamp;
+const coverage = [];
+
 
 const GRUP_MAP = {
   beras: ["27", "28", "109", "165", "166"],
@@ -16,10 +24,15 @@ const GRUP_MAP = {
 const GRUPS = Object.keys(GRUP_MAP);
 const RECENT_DAYS = 30;
 
-const files = await readdir("data/raw");
+const files = yield* io(() => readdir("data/raw"));
 const rawFile = files.filter((f) => f.startsWith("panelharga-")).sort().at(-1);
-if (rawFile == null) throw new Error("no data/raw/panelharga-*.json found");
-const raw = JSON.parse(await readFile(`data/raw/${rawFile}`, "utf8"));
+if (rawFile == null) return yield* Effect.fail(new ArchiveError({ message: "no data/raw/panelharga-*.json found" }));
+const Id = Schema.Union(Schema.String, Schema.Number);
+const PanelCatalog = Schema.Struct({ catalog: Schema.Struct({
+  provinces: Schema.optional(Schema.Struct({ data: Schema.Array(Schema.Struct({ national_id: Id })) })),
+  cms_eceran: Schema.optional(Schema.Struct({ data: Schema.Array(Schema.Struct({ id: Id })) })),
+}) });
+const raw = yield* io(() => readFile(`data/raw/${rawFile}`, "utf8")).pipe(Effect.flatMap(Schema.decodeUnknown(Schema.parseJson(PanelCatalog))));
 
 const provinces = raw.catalog.provinces?.data ?? [];
 const eceran = raw.catalog.cms_eceran?.data ?? [];
@@ -35,13 +48,7 @@ for (const f of pihpsFiles) {
 allDates.sort();
 console.log(`merging PIHPS dates: ${allDates.length} (${allDates[0] ?? "none"}..${allDates.at(-1) ?? "none"})`);
 
-const mondayOf = (iso) => {
-  const d = new Date(`${iso}T00:00:00Z`);
-  const shift = (d.getUTCDay() + 6) % 7;
-  d.setUTCDate(d.getUTCDate() - shift);
-  return d.toISOString().slice(0, 10);
-};
-const monthOf = (iso) => iso.slice(0, 7) + "-01";
+const monthOf = monthBucket;
 
 const newBucket = () => ({ sum: 0, n: 0 });
 const bucketKey = (grup, region) => `${grup}|${region}`;
@@ -113,7 +120,7 @@ const recentEntries = [];
 const liveByDate = new Map();
 let liveTotal = 0;
 
-const writeYear = async () => {
+const writeYear = () => Effect.gen(function* () {
   if (yearOf == null) return;
   const live = yearRows.filter((r) => r.price != null).length;
   const snap = {
@@ -121,26 +128,27 @@ const writeYear = async () => {
     dates: yearDates,
     level: "eceran",
     source: live > 0 ? "pihps" : "panelharga-cms",
-    fetchedAt: new Date().toISOString(),
+    fetchedAt: now,
     pricesLive: live > 0,
     liveRows: live,
     expectedRows: yearRows.length,
     rows: yearRows,
   };
-  await writeFile(`data/snapshots/${yearOf}.json`, JSON.stringify(snap));
+  yield* io(() => writeFile(`data/snapshots/${yearOf}.json`, JSON.stringify(snap)));
   console.log(`wrote data/snapshots/${yearOf}.json dates=${yearDates.length} rows=${yearRows.length} live=${live}`);
-};
+});
 
-await mkdir("data/snapshots", { recursive: true });
+yield* io(() => mkdir("data/snapshots", { recursive: true }));
 
 for (const date of allDates) {
   const dateRows = [];
-  const pihps = JSON.parse(await readFile(`data/raw/pihps-${date}.json`, "utf8"));
+  const pihps = yield* readRaw(`data/raw/pihps-${date}.json`);
+  coverage.push(summarizeRaw(pihps));
   const byRegion = new Map((pihps?.rows ?? []).map((r) => [r.region_code, r.prices]));
   const national = (pihps?.rows ?? []).find((r) => r.region_code == null)?.prices ?? {};
 
   const y = date.slice(0, 4);
-  if (yearOf != null && y !== yearOf) await writeYear();
+  if (yearOf != null && y !== yearOf) yield* writeYear();
   if (y !== yearOf) {
     yearOf = y;
     yearRows = [];
@@ -184,12 +192,12 @@ for (const date of allDates) {
   yearRows.push(...dateRows);
   if (dateRows.some((r) => r.price != null)) latestRows = dateRows;
 }
-await writeYear();
+yield* writeYear();
 flushWeek();
 flushMonth();
 
 const latestDate = [...liveByDate.keys()].sort().at(-1) ?? allDates.at(-1);
-await writeFile(
+yield* io(() => writeFile(
   "data/snapshots/latest.json",
   JSON.stringify(
     {
@@ -197,7 +205,7 @@ await writeFile(
       dates: [latestDate],
       level: "eceran",
       source: "pihps",
-      fetchedAt: new Date().toISOString(),
+      fetchedAt: now,
       pricesLive: latestRows.some((r) => r.price != null),
       liveRows: latestRows.filter((r) => r.price != null).length,
       expectedRows: latestRows.length,
@@ -206,28 +214,31 @@ await writeFile(
     null,
     2,
   ),
-);
+));
 
-await mkdir("src/data", { recursive: true });
-await writeFile(
+yield* io(() => mkdir("src/data", { recursive: true }));
+yield* io(() => writeFile(
   "src/data/prices.gen.ts",
   `export const LIVE_PRICES: Record<string, number> = {\n${recentEntries.join("\n")}\n};\n`,
-);
+));
 const series = (store) =>
   [...store.entries()]
     .map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)},`)
     .join("\n");
-await writeFile(
+yield* io(() => writeFile(
   "src/data/trends.gen.ts",
   `export const TREND_WEEKS: string[] = ${JSON.stringify(weeks)};\n` +
     `export const TREND_WEEKLY: Record<string, (number|null)[]> = {\n${series(weekly)}\n};\n` +
     `export const TREND_MONTHS: string[] = ${JSON.stringify(months)};\n` +
     `export const TREND_MONTHLY: Record<string, (number|null)[]> = {\n${series(monthly)}\n};\n`,
-);
-await writeFile(
+));
+yield* io(() => writeFile(
   "src/data/snapshot.gen.ts",
-  `export const SNAPSHOT_META: { level: string; source: string; pricesLive: boolean; fetchedAt: string; dates: string[]; liveDates: string[] } = ${JSON.stringify({ level: "eceran", source: "pihps", pricesLive: liveTotal > 0, fetchedAt: new Date().toISOString(), dates: allDates, liveDates: [...liveByDate.keys()].sort() }, null, 2)};\n`,
-);
+  `export const SNAPSHOT_META: { level: string; source: string; pricesLive: boolean; fetchedAt: string; dates: string[]; liveDates: string[] } = ${JSON.stringify({ level: "eceran", source: "pihps", pricesLive: liveTotal > 0, fetchedAt: now, dates: allDates, liveDates: [...liveByDate.keys()].sort() }, null, 2)};\n`,
+));
 console.log(
   `wrote latest=${latestDate} recentEntries=${recentEntries.length} weeks=${weeks.length} months=${months.length} liveTotal=${liveTotal}`,
 );
+
+yield* io(() => writeFile("data/snapshots/coverage.json", JSON.stringify({ dates: coverage, newestVerifiedLiveDate: coverage.filter((d) => d.verified && d.liveCells > 0).at(-1)?.iso ?? null }, null, 2)));
+})).catch((error) => { console.error(String(error)); process.exitCode = 1 });

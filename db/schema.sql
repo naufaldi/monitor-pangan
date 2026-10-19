@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS job_runs (
   note TEXT
 );
 
+CREATE INDEX IF NOT EXISTS prices_daily_trend ON prices_daily (commodity_id, source_id, level, date);
+
 CREATE TABLE IF NOT EXISTS source_days (
   date TEXT NOT NULL,
   source_id TEXT NOT NULL,

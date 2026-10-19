@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS source_days (
   checked_at TEXT NOT NULL,
   PRIMARY KEY (date, source_id)
 );
+CREATE INDEX IF NOT EXISTS prices_daily_trend ON prices_daily (commodity_id, source_id, level, date);
 INSERT OR IGNORE INTO commodities (id, name, unit) VALUES
 ${COMMODITY_ROWS.map(([id, name, unit]) => `(${sqlString(id)}, ${sqlString(name)}, ${sqlString(unit)})`).join(",\n")};
 INSERT OR IGNORE INTO regions (code, name, level) VALUES

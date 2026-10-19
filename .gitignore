@@ -6,5 +6,7 @@ dist/
 .dev.vars
 .DS_Store
 data/raw/
+data/archive/
+data/repairs/
 data/snapshots/2*.json
 data/seed-2*.sql
