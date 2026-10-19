@@ -1,6 +1,6 @@
 # PR #12 Historical Prices and Data Operations Implementation Plan
 
-> **Status:** Proposed design and execution plan, awaiting user review. Implementation has not started.
+> **Status:** User approved execution on 19 October 2026. Implementation is in progress on `fix/pr12-historical-prices`.
 > **For agentic workers:** Use `superpowers:executing-plans` to implement this plan task by task after design approval. Steps use checkboxes for tracking. Create an isolated worktree at execution time using `superpowers:using-git-worktrees`.
 
 **Goal:** Make historical PIHPS dates show verified prices or honest request states, and standardize how backfill, scheduled ingestion, coverage, recovery, and operational documentation keep those prices trustworthy.
@@ -8,6 +8,8 @@
 **Architecture:** Port the useful changes from PR #12 onto current `main`, preserving its custom Worker. D1 is the serving store; the raw archive is provenance and recovery input; frontend bundles are derived observations with explicit date coverage. Add validated snapshot/trend reads, bounded weekday ingestion, and a small read-only health endpoint to that same Worker, with one operations runbook for auditing and repair.
 
 **Tech Stack:** Existing TanStack Start/Router, React 19, Effect, Effect Schema, Cloudflare Worker/D1, Wrangler, `@effect/vitest`, and `@monitor-pangan/ui`. Use pnpm from the repo root and prefix shell commands with `rtk`.
+
+**Execution clarification:** The user subsequently did not know the original archive location and asked to check the codebase. Recovery found immutable derived yearly files on PR #14; the user was informed before extraction. See `docs/qa/pr12/data-audit.md` and `repair-manifest.json` for verified counts, hashes, proposed dates, and limitations. Import those recovered observations only; they cannot prove historical HTTP scope completion or justify manufactured `source_days` markers. This reuses stored data, not PR #14's code or rounding policy.
 
 ## Evidence and decisions
 
@@ -125,6 +127,8 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
 - [ ] Extract the two historical fixtures and document their provenance. Record all 38 expected snapshot cells, including null cells, from the actual source data.
 - [ ] Identify which historical dates have trustworthy day-level coverage markers for the import in Task 6. Create an explicit repair list only for proven production gaps; an empty repair list means no remote reseed. Keep this audit out of generated frontend bundles until explicitly regenerated.
 
+**Execution evidence:** Audit and derived-archive recovery reviewed and complete: `docs/qa/pr12/data-audit.md`, `repair-manifest.json`, commits `2fe6e96` and `d6f5f15`. The original raw archive remains unavailable; recovered observations cannot prove original HTTP scope completion. Proposed production repair remains unapplied.
+
 ## Task 2: Make empty price data explicit in the shared contract
 
 **User Story:** As a reader, I want missing prices to appear as missing, so that I never mistake an empty response for a free commodity.
@@ -137,7 +141,7 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
 
 **Definition of Done:** No empty calculation produces a displayed zero; null averages cannot yield a fabricated percentage, extrema, or map band. Existing live and sample-provider tests pass.
 
-- [ ] Add failing tests for the empty/partial summaries and the historical bundle gap. Include this core regression:
+- [x] Add failing tests for the empty/partial summaries and the historical bundle gap. Include this core regression:
 
   ```ts
   it.effect('an empty set has no national price', () => Effect.sync(() => {
@@ -148,11 +152,13 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
   }))
   ```
 
-- [ ] Run the targeted tests and confirm the new assertions fail before implementing the contract change.
-- [ ] Implement the single summary helper. Apply `Math.round(mean / 50) * 50` only to a non-empty set of valid observations. Add schema refinements so `pricedCount`, rows, and null/non-null average cannot contradict each other in decoded API payloads.
-- [ ] Update presentational props to accept an absent average where needed. Hide relative percentages/extrema when their inputs are missing; retain map selection, table sorting, and null-price rows.
-- [ ] Keep synchronous provider reads restricted to dates the bundle/fresh overlay actually contains when rendering official snapshots. A live date in metadata alone is not proof that its prices are loaded.
-- [ ] Run `rtk pnpm exec vitest run src/data/price-summary.test.ts src/data/provider.test.ts src/data/provider.effect.test.ts src/data/price-schema.test.ts` and `rtk pnpm typecheck`; commit the coherent contract change on the implementation branch.
+- [x] Run the targeted tests and confirm the new assertions fail before implementing the contract change.
+- [x] Implement the single summary helper. Apply `Math.round(mean / 50) * 50` only to a non-empty set of valid observations. Add schema refinements so `pricedCount`, rows, and null/non-null average cannot contradict each other in decoded API payloads.
+- [x] Update presentational props to accept an absent average where needed. Hide relative percentages/extrema when their inputs are missing; retain map selection, table sorting, and null-price rows.
+- [x] Keep synchronous provider reads restricted to dates the bundle/fresh overlay actually contains when rendering official snapshots. A live date in metadata alone is not proof that its prices are loaded.
+- [x] Run `rtk pnpm exec vitest run src/data/price-summary.test.ts src/data/provider.test.ts src/data/provider.effect.test.ts src/data/price-schema.test.ts` and `rtk pnpm typecheck`; commit the coherent contract change on the implementation branch.
+
+**Execution evidence:** Contract and invalid-fresh-value repair reviewed, commits `c704118` and `688eabe`. 33 targeted tests, typecheck, and build passed.
 
 ## Task 3: Add validated price reads to the existing Worker
 
@@ -172,10 +178,10 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
 
 **Definition of Done:** The API returns real D1 observations, source/level isolation is tested, HTTP failures remain distinguishable from empty data, and concatenating every page yields sorted unique dates in both series.
 
-- [ ] Add failing HTTP/store tests using typed Layers and local SQLite/D1 fixture data. Verify queries against actual local D1 as well as handler tests; a mock returning canned results is insufficient proof of pagination SQL.
-- [ ] Validate canonical civil dates with an actual calendar round trip, not just a regex. Validate region membership against the project's province catalog and `from <= to`; reject cursors outside the requested interval.
-- [ ] Select only official PIHPS eceran rows. Snapshot reads use the canonical 38-province grid and the shared summary helper. Check trusted day coverage before reporting an entirely absent date as empty.
-- [ ] Implement pagination with one authoritative national-date window. Fetch `limit + 1` national dates, emit the first `limit`, then bound provincial reads to exactly that page:
+- [x] Add failing HTTP/store tests using typed Layers and local SQLite/D1 fixture data. Verify queries against actual local D1 as well as handler tests; a mock returning canned results is insufficient proof of pagination SQL.
+- [x] Validate canonical civil dates with an actual calendar round trip, not just a regex. Validate region membership against the project's province catalog and `from <= to`; reject cursors outside the requested interval.
+- [x] Select only official PIHPS eceran rows. Snapshot reads use the canonical 38-province grid and the shared summary helper. Check trusted day coverage before reporting an entirely absent date as empty.
+- [x] Implement pagination with one authoritative national-date window. Fetch `limit + 1` national dates, emit the first `limit`, then bound provincial reads to exactly that page:
 
   ```sql
   -- Both queries also filter commodity_id, source_id = 'pihps', level = 'eceran'.
@@ -188,9 +194,11 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
 
   Omit the cursor predicate on the first page. When no national dates exist, return empty series and null cursor. Return the last emitted national date as `nextCursor` only when the lookahead proves another page exists.
 
-- [ ] Reproduce the sparse-series bug as a regression: national dates Sep 1/2/3/4 and provincial dates Sep 2/3, limit 2. Page 1's province dates must be `[Sep 2]`, page 2 `[Sep 3]`; no point may repeat or fall outside its national page.
-- [ ] Compose the handler into the existing Worker without changing deployment architecture. Add route tests proving freshness JSON, HTML injection, citizen/admin dispatch, and asset delivery still reach their existing handlers.
-- [ ] Run `rtk pnpm exec vitest run src/worker/price-store.test.ts src/worker/price-http.test.ts src/worker/index.test.ts src/worker/d1-store.test.ts src/worker/ingest.test.ts` and `rtk pnpm typecheck`; commit the Worker read path.
+- [x] Reproduce the sparse-series bug as a regression: national dates Sep 1/2/3/4 and provincial dates Sep 2/3, limit 2. Page 1's province dates must be `[Sep 2]`, page 2 `[Sep 3]`; no point may repeat or fall outside its national page.
+- [x] Compose the handler into the existing Worker without changing deployment architecture. Add route tests proving freshness JSON, HTML injection, citizen/admin dispatch, and asset delivery still reach their existing handlers.
+- [x] Run `rtk pnpm exec vitest run src/worker/price-store.test.ts src/worker/price-http.test.ts src/worker/index.test.ts src/worker/d1-store.test.ts src/worker/ingest.test.ts` and `rtk pnpm typecheck`; commit the Worker read path.
+
+**Execution evidence:** Worker read APIs reviewed, commit `f5140b9`. 48 tests across seven targeted files, typecheck, and build passed. Tests execute production SQL against SQLite; real Wrangler/D1 checks remain Task 8.
 
 ## Task 4: Connect historical selections to explicit request states
 
@@ -329,4 +337,4 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
 - Pagination has one date owner; the province series cannot run ahead of its national page.
 - Backend tests include actual local SQL/D1 checks. Browser-visible changes require desktop/mobile screenshot evidence.
 - Schedule, day-state transitions, gap selection, failed-run outcomes, health JSON, and the operations runbook all have named verification evidence. There is no new weekly full-history job or monitoring dashboard.
-- This document is planning only. No application code, database, PR status, or deployment has been changed.
+- Execution evidence is recorded per task below and in `docs/qa/pr12/`. Production data and deployment remain unchanged until a reviewed rollout is authorized.
