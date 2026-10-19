@@ -139,7 +139,9 @@ upload or cleanup. A skipped workflow's conclusion does not establish export
 success. Older evidence outside this bounded lookup remains unknown. The latest
 attempt is independent of the last success.
 GitHub metadata outages yield `unavailable` while preserving independently known
-checkpoints, D1 backlog and last readable success. Unknown evidence stays null.
+checkpoints, computable backlog and last readable success. Unknown checkpoints
+and their dependent counts/lag stay null. A validated empty archive has checkpoint
+zero; an unreadable archive does not.
 This command does not change `/api/pihps/health` ingestion semantics.
 
 Sanitized receipts are written to ignored

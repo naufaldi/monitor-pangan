@@ -25,7 +25,7 @@ it.live('a real Git remote gets one focused update and unchanged replay creates 
     yield* price('2026-10-19', '31', 16000)
     sqlite.prepare(CAPTURE_ARCHIVE_DAY_SQL).run(JSON.stringify({ date: '2026-10-19', checkedAt: '2026-10-19T10:15:00Z', kind: 'd1_reconciliation' }))
     let pr = null
-    const host = { find: () => Effect.succeed(pr), create: () => Effect.sync(() => { pr = { state: 'OPEN', author: { login: 'archive[bot]' }, url: 'https://github.com/fixture/repo/pull/1', number: 1, mergedAt: null }; return pr }), update: () => Effect.void }
+    const host = { find: () => Effect.succeed(pr), create: () => Effect.sync(() => { const number = (pr?.number ?? 0) + 1; pr = { state: 'OPEN', author: { login: 'archive[bot]' }, url: `https://github.com/fixture/repo/pull/${number}`, number, mergedAt: null }; return pr }), update: () => Effect.void }
     const options = { root: repo, query: sqliteQuery(sqlite), host, botLogin: 'archive[bot]' }
     assert.strictEqual((yield* publishArchiveUpdate(options)).outcome, 'published')
     const first = (yield* git(['ls-remote', 'origin', 'refs/heads/automation/pihps-history'])).trim()
@@ -34,7 +34,8 @@ it.live('a real Git remote gets one focused update and unchanged replay creates 
     const names = (yield* git(['diff', '--name-only', 'origin/main...origin/automation/pihps-history'])).trim().split('\n')
     assert.deepStrictEqual(names, ['data/history/pihps/updates/2026.jsonl', 'data/history/pihps/updates/manifest.json'])
     // Squash/merge has advanced main; a new export branch can outlive a failed PR creation.
-    yield* git(['merge', '--ff-only', 'origin/automation/pihps-history'])
+    yield* git(['merge', '--squash', 'origin/automation/pihps-history'])
+    yield* git(['commit', '-m', 'squash archive publication'])
     yield* git(['push', 'origin', 'main'])
     pr = { ...pr, state: 'MERGED', mergedAt: '2026-10-19T10:30:00Z' }
     for (const [date, value] of [['2026-10-20', 17000], ['2026-10-21', 18000]]) {
@@ -66,7 +67,35 @@ it.live('a real Git remote gets one focused update and unchanged replay creates 
     assert.strictEqual((yield* Effect.either(publishArchiveUpdate({ ...options, query: racingQuery })))._tag, 'Left')
     assert.ok((yield* git(['ls-remote', 'origin', 'refs/heads/automation/pihps-history'])).startsWith(competitor))
     assert.strictEqual((yield* publishArchiveUpdate(options)).throughSequence, 4)
-    pr = { ...pr, state: 'CLOSED' }
+    // A reviewer can merge the current PR while the next export is reading D1.
+    yield* price('2026-10-23', '31', 20000)
+    sqlite.prepare(CAPTURE_ARCHIVE_DAY_SQL).run(JSON.stringify({ date: '2026-10-23', checkedAt: '2026-10-23T10:15:00Z', kind: 'd1_reconciliation' }))
+    const previousPrNumber = pr.number
+    let mergedDuringExport = false
+    const mergingQuery = (sql, params) => localQuery(sql, params).pipe(Effect.tap(() => {
+      if (!mergedDuringExport && sql.startsWith('SELECT seq,')) {
+        mergedDuringExport = true
+        return Effect.gen(function* () {
+          yield* git(['merge', '--squash', 'origin/automation/pihps-history'])
+          yield* git(['commit', '-m', 'merge during export'])
+          yield* git(['push', 'origin', 'main'])
+          pr = { ...pr, state: 'MERGED', mergedAt: '2026-10-23T10:30:00Z' }
+        })
+      }
+      return Effect.void
+    }))
+    const afterConcurrentMerge = yield* publishArchiveUpdate({ ...options, query: mergingQuery })
+    assert.strictEqual(afterConcurrentMerge.outcome, 'published')
+    assert.strictEqual(afterConcurrentMerge.throughSequence, 5)
+    assert.strictEqual(pr.state, 'OPEN')
+    assert.strictEqual(pr.number, previousPrNumber + 1)
+    assert.strictEqual(afterConcurrentMerge.prUrl, pr.url)
+    yield* price('2026-10-24', '31', 21000)
+    sqlite.prepare(CAPTURE_ARCHIVE_DAY_SQL).run(JSON.stringify({ date: '2026-10-24', checkedAt: '2026-10-24T10:15:00Z', kind: 'd1_reconciliation' }))
+    const closingQuery = (sql, params) => localQuery(sql, params).pipe(Effect.tap(() => Effect.sync(() => {
+      if (sql.startsWith('SELECT seq,')) pr = { ...pr, state: 'CLOSED' }
+    })))
+    assert.strictEqual((yield* Effect.flip(publishArchiveUpdate({ ...options, query: closingQuery }))).category, 'closed_unmerged_pr')
     assert.strictEqual((yield* Effect.flip(publishArchiveUpdate(options))).category, 'closed_unmerged_pr')
   }),
   (root) => Effect.promise(() => rm(root, { recursive: true, force: true })),

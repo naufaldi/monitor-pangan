@@ -123,6 +123,32 @@ The reviewers' focused follow-up checks passed, with no remaining P1/P2 findings
 Publisher verification additionally exercises a competing remote branch update:
 the stale push fails its lease and the next run resumes safely.
 
+### Additional GPT-6.1 Sol review
+
+A third read-only review used `gpt-6.1-sol` with high reasoning effort on
+`13df19b..a892b0b`. It found two additional P2 defects, both reproduced with
+failing tests and fixed:
+
+- Unreadable GitHub archive checkpoints no longer become zero. Each unknown
+  checkpoint and its dependent counts/lag stays null, while independently
+  readable checkpoints, D1 head and success evidence remain visible.
+- The publisher refreshes PR state after pushing. A PR merged during export
+  causes the next open PR to be created; a PR closed without merging blocks
+  publication. Replacement PR creation must confirm an open PR owned by the bot.
+  The real Git regression now covers actual squash merges and concurrent merge
+  and closure during export.
+
+The reviewer checked both fixes and reported no remaining actionable P1/P2
+findings. Its independent follow-up passed eight status/evidence tests. The
+parent's regression run passed 23 tests across six explicit files:
+
+```sh
+rtk pnpm exec vitest run --maxWorkers=1 scripts/pihps-history-updates.test.mjs scripts/pihps-history-sync.test.mjs scripts/pihps-history-publish.test.mjs scripts/pihps-history-status.test.mjs scripts/pihps-history-github-evidence.test.mjs src/worker/archive-outbox.test.ts
+```
+
+`rtk pnpm typecheck` and `rtk pnpm build` also passed. The existing local browser evidence remains
+applicable: this follow-up changes only archive status and publication tooling.
+
 ## Production evidence still pending
 
 The workflow is disabled until `PIHPS_ARCHIVE_SYNC_ENABLED=true` is explicitly

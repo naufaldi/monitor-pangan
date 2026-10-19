@@ -37,8 +37,9 @@ const remoteStatus = (query, repository, botLogin) => Effect.gen(function* () {
   const found = yield* githubHost(repository, process.cwd()).pipe(Effect.flatMap((host) => host.find()), Effect.either)
   if (found._tag === 'Left') metadataAvailable = false
   const pr = found._tag === 'Right' ? found.right : null
-  let published = merged
+  let published = found._tag === 'Right' ? merged : null
   if (pr?.state === 'OPEN') {
+    published = null
     if (pr.author.login !== botLogin) metadataAvailable = false
     else {
       const pending = yield* command('git', ['fetch', 'origin', '+refs/heads/automation/pihps-history:refs/remotes/origin/automation/pihps-history']).pipe(

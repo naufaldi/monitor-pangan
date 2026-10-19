@@ -106,11 +106,15 @@ export const publishArchiveUpdate = ({ root = process.cwd(), query, host, botLog
           yield* git(['-c', 'user.name=monitor-pangan archive bot', '-c', 'user.email=archive@monitor-pangan.invalid', 'commit', '-m', 'data: synchronize PIHPS observations'], checkout)
           yield* git(['push', `--force-with-lease=refs/heads/${branch}:${previousSha}`, 'origin', `HEAD:refs/heads/${branch}`], checkout)
         }
-        let publishedPr = pr?.state === 'OPEN' ? pr : null
+        // A human may merge or close the previous PR while export/push is running.
+        const currentPr = yield* host.find()
+        if (currentPr && currentPr.author.login !== botLogin) return yield* reject('unexpected_pr_owner')
+        if (currentPr?.state === 'CLOSED' && !currentPr.mergedAt) return yield* reject('closed_unmerged_pr')
+        let publishedPr = currentPr?.state === 'OPEN' ? currentPr : null
         let createdPr = false
         if (!publishedPr && (changed || hasPendingBranch)) {
           publishedPr = yield* host.create(bodyFile)
-          if (!publishedPr) return yield* reject('pr_creation_unconfirmed')
+          if (publishedPr?.state !== 'OPEN' || publishedPr.author.login !== botLogin) return yield* reject('pr_creation_unconfirmed')
           createdPr = true
         }
         else if (publishedPr && changed) yield* host.update(publishedPr, bodyFile)
