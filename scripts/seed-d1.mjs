@@ -64,7 +64,7 @@ Effect.runPromise(Effect.gen(function* () {
     // Snapshot prices alone carry no independently verified scope completion.
   }
   if (coverage.some((d) => d.verified) && baselineJson && !option('--coverage-json')) return yield* Effect.fail(new ArchiveError({ message: 'verified raw input requires --coverage-json for exact coverage-change counts with a price export' }))
-  const plan = planImport({ from, to, observations, existing, coverage, existingCoverage })
+  const plan = yield* Effect.try({ try: () => planImport({ from, to, observations, existing, coverage, existingCoverage }), catch: (cause) => new ArchiveError({ message: String(cause) }) })
   const dates = new Set(observations.filter((r) => r.date >= from && r.date <= to).map((r) => r.date))
   const unknownWeekdays = tradingDaysFromThrough(from, to).filter((d) => !dates.has(d) && !coverage.some((c) => c.iso === d && c.verified))
   const report = { ...plan.report, generatedAt: yield* timestamp, target, applied: false, baseline: baselineJson ?? baselineDb, baselineSha256, baselineCoverageKnown: Boolean(baselineDb || option('--coverage-json')),

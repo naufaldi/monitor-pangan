@@ -1,4 +1,4 @@
-import { Clock, DateTime, Data, Effect, Schema } from 'effect'
+import { Clock, DateTime, Data, Effect, Option, Schema } from 'effect'
 import { mkdir, readFile, rename, writeFile, rm } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { randomUUID } from 'node:crypto'
@@ -10,11 +10,20 @@ export class ArchiveError extends Data.TaggedError('ArchiveError') {}
 export const io = (f) => Effect.tryPromise({ try: f, catch: (cause) => new ArchiveError({ message: String(cause) }) })
 export const timestamp = Clock.currentTimeMillis.pipe(Effect.map((ms) => DateTime.formatIso(DateTime.unsafeMake(ms))))
 export const DateSchema = Schema.String.pipe(Schema.pattern(/^\d{4}-\d{2}-\d{2}$/), Schema.filter((s) => addIsoDays(s, 0) === s))
+/** Raw writers use UTC ISO timestamps; accept whole seconds or canonical milliseconds only. */
+export const SourceCheckTimestampSchema = Schema.String.pipe(
+  Schema.pattern(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/),
+  Schema.filter((value) => {
+    const parsed = DateTime.make(value)
+    const canonical = value.includes('.') ? value : value.replace('Z', '.000Z')
+    return Option.isSome(parsed) && DateTime.formatIso(parsed.value) === canonical
+  }),
+)
 const Price = Schema.Number.pipe(Schema.finite(), Schema.int(), Schema.positive())
 const Prices = Schema.Struct(Object.fromEntries(COMMODITY_ROWS.map(([id]) => [id, Schema.optional(Schema.NullOr(Price))])))
 const ScopeSchema = Schema.Struct({ province_id: Schema.String, region_code: Schema.NullOr(Schema.String), prices: Prices,
   status: Schema.optional(Schema.Literal('ok', 'source-empty', 'http-error')), preserved: Schema.optional(Schema.Boolean), error: Schema.optional(Schema.String), attempts: Schema.optional(Schema.Number) })
-export const RawSchema = Schema.Struct({ date: DateSchema, source: Schema.Literal('pihps'), fetchedAt: Schema.String, rows: Schema.Array(ScopeSchema) }).pipe(Schema.filter((raw) =>
+export const RawSchema = Schema.Struct({ date: DateSchema, source: Schema.Literal('pihps'), fetchedAt: SourceCheckTimestampSchema, rows: Schema.Array(ScopeSchema) }).pipe(Schema.filter((raw) =>
   new Set(raw.rows.map((r) => r.province_id)).size === raw.rows.length && raw.rows.every((r) => r.province_id === 'nasional' ? r.region_code === null : BI_TO_KEMENDAGRI[r.province_id] === r.region_code)))
 const GridSchema = Schema.Struct({ data: Schema.Array(Schema.Struct({ name: Schema.String, level: Schema.Number }, Schema.Record({ key: Schema.String, value: Schema.Union(Schema.String, Schema.Number, Schema.Null) }))) })
 export const SCOPES = [{ province_id: 'nasional', region_code: null }, ...Object.entries(BI_TO_KEMENDAGRI).map(([province_id, region_code]) => ({ province_id, region_code }))]

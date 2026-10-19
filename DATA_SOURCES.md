@@ -214,8 +214,13 @@ Other supported seed inputs use the same mandatory `--from`, `--to`, `--target`,
 `--snapshot <file>`, a positional year for `data/snapshots/<year>.json`, or the
 latest snapshot when no input selector is supplied. Only official PIHPS eceran
 observations pass validation. Verified original raw scopes can generate
-`live`/`empty` source-day metadata; partial errors and preserved fallback cells
-cannot. A price-JSON baseline requires a separate `--coverage-json` complete
+`live`/`pending`/`empty` source-day metadata; partial errors and preserved fallback
+cells cannot. The raw `fetchedAt` must be canonical UTC ISO (whole seconds or
+three-digit milliseconds). Its date in Asia/Jakarta determines emptiness:
+zero-cell checks on their survey day remain `pending`, even when imported later;
+only successful checks after that date establish `empty`. Positive observations
+remain `live`, and empty retries preserve existing live markers and cells.
+A price-JSON baseline requires a separate `--coverage-json` complete
 `SELECT * FROM source_days` export for exact coverage-change counts. Snapshots
 without original scopes import observations only. No repair touches
 `laporan_warga`, deletes observations, updates newer dates, or appends job runs.

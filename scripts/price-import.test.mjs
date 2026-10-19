@@ -1,5 +1,5 @@
 import { assert, it } from '@effect/vitest'
-import { Effect } from 'effect'
+import { DateTime, Effect, TestClock } from 'effect'
 import { DatabaseSync } from 'node:sqlite'
 import { readFileSync } from 'node:fs'
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises'
@@ -12,6 +12,7 @@ import { planImport, derivedObservations, snapshotObservations, rawObservations 
 import { SCOPES } from './pihps-scrape.mjs'
 
 const row = { date: '2018-10-09', commodity_id: 'beras', region_code: '31', level: 'eceran', price: 13200, source_id: 'pihps', raw_ref: 'git:abc:public/series/2018.json' }
+const emptyRaw = (date, fetchedAt) => ({ date, fetchedAt, source: 'pihps', rows: SCOPES.map((s) => ({ ...s, prices: {}, status: 'source-empty' })) })
 it.effect('repeat import is idempotent, preserves newer data and never invents coverage', () => Effect.sync(() => {
   const db = new DatabaseSync(':memory:')
   db.exec(readFileSync('db/schema.sql', 'utf8'))
@@ -51,6 +52,78 @@ it.effect('derived recovery ignores national columns and keeps provincial observ
   assert.strictEqual(out.length, 10)
   assert.strictEqual(out[0].price, 13200)
   assert.ok(out.every((r) => r.region_code === '31'))
+  const db = new DatabaseSync(':memory:')
+  db.exec(readFileSync('db/schema.sql', 'utf8'))
+  db.exec(planImport({ from: row.date, to: row.date, observations: out, existing: [] }).sql)
+  assert.strictEqual(db.prepare('SELECT COUNT(*) AS n FROM source_days').get().n, 0)
+  db.close()
+}))
+it.effect('zero-cell checks remain pending until the survey date has passed in Jakarta', () => Effect.gen(function* () {
+  for (const fetchedAt of ['2026-10-19T04:00:00Z', '2026-10-18T17:00:00.000Z', '2026-10-18T16:59:59Z']) {
+    const date = '2026-10-19'
+    const raw = yield* rawObservations(emptyRaw(date, fetchedAt), 'raw')
+    const db = new DatabaseSync(':memory:')
+    db.exec(readFileSync('db/schema.sql', 'utf8'))
+    const plan = planImport({ from: date, to: date, observations: raw.observations, existing: [], coverage: [raw.coverage] })
+    db.exec(plan.sql)
+    assert.strictEqual(db.prepare('SELECT status FROM source_days').get().status, 'pending')
+    const repeat = planImport({ from: date, to: date, observations: [], existing: [], coverage: [raw.coverage], existingCoverage: db.prepare('SELECT * FROM source_days').all() })
+    const changes = db.prepare('SELECT total_changes() AS n').get().n
+    db.exec(repeat.sql)
+    assert.strictEqual(repeat.report.coverageChanges, 0)
+    assert.strictEqual(db.prepare('SELECT total_changes() AS n').get().n, changes)
+    db.close()
+  }
+}))
+it.effect('a successful later source check can establish empty after a pending day', () => Effect.gen(function* () {
+  const date = '2026-10-19'
+  const db = new DatabaseSync(':memory:')
+  db.exec(readFileSync('db/schema.sql', 'utf8'))
+  const sameDay = yield* rawObservations(emptyRaw(date, '2026-10-19T04:00:00Z'), 'raw')
+  db.exec(planImport({ from: date, to: date, observations: [], existing: [], coverage: [sameDay.coverage] }).sql)
+  const later = yield* rawObservations(emptyRaw(date, '2026-10-19T17:00:00Z'), 'raw')
+  const plan = planImport({ from: date, to: date, observations: [], existing: [], coverage: [later.coverage], existingCoverage: db.prepare('SELECT * FROM source_days').all() })
+  assert.strictEqual(plan.report.coverageChanges, 1)
+  db.exec(plan.sql)
+  assert.strictEqual(db.prepare('SELECT status FROM source_days').get().status, 'empty')
+  const repeat = planImport({ from: date, to: date, observations: [], existing: [], coverage: [later.coverage], existingCoverage: db.prepare('SELECT * FROM source_days').all() })
+  const changes = db.prepare('SELECT total_changes() AS n').get().n
+  db.exec(repeat.sql)
+  assert.strictEqual(repeat.report.coverageChanges, 0)
+  assert.strictEqual(db.prepare('SELECT total_changes() AS n').get().n, changes)
+  db.close()
+}))
+it.effect('importing same-day empty evidence years later cannot turn it into confirmed emptiness', () => Effect.gen(function* () {
+  yield* TestClock.setTime(DateTime.unsafeMake('2030-01-01T00:00:00Z').epochMillis)
+  const raw = yield* rawObservations(emptyRaw(row.date, '2018-10-09T04:00:00Z'), 'raw')
+  const db = new DatabaseSync(':memory:')
+  db.exec(readFileSync('db/schema.sql', 'utf8'))
+  db.exec(planImport({ from: row.date, to: row.date, observations: [], existing: [], coverage: [raw.coverage] }).sql)
+  assert.strictEqual(db.prepare('SELECT status FROM source_days').get().status, 'pending')
+  db.close()
+}))
+it.effect('empty retries preserve an existing live day and its observed cells', () => Effect.gen(function* () {
+  const date = '2026-10-19'
+  const raw = yield* rawObservations(emptyRaw(date, '2026-10-19T04:00:00Z'), 'raw')
+  const db = new DatabaseSync(':memory:')
+  db.exec(readFileSync('db/schema.sql', 'utf8'))
+  const observedRaw = emptyRaw(date, '2026-10-19T03:00:00Z')
+  observedRaw.rows = observedRaw.rows.map((r) => r.region_code === '31' ? { ...r, status: 'ok', prices: { beras: 13200 } } : r)
+  const observed = yield* rawObservations(observedRaw, 'raw')
+  db.exec(planImport({ from: date, to: date, observations: observed.observations, existing: [], coverage: [observed.coverage] }).sql)
+  assert.strictEqual(db.prepare('SELECT status FROM source_days').get().status, 'live')
+  const plan = planImport({ from: date, to: date, observations: [], existing: db.prepare('SELECT * FROM prices_daily').all(), coverage: [raw.coverage], existingCoverage: db.prepare('SELECT * FROM source_days').all() })
+  db.exec(plan.sql)
+  assert.strictEqual(db.prepare('SELECT status FROM source_days').get().status, 'live')
+  assert.strictEqual(db.prepare('SELECT price FROM prices_daily').get().price, 13200)
+  db.close()
+}))
+it.effect('malformed and noncanonical source-check timestamps fail in the typed decode channel', () => Effect.gen(function* () {
+  for (const fetchedAt of ['not-a-timestamp', '2026-02-30T04:00:00Z', '2026-10-19', '2026-10-19T04:00:00', '2026-10-19T04:00:00+00:00']) {
+    const result = yield* Effect.either(rawObservations(emptyRaw('2026-10-19', fetchedAt), 'raw'))
+    assert.strictEqual(result._tag, 'Left')
+    assert.strictEqual(result.left._tag, 'ParseError')
+  }
 }))
 it.effect('trend range query narrows by commodity and source before scanning dates', () => Effect.sync(() => {
   const db = new DatabaseSync(':memory:')

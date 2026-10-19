@@ -1,9 +1,10 @@
-import { Effect, Schema } from 'effect'
+import { DateTime, Effect, Schema } from 'effect'
 import { COMMODITY_ROWS, REGION_ROWS } from '../src/data/pihps-catalog.ts'
 import { isTradingDay } from '../src/lib/civil-date.ts'
-import { ArchiveError, DateSchema, RawSchema, summarizeRaw } from './pihps-scrape.mjs'
+import { ArchiveError, DateSchema, RawSchema, SourceCheckTimestampSchema, summarizeRaw } from './pihps-scrape.mjs'
 
 const Price = Schema.Number.pipe(Schema.finite(), Schema.int(), Schema.positive())
+const JAKARTA = DateTime.zoneUnsafeMakeNamed('Asia/Jakarta')
 export const ObservationSchema = Schema.Struct({ date: DateSchema, commodity_id: Schema.Literal(...COMMODITY_ROWS.map(([id]) => id)),
   region_code: Schema.Literal(...REGION_ROWS.map(([code]) => code)), level: Schema.Literal('eceran'), price: Price,
   source_id: Schema.Literal('pihps'), raw_ref: Schema.optional(Schema.NullOr(Schema.String)) })
@@ -79,7 +80,10 @@ export const planImport = ({ from, to, observations, existing, coverage = [], ex
   const markers = new Map(Schema.decodeUnknownSync(ExistingCoverageSchema)(existingCoverage).map((r) => [r.date, r]))
   for (const day of coverage.filter((d) => d.iso >= from && d.iso <= to)) {
     if (!day.verified) { report.unresolvedErrors.push(day); continue }
-    const status = day.liveCells > 0 ? 'live' : 'empty'
+    const checkedAt = Schema.decodeUnknownSync(SourceCheckTimestampSchema)(day.fetchedAt)
+    const checkedDate = DateTime.formatIsoDate(DateTime.setZone(DateTime.unsafeMake(checkedAt), JAKARTA))
+    // Evidence never gets stronger merely because an old raw file is imported later.
+    const status = day.liveCells > 0 ? 'live' : day.iso < checkedDate ? 'empty' : 'pending'
     const old = markers.get(day.iso)
     if (!old || (old.status !== 'live' && old.status !== status) || old.checked_at !== day.fetchedAt) report.coverageChanges++
     sql.push(`INSERT INTO source_days (date,source_id,status,checked_at) VALUES (${quote(day.iso)},'pihps',${quote(status)},${quote(day.fetchedAt)}) ON CONFLICT(date,source_id) DO UPDATE SET status=CASE WHEN source_days.status='live' THEN 'live' ELSE excluded.status END,checked_at=excluded.checked_at WHERE source_days.checked_at<>excluded.checked_at OR (source_days.status<>'live' AND source_days.status<>excluded.status);`)
