@@ -220,6 +220,12 @@ three-digit milliseconds). Its date in Asia/Jakarta determines emptiness:
 zero-cell checks on their survey day remain `pending`, even when imported later;
 only successful checks after that date establish `empty`. Positive observations
 remain `live`, and empty retries preserve existing live markers and cells.
+Out-of-order replay also preserves confirmed `empty` against weaker `pending`
+evidence and retains the latest check instant. Whole-second and millisecond
+timestamps are compared as instants, so equivalent formats cause no writes.
+Dry-run coverage counts use the same transition as SQL; a newer marker written
+after planning is protected by the SQL guard and requires a fresh dry run for
+updated counts. Another source's day marker does not count as PIHPS coverage.
 A price-JSON baseline requires a separate `--coverage-json` complete
 `SELECT * FROM source_days` export for exact coverage-change counts. Snapshots
 without original scopes import observations only. No repair touches

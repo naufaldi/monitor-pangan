@@ -93,6 +93,79 @@ it.effect('a successful later source check can establish empty after a pending d
   assert.strictEqual(db.prepare('SELECT total_changes() AS n').get().n, changes)
   db.close()
 }))
+it.effect('older pending evidence cannot downgrade confirmed empty or rewind its check time', () => Effect.gen(function* () {
+  const date = '2026-10-19', checkedAt = '2026-10-19T17:00:00Z'
+  const pending = yield* rawObservations(emptyRaw(date, '2026-10-19T04:00:00Z'), 'raw')
+  const empty = yield* rawObservations(emptyRaw(date, checkedAt), 'raw')
+  const db = new DatabaseSync(':memory:')
+  db.exec(readFileSync('db/schema.sql', 'utf8'))
+  db.exec(planImport({ from: date, to: date, observations: [], existing: [], coverage: [empty.coverage] }).sql)
+  for (let i = 0; i < 2; i++) {
+    const plan = planImport({ from: date, to: date, observations: [], existing: [], coverage: [pending.coverage], existingCoverage: db.prepare('SELECT * FROM source_days').all() })
+    const before = db.prepare('SELECT total_changes() AS n').get().n
+    db.exec(plan.sql)
+    assert.strictEqual(plan.report.coverageChanges, 0)
+    assert.strictEqual(db.prepare('SELECT total_changes() AS n').get().n - before, 0)
+    assert.deepStrictEqual({ ...db.prepare('SELECT status,checked_at FROM source_days').get() }, { status: 'empty', checked_at: checkedAt })
+  }
+  db.close()
+}))
+it.effect('coverage replay compares instants rather than mixed whole-second and millisecond strings', () => Effect.gen(function* () {
+  const date = '2026-10-19'
+  const db = new DatabaseSync(':memory:')
+  db.exec(readFileSync('db/schema.sql', 'utf8'))
+  db.exec("INSERT INTO source_days VALUES ('2026-10-19','pihps','live','2026-10-19T17:00:00Z')")
+  // Initialize catalogs so total_changes isolates marker writes below.
+  db.exec(planImport({ from: date, to: date, observations: [], existing: [] }).sql)
+  for (const [timestamp, count, latest] of [
+    ['2026-10-19T17:00:00.000Z', 0, '2026-10-19T17:00:00Z'],
+    ['2026-10-19T17:00:00.100Z', 1, '2026-10-19T17:00:00.100Z'],
+    ['2026-10-19T17:00:00Z', 0, '2026-10-19T17:00:00.100Z'],
+    ['2026-10-19T17:00:00.000Z', 0, '2026-10-19T17:00:00.100Z'],
+    ['2026-10-19T17:00:00.100Z', 0, '2026-10-19T17:00:00.100Z'],
+  ]) {
+    const raw = yield* rawObservations(emptyRaw(date, timestamp), 'raw')
+    const plan = planImport({ from: date, to: date, observations: [], existing: [], coverage: [raw.coverage], existingCoverage: db.prepare('SELECT * FROM source_days').all() })
+    const before = db.prepare('SELECT total_changes() AS n').get().n
+    db.exec(plan.sql)
+    assert.strictEqual(plan.report.coverageChanges, count)
+    assert.strictEqual(db.prepare('SELECT total_changes() AS n').get().n - before, count)
+    assert.deepStrictEqual({ ...db.prepare('SELECT status,checked_at FROM source_days').get() }, { status: 'live', checked_at: latest })
+  }
+  db.close()
+}))
+it.effect('runtime coverage collision after planning preserves newer completion and refreshed counts are zero', () => Effect.gen(function* () {
+  const date = '2026-10-19'
+  const raw = yield* rawObservations(emptyRaw(date, '2026-10-19T04:00:00Z'), 'raw')
+  const stale = planImport({ from: date, to: date, observations: [], existing: [], coverage: [raw.coverage] })
+  assert.strictEqual(stale.report.coverageChanges, 1)
+  const db = new DatabaseSync(':memory:')
+  db.exec(readFileSync('db/schema.sql', 'utf8'))
+  db.exec(planImport({ from: date, to: date, observations: [], existing: [] }).sql)
+  db.exec("INSERT INTO source_days VALUES ('2026-10-19','pihps','empty','2026-10-19T17:00:00Z')")
+  const before = db.prepare('SELECT total_changes() AS n').get().n
+  db.exec(stale.sql)
+  assert.strictEqual(db.prepare('SELECT total_changes() AS n').get().n - before, 0)
+  assert.deepStrictEqual({ ...db.prepare('SELECT status,checked_at FROM source_days').get() }, { status: 'empty', checked_at: '2026-10-19T17:00:00Z' })
+  const fresh = planImport({ from: date, to: date, observations: [], existing: [], coverage: [raw.coverage], existingCoverage: db.prepare('SELECT * FROM source_days').all() })
+  assert.strictEqual(fresh.report.coverageChanges, 0)
+  db.close()
+}))
+it.effect('another source marker on the same date does not suppress a planned PIHPS insert', () => Effect.gen(function* () {
+  const date = '2026-10-19'
+  const raw = yield* rawObservations(emptyRaw(date, '2026-10-19T17:00:00Z'), 'raw')
+  const db = new DatabaseSync(':memory:')
+  db.exec(readFileSync('db/schema.sql', 'utf8'))
+  db.exec(planImport({ from: date, to: date, observations: [], existing: [] }).sql)
+  db.exec("INSERT INTO source_days VALUES ('2026-10-19','other','empty','2026-10-19T17:00:00Z')")
+  const plan = planImport({ from: date, to: date, observations: [], existing: [], coverage: [raw.coverage], existingCoverage: db.prepare('SELECT * FROM source_days').all() })
+  const before = db.prepare('SELECT total_changes() AS n').get().n
+  db.exec(plan.sql)
+  assert.strictEqual(plan.report.coverageChanges, 1)
+  assert.strictEqual(db.prepare('SELECT total_changes() AS n').get().n - before, 1)
+  assert.strictEqual(db.prepare('SELECT COUNT(*) AS n FROM source_days').get().n, 2)
+  db.close()
+}))
 it.effect('importing same-day empty evidence years later cannot turn it into confirmed emptiness', () => Effect.gen(function* () {
   yield* TestClock.setTime(DateTime.unsafeMake('2030-01-01T00:00:00Z').epochMillis)
   const raw = yield* rawObservations(emptyRaw(row.date, '2018-10-09T04:00:00Z'), 'raw')

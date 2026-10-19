@@ -77,7 +77,7 @@ export const planImport = ({ from, to, observations, existing, coverage = [], ex
     values.push(value); bytes += Buffer.byteLength(value) + 2
   }
   flush()
-  const markers = new Map(Schema.decodeUnknownSync(ExistingCoverageSchema)(existingCoverage).map((r) => [r.date, r]))
+  const markers = new Map(Schema.decodeUnknownSync(ExistingCoverageSchema)(existingCoverage).filter((r) => r.source_id === 'pihps').map((r) => [r.date, r]))
   for (const day of coverage.filter((d) => d.iso >= from && d.iso <= to)) {
     if (!day.verified) { report.unresolvedErrors.push(day); continue }
     const checkedAt = Schema.decodeUnknownSync(SourceCheckTimestampSchema)(day.fetchedAt)
@@ -85,8 +85,22 @@ export const planImport = ({ from, to, observations, existing, coverage = [], ex
     // Evidence never gets stronger merely because an old raw file is imported later.
     const status = day.liveCells > 0 ? 'live' : day.iso < checkedDate ? 'empty' : 'pending'
     const old = markers.get(day.iso)
-    if (!old || (old.status !== 'live' && old.status !== status) || old.checked_at !== day.fetchedAt) report.coverageChanges++
-    sql.push(`INSERT INTO source_days (date,source_id,status,checked_at) VALUES (${quote(day.iso)},'pihps',${quote(status)},${quote(day.fetchedAt)}) ON CONFLICT(date,source_id) DO UPDATE SET status=CASE WHEN source_days.status='live' THEN 'live' ELSE excluded.status END,checked_at=excluded.checked_at WHERE source_days.checked_at<>excluded.checked_at OR (source_days.status<>'live' AND source_days.status<>excluded.status);`)
+    const incomingMillis = DateTime.unsafeMake(checkedAt).epochMillis
+    const oldMillis = old ? DateTime.unsafeMake(Schema.decodeUnknownSync(SourceCheckTimestampSchema)(old.checked_at)).epochMillis : -Infinity
+    // Completed evidence is monotonic; the check timestamp independently records the latest attempt.
+    const nextStatus = old?.status === 'live' || status === 'live' ? 'live'
+      : old?.status === 'empty' || status === 'empty' ? 'empty'
+      : incomingMillis >= oldMillis ? status : old.status
+    const nextCheckedAt = incomingMillis > oldMillis ? checkedAt : old.checked_at
+    if (!old || old.status !== nextStatus || incomingMillis > oldMillis) report.coverageChanges++
+    markers.set(day.iso, { date: day.iso, source_id: 'pihps', status: nextStatus, checked_at: nextCheckedAt })
+    // julianday compares actual instants, including equivalent whole-second/.000Z representations.
+    // The same guard runs against the current row, protecting evidence written after the dry run.
+    const newer = 'julianday(excluded.checked_at)>julianday(source_days.checked_at)'
+    const mergedStatus = `CASE WHEN source_days.status='live' OR excluded.status='live' THEN 'live'
+      WHEN source_days.status='empty' OR excluded.status='empty' THEN 'empty'
+      WHEN julianday(excluded.checked_at)>=julianday(source_days.checked_at) THEN excluded.status ELSE source_days.status END`
+    sql.push(`INSERT INTO source_days (date,source_id,status,checked_at) VALUES (${quote(day.iso)},'pihps',${quote(status)},${quote(checkedAt)}) ON CONFLICT(date,source_id) DO UPDATE SET status=${mergedStatus},checked_at=CASE WHEN ${newer} THEN excluded.checked_at ELSE source_days.checked_at END WHERE ${newer} OR source_days.status<>(${mergedStatus});`)
   }
   report.existingPreserved = baseline.length - report.unchanged
   report.statements = sql.filter((s) => !s.startsWith('--')).length
