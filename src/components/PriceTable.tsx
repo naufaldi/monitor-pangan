@@ -15,7 +15,7 @@ type PriceTableProps = {
   date: string
   rows: TableRow[]
   unit: PriceUnit
-  average: number
+  average: number | null
   selectedCode: string | null
   onSelect: (code: string) => void
 }
@@ -94,8 +94,8 @@ export function PriceTable({
             {visible.map((r) => {
               const price = r.price
               const missing = price == null
-              const diff = missing || average === 0 ? 0 : ((price - average) / average) * 100
-              const above = diff >= 0
+              const diff = missing || average == null || average <= 0 ? null : ((price - average) / average) * 100
+              const above = diff != null && diff >= 0
               return (
                 <tr
                   key={r.regionCode}
@@ -120,10 +120,10 @@ export function PriceTable({
                   <td
                     className={cn(
                       "tabular-nums px-4 py-2 text-right",
-                      missing ? "text-slate" : above ? "text-ember" : "text-leaf-deep",
+                      diff == null ? "text-slate" : above ? "text-ember" : "text-leaf-deep",
                     )}
                   >
-                    {missing ? "—" : `${above ? "+" : ""}${diff.toFixed(1)}%`}
+                    {diff == null ? "—" : `${above ? "+" : ""}${diff.toFixed(1)}%`}
                   </td>
                 </tr>
               )

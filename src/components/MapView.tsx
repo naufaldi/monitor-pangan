@@ -10,7 +10,7 @@ import { PRICE_BANDS, provinceFill } from "#/lib/province-fill.ts"
 type MapViewProps = {
   snapshotKey: string
   prices: PriceRow[]
-  average: number
+  average: number | null
   selectedCode: string | null
   onSelect: (code: string) => void
 }
@@ -81,7 +81,7 @@ export function MapView({
         />
       </MapContainer>
       <ul className="flex flex-wrap gap-x-4 gap-y-1 border-t border-hairline px-4 py-2 text-xs text-slate">
-        {PRICE_BANDS.map((band) => (
+        {average != null && average > 0 && PRICE_BANDS.map((band) => (
           <li key={band.label} className="flex items-center gap-1.5">
             <span
               className="inline-block h-3 w-3 rounded-sm"

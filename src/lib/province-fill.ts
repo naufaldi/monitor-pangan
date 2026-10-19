@@ -8,10 +8,10 @@ export const PRICE_BANDS = [
 
 export function provinceFill(
   price: number | null | undefined,
-  average: number,
+  average: number | null,
 ): { fillColor: string; fillOpacity: number } {
-  if (price == null) return { fillColor: "#1a1c16", fillOpacity: 0.9 }
-  const ratio = average === 0 ? 1 : price / average
+  if (price == null || average == null || average <= 0) return { fillColor: "#1a1c16", fillOpacity: 0.9 }
+  const ratio = price / average
   const fillColor = PRICE_BANDS.find((band) => ratio < band.below)?.color ?? "#eab308"
   return { fillColor, fillOpacity: 0.65 }
 }

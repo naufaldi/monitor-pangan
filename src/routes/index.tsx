@@ -51,7 +51,8 @@ function HomePage() {
   const hints = useMemo(() => {
     const map = new Map<string, string>()
     for (const c of COMMODITIES) {
-      map.set(c.id, formatPrice(provider.snapshot(date, c.id).nationalAvg, c.unit))
+      const average = provider.snapshot(date, c.id).nationalAvg
+      map.set(c.id, average == null ? "Tidak ada data" : formatPrice(average, c.unit))
     }
     return map
   }, [date])

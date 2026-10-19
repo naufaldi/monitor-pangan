@@ -1,7 +1,7 @@
-import { Effect } from "effect"
+import { Effect, Either } from "effect"
 import { assert, it } from "@effect/vitest"
 import { provider } from "./provider.ts"
-import { SnapshotSchema, TrendSeriesSchema, UnknownCommodityError, UnknownDateError } from "./price-schema.ts"
+import { UnknownCommodityError, UnknownDateError } from "./price-schema.ts"
 import { decodeSnapshot, decodeTrendSeries } from "./price-schema.ts"
 
 it.effect("decodes a live provider snapshot", () =>
@@ -26,6 +26,48 @@ it.effect("rejects a malformed snapshot with a ParseError", () =>
     assert.strictEqual(failure._tag, "ParseError")
   }))
 
+it.effect("decodes an empty snapshot without inventing a price", () =>
+  Effect.gen(function*() {
+    const decoded = yield* decodeSnapshot({
+      ...provider.snapshot("2026-09-16", "beras"),
+      nationalAvg: null,
+      pricedCount: 0,
+      rows: [{ regionCode: "31", price: null }],
+    })
+    assert.strictEqual(decoded.nationalAvg, null)
+    assert.strictEqual(decoded.pricedCount, 0)
+  }))
+
+it.effect("rejects contradictory snapshot summaries", () =>
+  Effect.gen(function*() {
+    const base = provider.snapshot("2026-09-16", "beras")
+    const contradictions = [
+      { rows: [{ regionCode: "31", price: null }], nationalAvg: 0, pricedCount: 0 },
+      { rows: [{ regionCode: "31", price: 16950 }], nationalAvg: null, pricedCount: 1 },
+      { rows: [{ regionCode: "31", price: 16950 }], nationalAvg: 16950, pricedCount: 0 },
+      { rows: [{ regionCode: "31", price: 16950 }], nationalAvg: 16950, pricedCount: 1.5 },
+      { rows: [{ regionCode: "31", price: 16950 }], nationalAvg: 17000, pricedCount: 1 },
+    ]
+    for (const fields of contradictions) {
+      const result = yield* Effect.either(decodeSnapshot({ ...base, ...fields }))
+      assert.ok(Either.isLeft(result))
+    }
+  }))
+
+it.effect("rejects non-finite zero and negative external prices", () =>
+  Effect.gen(function*() {
+    const base = provider.snapshot("2026-09-16", "beras")
+    for (const price of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, 0, -100]) {
+      const result = yield* Effect.either(decodeSnapshot({
+        ...base,
+        nationalAvg: 16950,
+        pricedCount: 1,
+        rows: [{ regionCode: "31", price }],
+      }))
+      assert.ok(Either.isLeft(result))
+    }
+  }))
+
 it.effect("rejects a trend series with an unknown direction", () =>
   Effect.gen(function*() {
     const series = provider.trend("beras")
@@ -41,6 +83,4 @@ it.effect("exposes typed domain errors", () =>
     const date = new UnknownDateError({ date: "1900-01-01" })
     assert.strictEqual(commodity._tag, "UnknownCommodityError")
     assert.strictEqual(date._tag, "UnknownDateError")
-    assert.strictEqual(SnapshotSchema.ast._tag, "TypeLiteral")
-    assert.strictEqual(TrendSeriesSchema.ast._tag, "TypeLiteral")
   }))
