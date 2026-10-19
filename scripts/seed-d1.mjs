@@ -52,11 +52,12 @@ Effect.runPromise(Effect.gen(function* () {
   }
   if (historyDir) {
     const archive = yield* readHistory(historyDir)
-    if (from < archive.manifest.range.from || to > archive.manifest.range.to) return yield* Effect.fail(new ArchiveError({ message: 'repository history import must stay inside audited 2017-03-27..2026-09-15 range' }))
+    if (from < archive.range.from || to > archive.range.to) return yield* Effect.fail(new ArchiveError({ message: 'repository history import must stay inside validated archive range' }))
     for (const observation of historyObservations(archive)) {
       if (observation.date >= from && observation.date <= to) observations.push(observation)
     }
     inputs.push(...archive.manifest.years.map((year) => ({ path: `${historyDir}/${year.file}`, sha256: year.sha256, raw_ref: `git:${archive.manifest.source.commit}:${year.provenance.path}` })))
+    inputs.push(...(archive.updates.manifest?.years ?? []).map((year) => ({ path: `${historyDir}/updates/${year.file}`, sha256: year.sha256, kind: 'd1-observations' })))
   } else if (inputDir) {
     const provenance = yield* jsonFile(`${inputDir}/provenance.json`).pipe(Effect.flatMap(Schema.decodeUnknown(ProvenanceSchema)))
     const manifest = yield* jsonFile('docs/qa/pr12/repair-manifest.json').pipe(Effect.flatMap(Schema.decodeUnknown(RecoveryManifestSchema)))

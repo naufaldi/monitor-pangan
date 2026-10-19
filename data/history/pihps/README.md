@@ -2,7 +2,9 @@
 
 The repository owns this recovery archive; D1 remains the application's serving
 store. These files are not public assets and must never be imported into the
-frontend bundle. Daily archive synchronization is follow-up issue #38.
+frontend bundle. Daily archive synchronization uses the D1 outbox and reviewed
+yearly update files described in the [incremental archive runbook](../../../docs/operations/pihps-archive-sync.md).
+Production activation and real scheduled-event verification remain pending.
 
 ## Version 1 contract
 
@@ -40,12 +42,27 @@ values passed structural validation. Missing weekdays remain unknown; neither
 an observed date nor a null cell proves that every HTTP scope completed.
 Restore observations only, without creating `source_days` or `job_runs`.
 
-September 16 onward is excluded: ten region-64 cells on 2026-09-16 disagreed
-with the current official bundle. Any expanded range requires a new reviewed
-reconciliation and schema/audit update. Existing official D1 prices always win.
+September 16 onward is excluded from this immutable base: ten region-64 cells on
+2026-09-16 disagreed with the current official bundle. Separately reconciled
+observations and daily D1 captures belong in `updates/`, preserving the original
+base audit. Existing official D1 prices always win during restoration.
 
 Keep raw responses, SQL, local databases, credentials and citizen data outside
 this directory. Git review owns changes to the archive and its provenance.
+
+## Incremental updates
+
+`updates/manifest.json` pins this base's manifest hash and records the export
+epoch/checkpoint, yearly file hashes, byte sizes, counts and ranges. The initial
+manifest has no events. Canonical `updates/YYYY.jsonl` files store immutable
+versioned D1 capture events and sorted provincial observation tuples. Their
+sequence orders corrections independently of the survey year.
+
+Validation and rebuild check both base and updates. The restore planner folds
+updates over base keys, keeping each winning observation's source reference.
+Missing tuples never erase good observations. Stored source-check metadata does
+not authorize restoration of source-day or job markers. Current D1 captures are
+not relabeled as original derived Git evidence or original HTTP responses.
 
 ## Validation and rebuild
 

@@ -65,3 +65,17 @@ CREATE INDEX IF NOT EXISTS laporan_warga_status_seen ON laporan_warga (status, s
 CREATE INDEX IF NOT EXISTS laporan_warga_status_seen_id ON laporan_warga (status, seen_on, id);
 
 CREATE INDEX IF NOT EXISTS laporan_warga_status_submitted ON laporan_warga (status, submitted_at);
+
+CREATE TABLE IF NOT EXISTS pihps_archive_epoch (
+  id INTEGER PRIMARY KEY CHECK (id = 1), epoch TEXT NOT NULL
+);
+INSERT OR IGNORE INTO pihps_archive_epoch (id, epoch) VALUES (1, lower(hex(randomblob(16))));
+CREATE TABLE IF NOT EXISTS pihps_archive_events (
+  seq INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('daily_ingest', 'd1_reconciliation')),
+  captured_at TEXT NOT NULL,
+  source_check_json TEXT NOT NULL,
+  observations_json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS pihps_archive_events_date_seq ON pihps_archive_events (date, seq DESC);

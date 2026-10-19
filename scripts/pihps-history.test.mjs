@@ -1,7 +1,7 @@
 import { assert, it } from '@effect/vitest'
 import { Effect } from 'effect'
 import { cp, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, relative } from 'node:path'
 import { tmpdir } from 'node:os'
 import { COMMODITY_ROWS, REGION_ROWS } from '../src/data/pihps-catalog.ts'
 import * as history from './pihps-history.mjs'
@@ -115,8 +115,10 @@ it.effect('hash, count and schema tampering fail validation and a rejected rebui
 it.effect('rebuilding the complete archive twice leaves every file byte-identical', () => withTemporary((root) => Effect.gen(function* () {
   const directory = join(root, 'archive')
   yield* files.io(() => cp('data/history/pihps', directory, { recursive: true }))
-  const digest = (dir) => files.io(() => readdir(dir)).pipe(Effect.flatMap((names) => Effect.forEach(names.sort(),
-    (name) => files.io(() => readFile(join(dir, name))).pipe(Effect.map((text) => [name, history.sha256(text)])))))
+  const digest = (dir) => files.io(() => readdir(dir, { recursive: true, withFileTypes: true })).pipe(
+    Effect.map((entries) => entries.filter((entry) => entry.isFile()).map((entry) => relative(dir, join(entry.parentPath, entry.name))).sort()),
+    Effect.flatMap((names) => Effect.forEach(names,
+      (name) => files.io(() => readFile(join(dir, name))).pipe(Effect.map((text) => [name, history.sha256(text)])))))
   const before = yield* digest(directory)
   yield* files.rebuildHistory(directory)
   yield* files.rebuildHistory(directory)

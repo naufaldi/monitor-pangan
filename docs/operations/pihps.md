@@ -15,6 +15,7 @@ exercise its D1 routes.
 | D1 `job_runs` | Worker invocations record `complete` or `error`; legacy `failed` is an error. A successful zero-row invocation is possible. |
 | `data/raw/`, `data/snapshots/` | Ignored local CLI source responses and normalized outputs. Preserve request-level statuses and timestamps. |
 | `data/history/pihps/` | Tracked, version-1 recovery archive: yearly provincial observations, nulls, manifest hashes/counts and immutable derived provenance. Repository review owns updates; D1 serves prices. |
+| `pihps_archive_events` / `data/history/pihps/updates/` | Ingestion's transactional D1 outbox feeds a separate export-only Actions publisher and reviewed yearly event files. Publication and merge have separate checkpoints; see the [archive sync runbook](pihps-archive-sync.md). |
 | `data/archive/pihps-derived/` | Optional ignored original derived files for forensic bootstrap. Ordinary validation/restoration does not need these or the old Git object. |
 | `data/repairs/` | Ignored durable baselines, proposed SQL and dry-run reports. Keep a separate baseline for each target. |
 | Citizen D1/R2 data | `laporan_warga` and the `PHOTOS` R2 binding remain separate. No price repair changes citizen reports, photos or credentials. |
@@ -130,7 +131,10 @@ The archive preserves derived observations, not original HTTP evidence. Its
 139,194 null cells and 23 omitted weekdays do not establish empty surveys. It
 contains no national series, SQL, database, raw responses, credentials or citizen
 data. D1 stays the serving store; do not import the archive into frontend code.
-Daily synchronization is issue #38 and is outside this initial historical import.
+Daily synchronization is implemented separately from this initial historical
+import. The [incremental archive runbook](pihps-archive-sync.md) owns the D1
+outbox, export-only workflow, review/merge checkpoints and bounded recovery.
+Production activation and real scheduled-event verification remain pending.
 
 **Local target only:** initialize an empty local database with the checked-in
 schema. This does not seed historical prices or prove remote access:
