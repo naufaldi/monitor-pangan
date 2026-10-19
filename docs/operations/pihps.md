@@ -81,8 +81,13 @@ nullable observations and a sanitized log. Notes, SQL and exceptions are private
 
 The latest-price query uses one backwards index seek per canonical commodity;
 it does not aggregate the entire historical price table. Coverage is limited
-to the scheduled period, and job reads return at most one attempt and one
-success. The endpoint is evidence of stored state, not proof that a particular
+to the scheduled period. Job reads use `job_runs_health_attempt` and
+`job_runs_health_success`, whose source/order and source/status/order expression
+keys match the exact instant ordering. Each reads at most one attempt or
+success without sorting historical jobs. Malformed timestamps retain the high
+sort key that makes decoding reject them. Both schema entry points create these
+indexes; cold migration plus a complete 340-cell day stays within the D1 query
+budget. The endpoint is evidence of stored state, not proof that a particular
 future Cron Trigger ran.
 
 `GET /api/pihps/fresh?after=2026-09-16` serves observed overlay rows. Database or

@@ -128,3 +128,66 @@ evidence rather than silently upgrading that claim.
   review, final branch gates, separately authorized remote backfill/deployment,
   readback of deployed MON-FRI triggers and the next real cron event. The full
   suite was not run here because repo instructions require targeted files.
+
+## Review fix round 1 (base `8ae30fa`)
+
+Resolved the Important bounded job-read finding in `task-7-review.md`. Returning
+one row did not bound the work: the exact chronological expression required a
+full job scan and temporary sort. Added `job_runs_health_attempt` on source,
+instant expression and descending id, plus `job_runs_health_success` on source,
+status, instant expression and descending id. Both `db/schema.sql` and Worker
+cold migration create them. The existing queries and malformed/mixed-precision
+ordering semantics remain unchanged. The success query seeks both source and
+status, so it does not walk through arbitrary preceding failures to find success.
+
+Added an EXPLAIN regression capturing the two actual queries emitted by the
+Worker health dispatcher. It checks the Worker migration and independently
+recreated standalone-schema indexes, rejects full scans/temporary sorts and
+requires source/status equality for the success lookup. Updated the cold-start
+budget test to execute migration, coverage read, a full340-cell day and a job
+record against the actual50-query limit, replacing the arbitrary12-statement
+migration cap. The runbook now identifies the indexes and exact bounded access
+strategy; pipeline-health.json includes the four fixture query plans.
+
+Exact red/green commands and outputs:
+
+```sh
+rtk pnpm exec vitest run src/worker/pihps-health.test.ts src/worker/d1-store.test.ts
+```
+
+RED before index changes:2 failed /17 passed. Both schema paths reported
+`SCAN job_runs` and `USE TEMP B-TREE FOR ORDER BY`. GREEN after index changes:
+2 files /19 tests passed, including existing malformed-timestamp, mixed-precision
+and legacy/current error normalization cases.
+
+```sh
+rtk pnpm exec node --experimental-strip-types data/repairs/capture-job-query-plans.mjs
+```
+
+Exit0. The ignored driver captured actual production SQL against an isolated
+in-memory SQLite fixture. Both schema entry points produced exactly:
+
+```text
+SEARCH job_runs USING INDEX job_runs_health_attempt (source_id=?)
+SEARCH job_runs USING INDEX job_runs_health_success (source_id=? AND status=?)
+```
+
+There were no full scans or temporary sorts. These are isolated schema/SQL
+fixture plans, not a claim that remote indexes were applied.
+
+Final verification commands:
+
+```sh
+rtk pnpm exec vitest run src/worker/pihps-health.test.ts src/worker/d1-store.test.ts src/worker/price-store.test.ts src/worker/index.test.ts src/worker/price-http.test.ts src/worker/ingest.test.ts
+rtk pnpm exec vitest run src/worker/laporan-store.test.ts scripts/price-import.test.mjs
+rtk pnpm typecheck
+rtk pnpm build
+rtk git diff --check
+```
+
+Outputs: first suite6 files /65 tests passed; schema consumers2 files /28 tests
+passed. Typecheck exit0 (`TypeScript: No errors found`). Build exit0, client/SSR
+and all6 prerendered pages passed; existing circular-module and bundle-size
+warnings remain. Diff check exit0. No production writes, source HTTP, shared
+local D1 mutation or deployment occurred. Parent review and Task8 runtime/browser
+evidence remain pending; earlier production rollout gates remain unchanged.

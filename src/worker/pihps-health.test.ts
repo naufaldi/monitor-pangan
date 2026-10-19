@@ -3,6 +3,7 @@ import { Effect, TestClock } from "effect"
 import { handleRequest, workerLayer, type WorkerEnv } from "./index.ts"
 import { sqliteFixture } from "./sqlite-test.ts"
 import { tradingDaysFromThrough } from "../lib/civil-date.ts"
+import { readFile } from "node:fs/promises"
 
 const environment = (db: WorkerEnv["DB"]): WorkerEnv => ({
   DB: db,
@@ -152,4 +153,29 @@ it.effect("rejects malformed latest official prices instead of calling them obse
   const response = yield* request(db.db)
   assert.strictEqual(response.status, 503)
   assert.strictEqual((yield* json(response)).status, "unavailable")
+}))
+
+for (const schema of ["worker-migration", "schema-file"]) it.effect(`seeks bounded job evidence without scanning or sorting using ${schema}`, () => Effect.gen(function* () {
+  const db = yield* fixture
+  const queries: string[] = []
+  const recordingDb = { ...db.db, prepare: (sql: string) => {
+    if (sql.startsWith("SELECT started_at, status FROM job_runs")) queries.push(sql)
+    return db.db.prepare(sql)
+  } }
+  yield* TestClock.setTime("2026-10-19T11:00:00Z")
+  yield* request(recordingDb)
+  assert.strictEqual(queries.length, 2)
+  if (schema === "schema-file") {
+    // Rebuild only the job indexes from the standalone schema, independently of Worker migration.
+    const indexes = db.sqlite.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'job_runs'").all()
+    for (const index of indexes) yield* Effect.sync(() => db.sqlite.exec(`DROP INDEX "${String(index.name).replaceAll('"', '""')}"`))
+    const sql = yield* Effect.promise(() => readFile(new URL("../../db/schema.sql", import.meta.url), "utf8"))
+    yield* Effect.sync(() => db.sqlite.exec(sql))
+  }
+  for (const sql of queries) {
+    const details = db.sqlite.prepare(`EXPLAIN QUERY PLAN ${sql}`).all().map((row) => String(row.detail))
+    assert.ok(details.some((detail) => detail.startsWith("SEARCH job_runs USING INDEX")), details.join("\n"))
+    if (sql.includes("AND status = 'complete'")) assert.ok(details.some((detail) => detail.includes("source_id=? AND status=?")), details.join("\n"))
+    assert.ok(!details.some((detail) => /SCAN job_runs|TEMP B-TREE/.test(detail)), details.join("\n"))
+  }
 }))

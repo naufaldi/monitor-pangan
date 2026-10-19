@@ -69,11 +69,25 @@ it.effect("rejects untrusted D1 write counts instead of inventing confirmed prog
 
 it.effect("cold migrations leave room for one day's reads/writes within the D1 query limit", () => Effect.gen(function* () {
   const fixture = yield* sqliteFixture
-  const db = { ...fixture.db, batch: (statements: D1Prepared[]) => {
-    assert.ok(statements.length <= 12, "cold migrations must not exhaust the 50-query D1 Free limit")
-    return fixture.db.batch(statements)
-  } }
-  yield* ensureMigrated(db)
+  let queries = 0
+  const prepare = (sql: string, values: unknown[] = []): D1Prepared => {
+    const statement = fixture.db.prepare(sql).bind(...values)
+    return {
+      bind: (...bound) => prepare(sql, bound),
+      all: <T>() => { queries++; return statement.all<T>() },
+      run: () => { queries++; return statement.run() },
+    }
+  }
+  const db = { ...fixture.db, prepare }
+  yield* Effect.gen(function* () {
+    const store = yield* PriceStore
+    yield* store.coverageSince("2026-09-16")
+    const rows = REGION_ROWS.slice(0, 34).flatMap(([regionCode]) => COMMODITY_ROWS.map(([commodityId]) => ({ date: "2026-10-19", regionCode, commodityId, price: 15000 })))
+    yield* store.upsertDay("2026-10-19", "live", rows, "2026-10-19T10:15:00Z")
+    yield* store.recordJob({ startedAt: "2026-10-19T10:15:00Z", status: "complete", rowsUpserted: 340, note: "cold full-day fixture" })
+  }).pipe(Effect.provide(d1PriceStoreLayer(db)))
+  assert.ok(queries <= 50, `cold migration and full-day storage used ${queries} D1 queries`)
+  assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM prices_daily").get()?.count, 340)
   assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM commodities").get()?.count, 10)
   assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM regions").get()?.count, 38)
 }))

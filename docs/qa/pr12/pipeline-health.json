@@ -108,5 +108,39 @@
     "browserRefreshAndAssets": "pending Task 8",
     "productionDeployment": "not performed",
     "actualCorrectedScheduledEvent": "pending separately authorized deployment and future observation"
+  },
+  "jobQueryPlans": {
+    "evidenceKind": "Isolated SQLite fixture capturing actual Worker health SQL, both schema entry points",
+    "captureCommand": "rtk pnpm exec node --experimental-strip-types data/repairs/capture-job-query-plans.mjs",
+    "plans": [
+      {
+        "entryPoint": "worker-migration",
+        "query": "SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1",
+        "details": [
+          "SEARCH job_runs USING INDEX job_runs_health_attempt (source_id=?)"
+        ]
+      },
+      {
+        "entryPoint": "worker-migration",
+        "query": "SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' AND status = 'complete' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1",
+        "details": [
+          "SEARCH job_runs USING INDEX job_runs_health_success (source_id=? AND status=?)"
+        ]
+      },
+      {
+        "entryPoint": "schema-file",
+        "query": "SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1",
+        "details": [
+          "SEARCH job_runs USING INDEX job_runs_health_attempt (source_id=?)"
+        ]
+      },
+      {
+        "entryPoint": "schema-file",
+        "query": "SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' AND status = 'complete' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1",
+        "details": [
+          "SEARCH job_runs USING INDEX job_runs_health_success (source_id=? AND status=?)"
+        ]
+      }
+    ]
   }
 }

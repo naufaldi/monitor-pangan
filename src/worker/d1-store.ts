@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS source_days (
   PRIMARY KEY (date, source_id)
 );
 CREATE INDEX IF NOT EXISTS prices_daily_trend ON prices_daily (commodity_id, source_id, level, date);
+CREATE INDEX IF NOT EXISTS job_runs_health_attempt ON job_runs (source_id, COALESCE(julianday(started_at), 1e99) DESC, id DESC);
+CREATE INDEX IF NOT EXISTS job_runs_health_success ON job_runs (source_id, status, COALESCE(julianday(started_at), 1e99) DESC, id DESC);
 INSERT OR IGNORE INTO commodities (id, name, unit) VALUES
 ${COMMODITY_ROWS.map(([id, name, unit]) => `(${sqlString(id)}, ${sqlString(name)}, ${sqlString(unit)})`).join(",\n")};
 INSERT OR IGNORE INTO regions (code, name, level) VALUES
