@@ -2,6 +2,8 @@
 
 Verified on 19 October 2026 against the existing production Worker and D1. All remote operations were read-only. No production rows, triggers, or deployments changed.
 
+Record timestamp: 2026-10-19T07:50:10Z (14:50:10 Asia/Jakarta). Remote observations were collected earlier in this same execution session; this timestamp records the audit handoff, not a claim that every request ran at the same instant.
+
 ## Production D1
 
 The official `pihps` / `eceran` rows contain 8,040 non-null provincial cells across 24 dates, from 2026-09-16 through 2026-10-19. No earlier year appears in the per-year coverage query. The specific historical regression dates 2018-10-09 and 2025-10-30 have no stored rows. The 2026-09-16 control has 310 cells.
@@ -36,6 +38,12 @@ These files were extracted to ignored local staging and validated with Effect Sc
 Comparison with the current generated bundle found 9,800 overlapping observed cells. Of these, 9,790 match exactly. The ten differences are all Kalimantan Timur (`64`) on 2026-09-16, one per commodity. This is a real discrepancy, not proven source revision. Preserve existing observations; restrict the proposed historical repair to dates before 2026-09-16, so none of the disputed cells or newer production data is overwritten.
 
 The recovered data is a derived repository archive, not the original PIHPS raw HTTP responses. Fixture/import provenance must retain that distinction and pin the commit and original path. Restoring these data files does not merge PR #14's code or change its mean/percentage policies.
+
+[repair-manifest.json](repair-manifest.json) is the machine-readable handoff. It pins each yearly file by SHA-256 and includes all 2,449 proposed repair dates, 791,426 proposed non-null provincial cells, and 23 omitted weekdays. The repair interval is 2017-03-27 through 2026-09-15 inclusive. No known production date is in that interval. An actual database import still requires the generator's row-level conflict/dry-run checks at execution time.
+
+The per-year archive counts (dates / non-null provincial cells) are: 2017: 194 / 46,813; 2018: 257 / 83,282; 2019: 260 / 84,528; 2020: 260 / 83,010; 2021: 257 / 84,362; 2022: 254 / 83,742; 2023: 260 / 86,780; 2024: 262 / 88,069; 2025: 261 / 88,340; 2026 through September 23: 190 / 64,460. These describe the complete recovered files; the proposed repair excludes September 16 onward.
+
+Weekday comparison found 23 omissions between the archive's first and last dates. They remain **unknown**, not confirmed empty holidays: no original HTTP scope statuses were recovered. The exact dates are in the manifest. The 2,449 repair dates prove recorded observations exist, but do not prove every provincial HTTP request succeeded. Therefore derived-file recovery imports price observations only and must not manufacture historical completed `live` or `empty` records in `source_days`. Only independently verified source checks can establish those operational markers. Price reads can serve known observations without pretending the original scrape's scope completeness is known.
 
 Archive examples: Jakarta beras is 13,200 on 2018-10-09 and 16,300 on 2025-10-30. The archive's nearest-rupiah national figures are 11,707 and 15,769 respectively; PR #12 retains Rp 50 rounding, yielding 11,700 and 15,750 when computed from the provincial observations.
 
