@@ -1,4 +1,4 @@
-import { Context, Data, Effect, Layer, Schema } from "effect"
+import { Context, Data, DateTime, Effect, Layer, Option, Schema } from "effect"
 import { COMMODITIES } from "../data/catalog.ts"
 import { REGION_ROWS } from "../data/pihps-catalog.ts"
 import {
@@ -17,6 +17,23 @@ type ReadFailure = PriceReadError | CoverageUnavailable
 export class PriceReadStore extends Context.Tag("PriceReadStore")<PriceReadStore, {
   readonly snapshot: (date: string, commodityId: string) => Effect.Effect<SnapshotValidated, ReadFailure>
   readonly trendPage: (query: TrendPageQuery) => Effect.Effect<TrendPage, ReadFailure>
+}>() {}
+
+/** Stored UTC instants accept the two canonical formats already written by ingestion. */
+export const IsoTimestampSchema = Schema.String.pipe(Schema.filter((value) => {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value)) return false
+  const parsed = DateTime.make(value)
+  return Option.isSome(parsed) && DateTime.formatIso(parsed.value) === (value.includes(".") ? value : value.replace("Z", ".000Z"))
+}))
+const JobEvidenceSchema = Schema.Struct({ started_at: IsoTimestampSchema, status: Schema.Literal("complete", "error", "failed") })
+const HealthEvidenceSchema = Schema.Struct({
+  coverage: Schema.Array(Schema.Struct({ date: CivilDateSchema, status: Schema.Literal("live", "empty", "pending", "error"), checked_at: IsoTimestampSchema })),
+  latestPricedDate: Schema.NullOr(CivilDateSchema),
+  attempts: Schema.Array(JobEvidenceSchema).pipe(Schema.maxItems(1)),
+  successes: Schema.Array(JobEvidenceSchema.pipe(Schema.filter((job) => job.status === "complete"))).pipe(Schema.maxItems(1)),
+})
+export class PihpsHealthReadStore extends Context.Tag("PihpsHealthReadStore")<PihpsHealthReadStore, {
+  readonly evidence: (after: string, through: string) => Effect.Effect<typeof HealthEvidenceSchema.Type, PriceReadError>
 }>() {}
 
 const readError = (cause: unknown) => new PriceReadError({ message: String(cause) })
@@ -99,5 +116,19 @@ export const priceReadStoreLayer = (db: D1Database) => {
     )
     return yield* Schema.decodeUnknown(TrendPageSchema)({ national, selected, nextCursor: nationalRows.length > limit ? pageEnd : null }).pipe(Effect.mapError(readError))
   })
-  return Layer.succeed(PriceReadStore, { snapshot, trendPage })
+  const evidence = Effect.fn("PriceReadStore.healthEvidence")(function* (after: string, through: string) {
+    const coverage = yield* query("SELECT date, status, checked_at FROM source_days WHERE source_id = 'pihps' AND date > ? AND date <= ? ORDER BY date", [after, through])
+    // One indexed backwards seek per commodity, rather than aggregating the historical table.
+    const latest = yield* query(COMMODITIES.map(() => `SELECT date, region_code, price FROM (SELECT date, region_code, price FROM prices_daily
+      WHERE commodity_id = ? AND source_id = 'pihps' AND level = 'eceran' AND date <= ?
+      AND price IS NOT NULL ORDER BY date DESC LIMIT 1)`).join(" UNION ALL "), COMMODITIES.flatMap((commodity) => [commodity.id, through])).pipe(
+      Effect.flatMap(Schema.decodeUnknown(Schema.Array(Schema.Struct({ date: CivilDateSchema, region_code: RegionCodeSchema, price: Price })))), Effect.mapError(readError),
+    )
+    // Separate bounded reads retain the last success even after many consecutive failures.
+    // Sort instants, not mixed-precision strings; malformed times surface first and fail decoding.
+    const attempts = yield* query("SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1", [])
+    const successes = yield* query("SELECT started_at, status FROM job_runs WHERE source_id = 'pihps' AND status = 'complete' ORDER BY COALESCE(julianday(started_at), 1e99) DESC, id DESC LIMIT 1", [])
+    return yield* Schema.decodeUnknown(HealthEvidenceSchema)({ coverage, latestPricedDate: latest.map((row) => row.date).sort().at(-1) ?? null, attempts, successes }).pipe(Effect.mapError(readError))
+  })
+  return Layer.merge(Layer.succeed(PriceReadStore, { snapshot, trendPage }), Layer.succeed(PihpsHealthReadStore, { evidence }))
 }

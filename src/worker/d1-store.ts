@@ -1,6 +1,7 @@
 import { Effect, Layer, Schema } from "effect"
 import { COMMODITY_ROWS, REGION_ROWS } from "../data/pihps-catalog.ts"
-import type { FreshPayload } from "../data/fresh-payload.ts"
+import { FreshPayloadSchema, type FreshPayload } from "../data/fresh-payload.ts"
+import { CivilDateSchema, CommodityIdSchema, RegionCodeSchema } from "../data/price-schema.ts"
 import type { PihpsPriceCell } from "../data/pihps-grid.ts"
 import { PriceStore, StoreError, type JobRecord } from "./ingest.ts"
 import { CoverageDaySchema, type CoverageDay } from "./ingest-plan.ts"
@@ -176,13 +177,17 @@ export const d1PriceStoreLayer = (db: D1Database) => {
           try: () =>
             db
               .prepare(
-                "SELECT date, commodity_id, region_code, price FROM prices_daily WHERE source_id = 'pihps' AND price IS NOT NULL AND date > ? ORDER BY date, commodity_id, region_code",
+                "SELECT date, commodity_id, region_code, price FROM prices_daily WHERE source_id = 'pihps' AND level = 'eceran' AND price IS NOT NULL AND date > ? ORDER BY date, commodity_id, region_code",
               )
               .bind(after)
-              .all<{ date: string; commodity_id: string; region_code: string; price: number }>(),
+              .all<unknown>(),
           catch: storeError,
         }),
       ),
+      Effect.flatMap(Schema.decodeUnknown(Schema.Struct({ results: Schema.Array(Schema.Struct({
+        date: CivilDateSchema, commodity_id: CommodityIdSchema, region_code: RegionCodeSchema,
+        price: Schema.Number.pipe(Schema.finite(), Schema.positive()),
+      })) }))),
       Effect.map((out): FreshPayload => {
         const dates: string[] = []
         const prices: Record<string, number> = {}
@@ -193,6 +198,8 @@ export const d1PriceStoreLayer = (db: D1Database) => {
         const latestDate = dates.length === 0 ? null : (dates[dates.length - 1] ?? null)
         return { latestDate, dates, prices }
       }),
+      Effect.flatMap(Schema.decodeUnknown(FreshPayloadSchema)),
+      Effect.mapError(storeError),
     )
 
   return Layer.succeed(PriceStore, {

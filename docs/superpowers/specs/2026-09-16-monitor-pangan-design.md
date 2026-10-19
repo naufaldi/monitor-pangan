@@ -1,5 +1,10 @@
 # Monitor Pangan — Design Spec (2026-09-16)
 
+> Historical design, retained as written. It records the original proposal and
+> does not describe current production architecture, storage or schedules.
+> Use the [current PIHPS operations runbook](../../operations/pihps.md) and
+> [data provenance](../../../DATA_SOURCES.md) for verified behavior and commands.
+
 ## 1. Context
 - Owner GitHub `naufaldi` (374 public repos): pattern of fast single-push experiments, TypeScript-heavy. Winners are Indonesia-focused real-user tools: `viralkan-app` (37 stars), `teacher-exam` (21 stars), `ai-think` (13 stars).
 - Past abandonment cause (owner-confirmed): mostly experiments/learning, no filter between playground vs keeper.

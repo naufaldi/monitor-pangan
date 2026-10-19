@@ -1,5 +1,6 @@
-import { Context, Data, Effect, Layer } from "effect"
-import { emptyFreshPayload } from "../data/fresh-payload.ts"
+import { Context, Data, Effect, Layer, Schema } from "effect"
+import { FreshPayloadSchema } from "../data/fresh-payload.ts"
+import { CivilDateSchema } from "../data/price-schema.ts"
 import { STATIC_LIVE_THROUGH } from "../data/fresh-prices.ts"
 import { d1PriceStoreLayer, type D1Database } from "./d1-store.ts"
 import { injectFreshScript } from "./html.ts"
@@ -8,6 +9,7 @@ import { handleLaporan, laporanEdgeFromEnv, laporanHttpError } from "./laporan-h
 import { laporanStoreLayer, type PhotoBucket } from "./laporan-store.ts"
 import { handlePriceRequest } from "./price-http.ts"
 import { priceReadStoreLayer } from "./price-store.ts"
+import { pihpsHealth } from "./pihps-health.ts"
 
 export interface AssetFetcher {
   fetch(request: Request): Promise<Response>
@@ -56,15 +58,15 @@ export const workerLayer = (env: WorkerEnv) =>
     laporanEdgeFromEnv(env),
   )
 
-const isoDate = /^\d{4}-\d{2}-\d{2}$/
-
 const freshJson = Effect.fn("Worker.freshJson")(function* (after: string) {
   const store = yield* PriceStore
-  const payload = yield* store.freshSince(after).pipe(
-    Effect.tapError((error) => Effect.logError(error.message)),
-    Effect.catchAll(() => Effect.succeed(emptyFreshPayload)),
+  return yield* store.freshSince(after).pipe(
+    Effect.flatMap(Schema.decodeUnknown(FreshPayloadSchema)),
+    Effect.map((payload) => Response.json(payload, { headers: { "cache-control": "no-store" } })),
+    Effect.catchAll(() => Effect.logError({ event: "pihps_freshness_unavailable", surface: "api" }).pipe(
+      Effect.as(Response.json({ error: "freshness_unavailable" }, { status: 503, headers: { "cache-control": "no-store" } })),
+    )),
   )
-  return Response.json(payload, { headers: { "cache-control": "no-store" } })
 })
 
 /** Serve the freshness API, and stamp HTML shells with the same payload. */
@@ -73,6 +75,10 @@ const stampAdminRobots = (html: string): string =>
 
 export const handleRequest = Effect.fn("Worker.handleRequest")(function* (request: Request) {
   const url = new URL(request.url)
+  if (url.pathname === "/api/pihps/health") {
+    if (request.method !== "GET") return Response.json({ error: "method_not_allowed" }, { status: 405, headers: { allow: "GET", "cache-control": "no-store" } })
+    return yield* pihpsHealth()
+  }
   const laporan = yield* handleLaporan(request).pipe(
     Effect.catchAll((error) => {
       const response = laporanHttpError(error)
@@ -85,7 +91,7 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
   if (prices != null) return prices
   if (url.pathname === "/api/pihps/fresh") {
     const after = url.searchParams.get("after") ?? STATIC_LIVE_THROUGH
-    if (!isoDate.test(after)) {
+    if (!Schema.is(CivilDateSchema)(after)) {
       return Response.json({ error: "after must be YYYY-MM-DD" }, { status: 400 })
     }
     return yield* freshJson(after)
@@ -101,8 +107,8 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
   })
   const store = yield* PriceStore
   const payload = yield* store.freshSince(STATIC_LIVE_THROUGH).pipe(
-    Effect.tapError((error) => Effect.logError(error.message)),
-    Effect.catchAll(() => Effect.succeed(emptyFreshPayload)),
+    Effect.flatMap(Schema.decodeUnknown(FreshPayloadSchema)),
+    Effect.catchAll(() => Effect.logError({ event: "pihps_freshness_unavailable", surface: "html" }).pipe(Effect.as(null))),
   )
   const headers = new Headers(asset.headers)
   headers.set("content-type", "text/html; charset=utf-8")
@@ -111,7 +117,7 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
   const admin = url.pathname === "/admin" || url.pathname === "/admin/"
   if (admin) headers.set("x-robots-tag", "noindex, nofollow")
   const stamped = admin ? stampAdminRobots(html) : html
-  return new Response(injectFreshScript(stamped, payload), { status: asset.status, headers })
+  return new Response(payload == null ? stamped : injectFreshScript(stamped, payload), { status: asset.status, headers })
 })
 
 /** One survey day at each weekday trigger, allowing delayed same-day publication. */

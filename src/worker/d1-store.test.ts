@@ -77,3 +77,21 @@ it.effect("cold migrations leave room for one day's reads/writes within the D1 q
   assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM commodities").get()?.count, 10)
   assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM regions").get()?.count, 38)
 }))
+
+it.effect("freshness includes only official retail rows and rejects malformed observations", () => Effect.gen(function* () {
+  const db = yield* sqliteFixture
+  yield* db.price("2026-10-19", "31", 15000)
+  yield* db.price("2026-10-20", "31", 90000, "beras", "panelharga")
+  yield* db.price("2026-10-20", "31", 90000, "beras", "pihps", "grosir")
+  yield* Effect.gen(function* () {
+    const store = yield* PriceStore
+    assert.deepStrictEqual(yield* store.freshSince("2026-10-18"), { latestDate: "2026-10-19", dates: ["2026-10-19"], prices: { "2026-10-19:beras:31": 15000 } })
+    for (const price of [0, -1, "corrupt"]) {
+      yield* db.price("2026-10-19", "31", price)
+      assert.strictEqual((yield* Effect.flip(store.freshSince("2026-10-18")))._tag, "StoreError")
+    }
+    yield* db.price("2026-10-19", "31", 15000)
+    yield* db.price("2026-10-40", "31", 15000)
+    assert.strictEqual((yield* Effect.flip(store.freshSince("2026-10-18")))._tag, "StoreError")
+  }).pipe(Effect.provide(d1PriceStoreLayer(db.db)))
+}))

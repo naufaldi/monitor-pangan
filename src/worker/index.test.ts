@@ -49,6 +49,22 @@ it.effect("preserves freshness JSON, HTML injection, admin metadata, citizen API
   assert.strictEqual(yield* text(asset), "body{}")
 }))
 
+it.effect("exposes freshness read failure without replacing it with a confirmed empty payload", () => Effect.gen(function* () {
+  const db = yield* sqliteFixture
+  yield* Effect.sync(() => db.sqlite.exec("DROP TABLE prices_daily"))
+  const env = environment(db.db)
+  const fetch = (path: string) => Effect.promise(() => worker.fetch(new Request(`https://example.test${path}`), env))
+  const response = yield* fetch("/api/pihps/fresh")
+  assert.strictEqual(response.status, 503)
+  assert.strictEqual(response.headers.get("cache-control"), "no-store")
+  assert.deepStrictEqual(yield* json(response), { error: "freshness_unavailable" })
+  const html = yield* fetch("/")
+  assert.strictEqual(html.status, 200)
+  assert.ok((yield* text(html)).includes("<body>app</body>"))
+  assert.ok(!(yield* text(yield* fetch("/"))).includes('id="mp-pihps-fresh"'))
+  assert.strictEqual((yield* fetch("/api/pihps/fresh?after=2026-02-30")).status, 400)
+}))
+
 it.effect("scheduled execution stays failed after recording an upstream failure", () => Effect.gen(function* () {
   yield* TestClock.setTime(1792401300000)
   const failure = yield* Effect.flip(handleScheduled()).pipe(Effect.provide(Layer.mergeAll(

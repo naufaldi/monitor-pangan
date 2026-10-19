@@ -9,6 +9,12 @@ Source sites:
 - Open Data Pangan — https://data.badanpangan.go.id/
 - PIHPS Bank Indonesia FAQ — https://www.bi.go.id/hargapangan/Informasi/FAQ
 
+The current custom Worker serves official PIHPS observations from D1 and runs
+daily ingestion. [The operations runbook](docs/operations/pihps.md) owns health,
+schedule, audit, clean-checkout recovery and target-specific repair commands.
+The 19 October 2026 production audit and local restoration below are separate
+dated results; local success does not establish production backfill/deployment.
+
 ## What the scrapers do (2026-09-16)
 
 `pnpm run ingest` runs two public, keyless scrapers — the same calls the public
@@ -18,7 +24,7 @@ sites make — rate-limited one-shot, cached to `data/raw/`:
 - `GET /hargapangan/WebSite/TabelHarga/GetGridDataDaerah` with
   `price_type_id=1` (pasar tradisional = eceran), `tipe_laporan=1` (harian),
   per province. No key, no login.
-- 2026-09-16: 310/380 rows live (national + 31 provinces x 10 grup).
+- 2026-09-16: 310/380 provincial observations live (31 provinces x 10 groups).
   Source-empty that day: Kepri, Kalbar, Kaltara (`{"data":[]}` — intermittent,
   they usually serve data) plus the 4 post-2022 Papua provinces (93–96:
   Papua Selatan/Tengah/Pegunungan/Barat Daya) PIHPS never surveys — no BI
@@ -60,7 +66,11 @@ Daily per-province price endpoints (`front/harga-pangan-table`,
 `401 Unauthorized` — the embedded `x-api-key` in the public bundle is rotated
 server-side. The scraper records the 401 and continues; no credential bypass.
 
-## Going live (manual parallel track)
+## Optional Panel Harga integration (manual parallel track)
+
+PIHPS is already live. These steps concern the separate Panel Harga source,
+which remains gated by registration/access; they are not prerequisites for
+serving official PIHPS data or evidence that the daily Worker is merely proposed.
 
 1. Register at https://webapi.badanpangan.go.id/register (needs
    Nama/Email/No.Telp/Lembaga/Dokumen), wait for Pusdatin approval, copy the
@@ -68,9 +78,8 @@ server-side. The scraper records the 401 and continues; no credential bypass.
 2. Or download the monthly "Rata-rata Harga Pangan Bulanan Tingkat Konsumen
    Provinsi" CSV from Open Data (survey form + SAPA gated) into
    `data/raw/manual-*.csv`, then `pnpm run normalize`.
-3. When either lands, `data/snapshots/latest.json` carries real prices and the
-   header badge flips from `Data contoh` to `Data <date> · Panel Harga eceran`
-   with zero UI changes.
+3. Validate and label any imported Panel Harga observations with their own
+   provenance. Never relabel samples or PIHPS observations as Panel Harga data.
 
 ## Semantics (PIHPS FAQ)
 
@@ -86,15 +95,16 @@ Citizen reports live in `laporan_warga` and the R2 bucket
 Grafik, or Daya Beli.
 
 Secrets stay out of the repo. Set them with Wrangler, each value at least 32
-random bytes where noted:
+random bytes where noted. These commands update remote Worker secrets and
+require a separately authorized production configuration change; none ran here:
 
 ```sh
-wrangler secret put ADMIN_SECRET
-wrangler secret put TURNSTILE_SECRET
-wrangler secret put TURNSTILE_SITE_KEY
-wrangler secret put R2_ACCOUNT_ID
-wrangler secret put R2_ACCESS_KEY_ID
-wrangler secret put R2_SECRET_ACCESS_KEY
+rtk pnpm exec wrangler secret put ADMIN_SECRET
+rtk pnpm exec wrangler secret put TURNSTILE_SECRET
+rtk pnpm exec wrangler secret put TURNSTILE_SITE_KEY
+rtk pnpm exec wrangler secret put R2_ACCOUNT_ID
+rtk pnpm exec wrangler secret put R2_ACCESS_KEY_ID
+rtk pnpm exec wrangler secret put R2_SECRET_ACCESS_KEY
 ```
 
 `ADMIN_SECRET` must be at least 32 bytes. `R2_BUCKET_NAME` is the non-secret
@@ -105,10 +115,11 @@ Photos land at `pending/<id>.jpg` and move to `decided/<id>.jpg` when a report
 is approved or rejected. One lifecycle rule, in `r2-lifecycle.json`, deletes
 objects under `decided/` 30 days after upload (2,592,000 seconds). Pending
 objects are not auto-deleted. There is no retention cron. Apply the rule
-yourself when the bucket exists; this change does not run it:
+yourself when the remote bucket exists; this remote R2 mutation requires
+separate authorization and was not run by this change:
 
 ```sh
-wrangler r2 bucket lifecycle set monitor-pangan-laporan --file r2-lifecycle.json
+rtk pnpm exec wrangler r2 bucket lifecycle set monitor-pangan-laporan --file r2-lifecycle.json
 ```
 
 The browser PUTs the JPEG to R2, so the bucket also needs a CORS rule that
@@ -116,7 +127,7 @@ allows `PUT` with `content-type` from `https://monitor.naufaldi.com`.
 `r2-cors.json` is that rule. Apply it yourself; this change does not run it:
 
 ```sh
-wrangler r2 bucket cors set monitor-pangan-laporan --file r2-cors.json
+rtk pnpm exec wrangler r2 bucket cors set monitor-pangan-laporan --file r2-cors.json
 ```
 
 A Free WAF rate limit on `POST /api/laporan` (per IP, 10 seconds, Block) is
@@ -140,26 +151,35 @@ columns are ignored. Current national values still use the mean of observed
 provinces rounded to Rp 50. Every recovered observation retains its original
 `git:<commit>:public/series/<year>.json` provenance in `raw_ref`.
 
-Recover into ignored local storage, then generate SQL and a JSON dry-run report:
+For a clean checkout, fetch and verify the pinned Git object before recovery.
+The runbook includes complete local/remote baseline-export commands. Recover
+into ignored local storage, then use a complete durable local baseline for SQL
+and a JSON dry-run report:
 
 ```sh
-rtk proxy node scripts/recover-pihps-history.mjs --out data/archive/pihps-derived
-rtk proxy node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-json .superpowers/sdd/2026-10-19-pr12-historical-prices/local-prices-before.json --out data/repairs/historical.sql
+rtk git fetch origin ef85f27904b044bd343a56dcdd77a46d28eb1205
+rtk git rev-parse FETCH_HEAD
+rtk pnpm exec node scripts/recover-pihps-history.mjs --out data/archive/pihps-derived
+rtk proxy mkdir -p data/repairs
+rtk proxy pnpm exec wrangler d1 execute monitor-pangan --local --command 'SELECT * FROM prices_daily ORDER BY date, commodity_id, region_code, level' --json > data/repairs/prices-before.local.json
+rtk pnpm exec node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-json data/repairs/prices-before.local.json --out data/repairs/historical.sql
 ```
 
-The supplied baseline is one complete `SELECT * FROM prices_daily` Wrangler
+The baseline must be one complete `SELECT * FROM prices_daily` Wrangler
 `--json` result, not an empty stand-in. The actual audit baseline hash is
 `dfe4dc08f27bf4cff81d98d444acf4a8ac9a042fba03b4942443e98a6c26cdee`.
 For another environment, export its complete table with an explicit
-`wrangler d1 execute monitor-pangan --local` or `--remote` target and
+`rtk pnpm exec wrangler d1 execute monitor-pangan --local` or `--remote` target and
 `--command 'SELECT * FROM prices_daily ORDER BY date, commodity_id, region_code, level' --json`.
 Use the exported JSON as `--existing-json`. A static export describes only the
 snapshot time; regenerate immediately before any separately authorized apply.
 `--target remote` labels a dry run for a remote baseline and never applies SQL.
 
-Inspect `data/repairs/historical.sql.report.json` before applying locally:
-791,426 planned inserts, zero updates, 8,040 existing rows preserved, zero
-coverage changes and 23 unknown omitted weekdays. Derived observations have no
+Inspect `data/repairs/historical.sql.report.json` before applying locally. The
+initial 19 October 2026 dry run had 791,426 planned inserts, zero updates, 8,040
+existing rows preserved, zero coverage changes and 23 unknown omitted weekdays.
+A new baseline after import instead reports those historical rows unchanged.
+Derived observations have no
 original request statuses, so **none of the 2,449 dates creates `source_days`
 completion markers**. Current ingestion owns existing source-day/job metadata.
 There is no weekly full-history cron.
@@ -187,16 +207,21 @@ Discover the intended local SQLite file, then reproduce the complete checksum
 and both 38-cell fixture comparisons with the read-only QA helper:
 
 ```sh
-rtk proxy rg --files --hidden --no-ignore .wrangler/state/v3/d1 -g '*.sqlite'
-rtk proxy node docs/qa/pr12/verify-history.mjs /absolute/path/to/local-d1.sqlite .superpowers/sdd/2026-10-19-pr12-historical-prices/local-prices-before.json
+rtk rg --files --hidden --no-ignore .wrangler/state/v3/d1 -g '*.sqlite'
+rtk pnpm exec node docs/qa/pr12/verify-history.mjs /absolute/path/to/local-d1.sqlite data/repairs/prices-before.local.json
 ```
+
+The checksum helper needs the retained pre-import baseline. The dated evidence
+used a session-specific `.superpowers` export; future operations use the durable
+ignored `data/repairs` path above. A post-import export cannot prove first-import
+preservation.
 
 A dry run against an explicit SQLite file reads prices and source-day metadata
 without writing the file. Locate the intended `.sqlite` file under the local
 Wrangler state directory and supply its full path:
 
 ```sh
-rtk proxy node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-db /absolute/path/to/local-d1.sqlite --out data/repairs/historical-repeat.sql
+rtk pnpm exec node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-db /absolute/path/to/local-d1.sqlite --out data/repairs/historical-repeat.sql
 ```
 
 After the local import this reports zero inserts/updates and 791,426 unchanged
