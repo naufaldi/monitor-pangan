@@ -1,7 +1,9 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from "@tanstack/react-router"
 import { Badge } from "@monitor-pangan/ui"
 import { Navbar } from "../components/Navbar.tsx"
-import { useDataBadge, VintageProvider } from "../data/vintage.tsx"
+import { useDataBadge, useVintage, VintageProvider } from "../data/vintage.tsx"
+import { latestLiveDate, provider } from "../data/provider.ts"
+import { homeSelectedDate, parseHomeSearch } from "../lib/commodity-search.ts"
 import { seoLinks, seoMeta, seoScripts, THEME_COLOR } from "../seo.ts"
 import appCss from "../styles.css?url"
 
@@ -30,8 +32,12 @@ function RootComponent() {
 }
 
 function Shell() {
-  const badge = useDataBadge()
+  useVintage()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const search = useRouterState({ select: (state) => state.location.search })
+  const dates = provider.dates()
+  const homeDate = pathname === "/" ? homeSelectedDate(parseHomeSearch(search, dates), dates, latestLiveDate()) : undefined
+  const badge = useDataBadge(homeDate)
   const pihpsBadge = pathname !== "/laporan" && pathname !== "/lapor" && pathname !== "/admin"
   return (
     <div className="min-h-svh bg-canvas text-ink">

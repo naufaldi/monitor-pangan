@@ -62,7 +62,6 @@ export function ProvincePanel({
         <StatusMessage tone="empty" title="Tidak ada data" bare>
           Provinsi ini tidak disurvei PIHPS pada tanggal ini, atau sumbernya kosong.
         </StatusMessage>
-        {range != null && <p className="tabular-nums mt-2 text-sm text-slate">{range}</p>}
       </aside>
     )
   }
