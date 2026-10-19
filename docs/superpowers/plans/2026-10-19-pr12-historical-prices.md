@@ -318,12 +318,12 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
 
 **Definition of Done:** Required checks pass; screenshots and requests show the intended behavior; no known regression remains; any unverified production data prerequisite is named explicitly in the PR. Keep the original draft open until its replacement merges.
 
-- [ ] Confirm execution preparation used the locked dependencies. Avoid package upgrades.
-- [ ] Run `rtk pnpm typecheck`, the explicit test targets from Tasks 2 through 7, and `rtk pnpm build`. Inspect the generated-file diff and revert unrelated generator churn.
-- [ ] Start the built app through the real local Worker with seeded D1: `rtk pnpm exec wrangler dev --port 8787`. Browser verification must use this Worker URL, not only the Vite-only development server.
-- [ ] Issue HTTP checks for valid snapshot/trend requests, invalid params (400), unsupported methods (405), unavailable historical coverage (503), confirmed empty data (200), and a forced DB error (500 in a local fixture). Walk trend pages with limit 2 to prove no provincial date repeats.
-- [ ] Invoke the local scheduled handler with controlled clock/source fixtures for Friday, Monday, delayed publication, and a failed run. Prove that target selection, final day state, `job_runs`, health JSON, and invocation outcome agree. Save the results in `docs/qa/pr12/cron-verification.md`; include local trigger timestamps and separately label any verified production events.
-- [ ] Use T3 preview browser tools for the following desktop and 390px mobile checks. Save screenshots after execution at these paths:
+- [x] Confirm execution preparation used the locked dependencies. Avoid package upgrades.
+- [x] Run `rtk pnpm typecheck`, the explicit test targets from Tasks 2 through 7, and `rtk pnpm build`. Inspect the generated-file diff and revert unrelated generator churn.
+- [x] Start the built app through the real local Worker with seeded D1: `rtk pnpm exec wrangler dev --port 8787`. Browser verification must use this Worker URL, not only the Vite-only development server.
+- [x] Issue HTTP checks for valid snapshot/trend requests, invalid params (400), unsupported methods (405), unavailable historical coverage (503), confirmed empty data (200), and a forced DB error (500 in a local fixture). Walk trend pages with limit 2 to prove no provincial date repeats.
+- [x] Invoke the local scheduled handler with controlled clock/source fixtures for Friday, Monday, delayed publication, and a failed run. Prove that target selection, final day state, `job_runs`, health JSON, and invocation outcome agree. Save the results in `docs/qa/pr12/cron-verification.md`; include local trigger timestamps and separately label any verified production events.
+- [x] Use T3 preview browser tools for the following desktop and 390px mobile checks. Save screenshots after execution at these paths:
   - `docs/qa/pr12/01-historical-2025-10-30-desktop.png`: real provincial rows and mean matching the archive, historical badge/date/footer aligned.
   - `docs/qa/pr12/02-historical-2018-10-09-mobile.png`: older data readable and controls usable without horizontal overflow.
   - `docs/qa/pr12/03-latest-freshness.png`: newest live date and fresh overlay still work; a pinned historical selection remains pinned.
@@ -331,10 +331,13 @@ An empty snapshot is a successful, verified result with `pricedCount = 0` and `n
   - `docs/qa/pr12/05-confirmed-empty.png`: verified empty fixture shows `Tidak ada data`, without a zero national price or fabricated percentage.
   - `docs/qa/pr12/06-trend-sparse-province.png`: day chart has no duplicate points; week/month views keep their current behavior.
   - `docs/qa/pr12/07-citizen-route-smoke.png`: existing public reports and form routes still render through the same Worker.
-- [ ] Verify A-to-B request races with throttling, direct historical URL reload, and browser back/forward. Verify an absent header date follows latest only on routes that use latest.
-- [ ] Compare evidence with the requested behavior. If screenshots contradict the intended historical/empty/error behavior, pause and ask whether to correct the mismatch or show the current result; do not claim completion from command success alone.
+- [x] Verify A-to-B request races with throttling, direct historical URL reload, and browser back/forward. Verify an absent header date follows latest only on routes that use latest.
+- [x] Compare evidence with the requested behavior. If screenshots contradict the intended historical/empty/error behavior, pause and ask whether to correct the mismatch or show the current result; do not claim completion from command success alone.
 - [ ] Review the final diff for unrelated changes and current AGENTS compliance. Open a replacement draft PR against main, immediately register it with `link_pull_request`, and link #12 as superseded by the replacement in the PR description. Do not close #12 before the replacement lands.
 - [ ] Prepare a separate production rollout checklist: audit existing D1 coverage and deployed triggers, generate scoped repair SQL only for proven gaps, verify counts and rerun safety locally, then apply the reviewed repair and deployment when authorized. After deployment, read back actual trigger settings and the next available scheduled event/health result. Do not replace an unavailable future cron event with a claim that it passed; record it as pending evidence. Never claim remote readiness based solely on local seeds.
+
+
+**Execution evidence:** Local runtime verification is recorded in [runtime-verification.md](../../qa/pr12/runtime-verification.md), [cron-verification.md](../../qa/pr12/cron-verification.md), actual HTTP JSON and seven primary PNGs plus supporting rows/footer/form captures. Sequential typecheck, 25 explicit files / 190 tests, and build passed after runtime fix `f47de1b` (D1 compound-SELECT limit). Fixtures and browser instrumentation restored; full/recent checksums and metadata preserved. [Production rollout checklist](../../qa/pr12/production-rollout.md) prepared; actual account quota/tier, fresh remote planning, authorized apply/deployment, trigger readback and future event remain pending. Independent final review and draft PR publication remain pending.
 
 ## Final plan self-review
 

@@ -261,3 +261,21 @@ commodity/source in the range. Local `EXPLAIN QUERY PLAN` now selects
 `prices_daily_trend (commodity_id, source_id, level, date)` with equality on the
 first three columns and a date range. Both `db/schema.sql` and the Worker cold
 migration create this measured index.
+
+
+## Validated local Worker verification
+
+The [19 October runtime evidence](docs/qa/pr12/runtime-verification.md) exercises
+built assets through real local Wrangler/D1 on port 8787, including both archive
+fixtures, sparse pagination, explicit error/empty states, retry and request races,
+and desktop/390px screenshots. A D1 compound-SELECT incompatibility found during
+this check was fixed with sequential indexed health reads. The
+[controlled scheduler record](docs/qa/pr12/cron-verification.md) verifies Friday,
+Monday, delayed publication and failed-run outcomes without live source HTTP.
+
+Follow the [PIHPS runbook](docs/operations/pihps.md) for repeatable setup and
+read-only auditing. The separate [production rollout checklist](docs/qa/pr12/production-rollout.md)
+requires fresh target baselines, actual account quota/tier verification, reviewed
+scoped repair SQL, and authorized deployment plus real trigger/event readback.
+Production history and corrected triggers remain unapplied; local seeds do not
+establish remote readiness.

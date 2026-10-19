@@ -79,8 +79,9 @@ No successful job evidence, or a latest error attempt, yields `degraded` even
 when prices remain readable. A database/decode failure yields `unavailable` with
 nullable observations and a sanitized log. Notes, SQL and exceptions are private.
 
-The latest-price query uses one backwards index seek per canonical commodity;
-it does not aggregate the entire historical price table. Coverage is limited
+The latest-price query uses one separate sequential backwards index seek per
+canonical commodity. This avoids D1's measured five-term compound-SELECT limit
+while retaining indexed reads rather than aggregating the historical price table. Coverage is limited
 to the scheduled period. Job reads use `job_runs_health_attempt` and
 `job_runs_health_success`, whose source/order and source/status/order expression
 keys match the exact instant ordering. Each reads at most one attempt or
@@ -283,8 +284,13 @@ import and corrected trigger deployment remain unapplied. Separately,
 [local import evidence](../qa/pr12/history-import.json) records 799,466 cells /
 2,473 dates after restoration, unchanged recent rows/markers/jobs and a zero-write
 SQL replay. [Health fixture evidence](../qa/pr12/pipeline-health.json) records
-isolated SQLite/D1-adapter HTTP responses; it explicitly tracks pending Wrangler
-and production verification. It must not be presented as a deployed cron result.
+isolated SQLite/D1-adapter HTTP responses plus a separately labeled actual local
+Wrangler health capture. [Runtime QA](../qa/pr12/runtime-verification.md) records
+actual Wrangler APIs/assets and desktop/mobile checks. [Controlled scheduler QA](../qa/pr12/cron-verification.md)
+records handler/state/job/health agreement without source HTTP. Neither is a
+deployed cron result. The [production rollout checklist](../qa/pr12/production-rollout.md)
+requires actual account-tier/quota verification before a scoped historical repair,
+then authorized apply/deployment and actual trigger/event readback.
 
 Commands exercised for this health change:
 
