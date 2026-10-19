@@ -108,7 +108,7 @@
   },
   "tests": {
     "explicitFiles": 6,
-    "passed": 49,
+    "passed": 50,
     "fullSizeSqliteReplayEffectiveWrites": 0,
     "existingOfficialConflictPreserved": true,
     "newerOfficialRowPreserved": true,
@@ -123,5 +123,24 @@
     "findings": 0,
     "sourceCellsCompared": 930620,
     "allPricesAndNullsMatched": true
+  },
+  "followupReview": {
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "high",
+    "axes": [
+      "security/standards/KISS/DRY",
+      "spec/correctness/regressions"
+    ],
+    "originalHead": "fdf608600b5642015ac3c50aa601156966e71db0",
+    "findings": 1,
+    "fixed": 1,
+    "remaining": 0,
+    "finding": "Numeric option paths were misclassified as positional snapshot years.",
+    "resolution": "Use node:util parseArgs, separate options from positionals, and reuse the validated positional year.",
+    "regressionTestRedThenGreen": true,
+    "bothReviewersApproved": true,
+    "finalTestsPassed": 50,
+    "finalTestDurationSeconds": 36.39,
+    "concurrentTimeoutRunsCountAsPassingEvidence": false
   }
 }

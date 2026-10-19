@@ -68,3 +68,9 @@ replay preserved the full-row checksum, and a refreshed plan had zero inserts or
 updates. Two rebuilds preserved every archive file byte-for-byte. Independent
 review found no issues and compared every price/null with the pinned originals.
 See `docs/qa/issue-37/verification.md` and `.json`. No production changes.
+
+
+Follow-up requested Sol High security/KISS/DRY and regression review found one
+numeric-argument dispatch bug. Fixed with built-in option parsing and a red/green
+CLI regression test. Both reviewers approved the fix; final gates passed with
+50 targeted tests. See the issue-37 verification record for details.

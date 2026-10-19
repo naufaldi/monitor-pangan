@@ -37,8 +37,8 @@ rtk pnpm history:pihps:rebuild
 rtk git diff --check
 ```
 
-Typecheck and production build passed; 49 tests passed across six explicit test
-files. The focused independent review also ran the archive and price-import
+Typecheck and production build passed; the final post-review run passed 50
+tests across six explicit test files. The focused independent review also ran the archive and price-import
 files: 24 tests passed. Existing build warnings concern the route CLI's circular
 import and large output chunks. No generated source files changed.
 
@@ -99,3 +99,30 @@ coverage changes. The final results are recorded in
 [verification.json](verification.json). SQL, raw Wrangler results and databases
 remain in ignored/local staging; the committed evidence contains only counts,
 hashes and verification outcomes.
+
+
+## Requested Sol High review and remediation
+
+Two GPT-6.1-Sol subagents with high reasoning reviewed the original
+`96900c0..fdf6086` range independently: security/standards/KISS/DRY and
+requirements/correctness/regressions. Security and KISS/DRY found no substantive
+issues. The regression review found one P2 in importer argument dispatch: a
+numeric option value such as `--raw-dir 2018` was mistaken for a positional
+snapshot year and rejected as an ambiguous input.
+
+A new bounded CLI regression test reproduced that failure before the fix.
+The importer now uses Node's built-in `parseArgs` to separate options and their
+values from positionals, validates the optional snapshot year once, and reuses
+it in snapshot dispatch. The regression covers numeric raw/snapshot/baseline/
+output paths and a real positional year. Both Sol High reviewers approved the
+remediation, including independent rejection checks for ambiguous inputs,
+invalid/multiple positionals and a missing option value.
+
+Duplicate concurrent full-size review suites caused a five-second filesystem
+validation timeout and a sixty-second restore timeout during the first rerun;
+those runs are not passing evidence. The duplicate sessions were stopped. The
+two archive filesystem integration cases now have explicit fifteen-second
+bounds. A clean six-file rerun passed all 50 tests in 36.39 seconds, including
+the unchanged sixty-second full-restore bound. Typecheck and production build
+then passed again. No archive data, source evidence or import conflict policy
+changed during remediation.

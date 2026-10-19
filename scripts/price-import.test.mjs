@@ -2,7 +2,7 @@ import { assert, it } from '@effect/vitest'
 import { DateTime, Effect, TestClock } from 'effect'
 import { DatabaseSync } from 'node:sqlite'
 import { readFileSync } from 'node:fs'
-import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -238,3 +238,24 @@ it.effect('seed CLI creates an explicit local dry run without changing the suppl
   assert.strictEqual(report.coverageChanges, 0)
   yield* Effect.promise(() => rm(dir, { recursive: true, force: true }))
 }))
+
+it.effect('seed CLI distinguishes numeric option paths from the positional snapshot year', () => Effect.acquireUseRelease(
+  Effect.promise(() => mkdtemp(join(tmpdir(), 'pihps-numeric-path-'))),
+  (directory) => Effect.gen(function* () {
+    yield* Effect.promise(() => mkdir(join(directory, '2018')))
+    yield* Effect.promise(() => mkdir(join(directory, 'data/snapshots'), { recursive: true }))
+    yield* Effect.promise(() => writeFile(join(directory, '2019'), JSON.stringify([{ success: true, results: [] }])))
+    const snapshot = JSON.stringify({ rows: [row] })
+    yield* Effect.promise(() => writeFile(join(directory, '2020'), snapshot))
+    yield* Effect.promise(() => writeFile(join(directory, 'data/snapshots/2018.json'), snapshot))
+    const common = ['--from', row.date, '--to', row.date, '--target', 'local', '--dry-run', '--existing-json', '2019', '--out', '2026']
+    const cli = fileURLToPath(new URL('./seed-d1.mjs', import.meta.url))
+    for (const [input, inserts] of [[['--raw-dir', '2018'], 0], [['--snapshot', '2020'], 1], [['2018'], 1]]) {
+      yield* Effect.tryPromise({ try: () => promisify(execFile)(process.execPath, [cli, ...input, ...common], { cwd: directory }), catch: (cause) => cause })
+      const report = JSON.parse(yield* Effect.promise(() => readFile(join(directory, '2026.report.json'), 'utf8')))
+      assert.strictEqual(report.inserts, inserts)
+      assert.strictEqual(report.applied, false)
+    }
+  }),
+  (directory) => Effect.promise(() => rm(directory, { recursive: true, force: true })),
+), 15000)

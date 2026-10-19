@@ -3,19 +3,30 @@ import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { DatabaseSync } from 'node:sqlite'
 import { dirname } from 'node:path'
+import { parseArgs } from 'node:util'
 import { derivedObservations, rawObservations, snapshotObservations, planImport, validateRange, RecoveryManifestSchema, ProvenanceSchema, ExistingCoverageSchema } from './price-import.mjs'
 import { ArchiveError, io, readRaw, timestamp } from './pihps-scrape.mjs'
 import { tradingDaysFromThrough } from '../src/lib/civil-date.ts'
 import { readHistory } from './pihps-history-files.mjs'
 import { historyObservations } from './pihps-history.mjs'
 
-const args = process.argv.slice(2)
-const option = (key) => { const i = args.indexOf(key); return i < 0 ? undefined : args[i + 1] }
 const jsonFile = (path) => io(() => readFile(path, 'utf8')).pipe(Effect.flatMap(Schema.decodeUnknown(Schema.parseJson(Schema.Unknown))))
 Effect.runPromise(Effect.gen(function* () {
+  const { values, positionals } = yield* Effect.try({
+    try: () => parseArgs({ allowPositionals: true, options: {
+      ...Object.fromEntries(['from', 'to', 'target', 'out', 'existing-json', 'existing-db', 'coverage-json', 'input-dir', 'raw-dir', 'history-dir', 'snapshot'].map((key) => [key, { type: 'string' }])),
+      'dry-run': { type: 'boolean' },
+    } }),
+    catch: (cause) => new ArchiveError({ message: `invalid import arguments: ${String(cause)}` }),
+  })
+  const [yearArg] = positionals
+  if (positionals.length > 1 || (yearArg !== undefined && !/^\d{4}$/.test(yearArg))) {
+    return yield* Effect.fail(new ArchiveError({ message: 'expected at most one positional snapshot year (YYYY)' }))
+  }
+  const option = (key) => values[key.slice(2)]
   const from = option('--from'), to = option('--to'), target = option('--target'), output = option('--out')
   validateRange(from, to)
-  if (!['local', 'remote'].includes(target) || !args.includes('--dry-run') || !output) return yield* Effect.fail(new ArchiveError({ message: 'required: --target local|remote --dry-run --out <sql-path>; generator never applies SQL' }))
+  if (!['local', 'remote'].includes(target) || !values['dry-run'] || !output) return yield* Effect.fail(new ArchiveError({ message: 'required: --target local|remote --dry-run --out <sql-path>; generator never applies SQL' }))
   const baselineJson = option('--existing-json'), baselineDb = option('--existing-db')
   if (Boolean(baselineJson) === Boolean(baselineDb)) return yield* Effect.fail(new ArchiveError({ message: 'provide exactly one --existing-json <Wrangler SELECT export> or --existing-db <SQLite file>' }))
   let existing, existingCoverage = [], baselineSha256
@@ -36,7 +47,6 @@ Effect.runPromise(Effect.gen(function* () {
   }
   const observations = [], coverage = [], inputs = []
   const inputDir = option('--input-dir'), rawDir = option('--raw-dir'), historyDir = option('--history-dir')
-  const yearArg = args.find((s) => /^\d{4}$/.test(s))
   if ([inputDir, rawDir, historyDir, option('--snapshot'), yearArg].filter(Boolean).length > 1) {
     return yield* Effect.fail(new ArchiveError({ message: 'choose exactly one history, derived, raw or snapshot input' }))
   }
@@ -70,8 +80,7 @@ Effect.runPromise(Effect.gen(function* () {
       inputs.push({ path: `${rawDir}/${file}` })
     }
   } else {
-    const year = args.find((s) => /^\d{4}$/.test(s))
-    const path = option('--snapshot') ?? (year ? `data/snapshots/${year}.json` : 'data/snapshots/latest.json')
+    const path = option('--snapshot') ?? (yearArg ? `data/snapshots/${yearArg}.json` : 'data/snapshots/latest.json')
     observations.push(...snapshotObservations(yield* jsonFile(path), path)); inputs.push({ path })
     // Snapshot prices alone carry no independently verified scope completion.
   }

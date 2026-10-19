@@ -110,7 +110,7 @@ it.effect('hash, count and schema tampering fail validation and a rejected rebui
   manifest.years[1].bytes = Buffer.byteLength(text)
   yield* files.io(() => writeFile(path, history.serializeManifest(manifest)))
   assert.strictEqual((yield* Effect.either(files.readHistory(directory)))._tag, 'Left')
-})))
+})), 15000)
 
 it.effect('rebuilding the complete archive twice leaves every file byte-identical', () => withTemporary((root) => Effect.gen(function* () {
   const directory = join(root, 'archive')
@@ -121,4 +121,4 @@ it.effect('rebuilding the complete archive twice leaves every file byte-identica
   yield* files.rebuildHistory(directory)
   yield* files.rebuildHistory(directory)
   assert.deepStrictEqual(yield* digest(directory), before)
-})))
+})), 15000)
