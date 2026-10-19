@@ -14,7 +14,8 @@ exercise its D1 routes.
 | D1 `source_days` | Daily pipeline and verified original raw imports own checked survey states. Derived archives never create completion markers. |
 | D1 `job_runs` | Worker invocations record `complete` or `error`; legacy `failed` is an error. A successful zero-row invocation is possible. |
 | `data/raw/`, `data/snapshots/` | Ignored local CLI source responses and normalized outputs. Preserve request-level statuses and timestamps. |
-| `data/archive/pihps-derived/` | Ignored recovery of immutable repository observations; provenance is in `provenance.json`. These are not original raw responses. |
+| `data/history/pihps/` | Tracked, version-1 recovery archive: yearly provincial observations, nulls, manifest hashes/counts and immutable derived provenance. Repository review owns updates; D1 serves prices. |
+| `data/archive/pihps-derived/` | Optional ignored original derived files for forensic bootstrap. Ordinary validation/restoration does not need these or the old Git object. |
 | `data/repairs/` | Ignored durable baselines, proposed SQL and dry-run reports. Keep a separate baseline for each target. |
 | Citizen D1/R2 data | `laporan_warga` and the `PHOTOS` R2 binding remain separate. No price repair changes citizen reports, photos or credentials. |
 
@@ -108,24 +109,28 @@ rtk pnpm exec node --version
 rtk proxy mkdir -p data/repairs
 ```
 
-Recovery reads Git objects, not a moving branch tip. Fetch the exact pinned
-commit first, then verify its identity. The fetch and `FETCH_HEAD` verification
-were exercised read-only against origin on 19 October 2026. They do not merge
-PR #14 or change the checked-out branch.
+The current checkout includes the audited archive. Validate its versioned schema,
+positive finite integer prices, unique observation keys, hashes, per-year counts
+and audited date range before planning a restore:
 
 ```sh
-rtk git fetch origin ef85f27904b044bd343a56dcdd77a46d28eb1205
-rtk git rev-parse FETCH_HEAD
-rtk git cat-file -t ef85f27904b044bd343a56dcdd77a46d28eb1205
-rtk pnpm exec node scripts/recover-pihps-history.mjs --out data/archive/pihps-derived
+rtk pnpm history:pihps:validate
+rtk pnpm history:pihps:rebuild
+rtk git diff --exit-code -- data/history/pihps
 ```
 
-Expect that exact SHA and `commit`. Recovery verifies each yearly file against
-the committed [SHA-256 manifest](../qa/pr12/repair-manifest.json) and Schema
-before generating derived observations. The files are
-`public/series/2017.json` through `public/series/2026.json` in that commit.
-If the immutable object cannot be fetched, stop recovery and restore it from
-the recorded repository/archive; another branch tip is not an equivalent input.
+Rebuild has stable ordering and no changing timestamps. It validates a sibling
+stage before publication, rejects concurrent writers and restores the previous
+directory on installation failure. Validation failure leaves archive bytes
+untouched. The archive [README](../../data/history/pihps/README.md) documents
+schema, storage-size measurements, locks/crash recovery and the optional original
+hash-pinned bootstrap. A clean restore never fetches the old feature commit.
+
+The archive preserves derived observations, not original HTTP evidence. Its
+139,194 null cells and 23 omitted weekdays do not establish empty surveys. It
+contains no national series, SQL, database, raw responses, credentials or citizen
+data. D1 stays the serving store; do not import the archive into frontend code.
+Daily synchronization is issue #38 and is outside this initial historical import.
 
 **Local target only:** initialize an empty local database with the checked-in
 schema. This does not seed historical prices or prove remote access:
@@ -178,7 +183,7 @@ These are durable ignored paths, independent of this session's work ledger.
 ```sh
 rtk proxy pnpm exec wrangler d1 execute monitor-pangan --local --command 'SELECT * FROM prices_daily ORDER BY date, commodity_id, region_code, level' --json > data/repairs/prices-before.local.json
 rtk proxy pnpm exec wrangler d1 execute monitor-pangan --local --command 'SELECT * FROM source_days ORDER BY date, source_id' --json > data/repairs/coverage-before.local.json
-rtk pnpm exec node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-json data/repairs/prices-before.local.json --coverage-json data/repairs/coverage-before.local.json --out data/repairs/historical.local.sql
+rtk pnpm history:pihps:restore --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-json data/repairs/prices-before.local.json --coverage-json data/repairs/coverage-before.local.json --out data/repairs/historical.local.sql
 ```
 
 Inspect `data/repairs/historical.local.sql.report.json`: target, range, hashes,
@@ -206,7 +211,7 @@ An explicit SQLite baseline is another **local, read-only dry-run** path:
 
 ```sh
 rtk rg --files --hidden --no-ignore .wrangler/state/v3/d1 -g '*.sqlite'
-rtk pnpm exec node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-db /absolute/path/to/local-d1.sqlite --out data/repairs/historical-repeat.local.sql
+rtk pnpm history:pihps:restore --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-db /absolute/path/to/local-d1.sqlite --out data/repairs/historical-repeat.local.sql
 rtk pnpm exec node docs/qa/pr12/verify-history.mjs /absolute/path/to/local-d1.sqlite data/repairs/prices-before.local.json
 ```
 
@@ -234,7 +239,7 @@ and a full-outage wait unlike the scheduled Worker.
 ```sh
 rtk proxy pnpm exec wrangler d1 execute monitor-pangan --remote --command 'SELECT * FROM prices_daily ORDER BY date, commodity_id, region_code, level' --json > data/repairs/prices-before.remote.json
 rtk proxy pnpm exec wrangler d1 execute monitor-pangan --remote --command 'SELECT * FROM source_days ORDER BY date, source_id' --json > data/repairs/coverage-before.remote.json
-rtk pnpm exec node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target remote --dry-run --existing-json data/repairs/prices-before.remote.json --coverage-json data/repairs/coverage-before.remote.json --out data/repairs/historical.remote.sql
+rtk pnpm history:pihps:restore --from 2017-03-27 --to 2026-09-15 --target remote --dry-run --existing-json data/repairs/prices-before.remote.json --coverage-json data/repairs/coverage-before.remote.json --out data/repairs/historical.remote.sql
 ```
 
 `--target remote` labels the report; it does not connect or write. A reviewed
@@ -273,7 +278,7 @@ event are three separate claims. Future events remain pending until observed.
 | `waiting` / `pending` | Before 17:45 WIB, allow scheduled publication checks. After the deadline it is degraded; later successful zero-cell evidence can finalize the prior day as empty. |
 | Latest attempt `error` | Earlier readable prices remain usable but do not prove the latest invocation succeeded. Inspect job/log category and next successful invocation. |
 | Freshness 503 while HTML loads | The overlay is unavailable, not confirmed empty. HTML logs identify that fallback; preserve the browser's last usable overlay on failed refresh. |
-| Missing archive | Fetch and verify the pinned object, recover ignored files and check SHA-256. Do not replace it with PR #14's moving tip or infer holidays from omissions. |
+| Missing/corrupt archive | Restore the tracked `data/history/pihps/` files from the reviewed branch, then run `pnpm history:pihps:validate`. Do not bypass a failed hash/schema check, substitute a moving branch tip or infer holidays from omissions. |
 | Missing account access | Continue isolated local fixtures; record production audit/deployment/cron checks as pending until access returns. |
 
 ## Exercised evidence and remaining gates
@@ -304,3 +309,10 @@ The archive recovery, initial local SQL apply, duplicate local apply and checksu
 helper were exercised during historical repair; their dated results are linked
 above. Baseline paths in this runbook are reusable examples, not a claim that a
 clean checkout already contains this session's ignored files.
+
+## Repository archive verification (#37)
+
+[Archive verification](../qa/issue-37/verification.md) records clean-checkout
+restoration from tracked files, both 38-province fixtures, Rp 50 rounding,
+zero-write replay and unchanged newer observations/day/job metadata. The original
+#36 production audit and deployment gates above remain dated, separate evidence.

@@ -3,17 +3,30 @@ import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { DatabaseSync } from 'node:sqlite'
 import { dirname } from 'node:path'
+import { parseArgs } from 'node:util'
 import { derivedObservations, rawObservations, snapshotObservations, planImport, validateRange, RecoveryManifestSchema, ProvenanceSchema, ExistingCoverageSchema } from './price-import.mjs'
 import { ArchiveError, io, readRaw, timestamp } from './pihps-scrape.mjs'
 import { tradingDaysFromThrough } from '../src/lib/civil-date.ts'
+import { readHistory } from './pihps-history-files.mjs'
+import { historyObservations } from './pihps-history.mjs'
 
-const args = process.argv.slice(2)
-const option = (key) => { const i = args.indexOf(key); return i < 0 ? undefined : args[i + 1] }
 const jsonFile = (path) => io(() => readFile(path, 'utf8')).pipe(Effect.flatMap(Schema.decodeUnknown(Schema.parseJson(Schema.Unknown))))
 Effect.runPromise(Effect.gen(function* () {
+  const { values, positionals } = yield* Effect.try({
+    try: () => parseArgs({ allowPositionals: true, options: {
+      ...Object.fromEntries(['from', 'to', 'target', 'out', 'existing-json', 'existing-db', 'coverage-json', 'input-dir', 'raw-dir', 'history-dir', 'snapshot'].map((key) => [key, { type: 'string' }])),
+      'dry-run': { type: 'boolean' },
+    } }),
+    catch: (cause) => new ArchiveError({ message: `invalid import arguments: ${String(cause)}` }),
+  })
+  const [yearArg] = positionals
+  if (positionals.length > 1 || (yearArg !== undefined && !/^\d{4}$/.test(yearArg))) {
+    return yield* Effect.fail(new ArchiveError({ message: 'expected at most one positional snapshot year (YYYY)' }))
+  }
+  const option = (key) => values[key.slice(2)]
   const from = option('--from'), to = option('--to'), target = option('--target'), output = option('--out')
   validateRange(from, to)
-  if (!['local', 'remote'].includes(target) || !args.includes('--dry-run') || !output) return yield* Effect.fail(new ArchiveError({ message: 'required: --target local|remote --dry-run --out <sql-path>; generator never applies SQL' }))
+  if (!['local', 'remote'].includes(target) || !values['dry-run'] || !output) return yield* Effect.fail(new ArchiveError({ message: 'required: --target local|remote --dry-run --out <sql-path>; generator never applies SQL' }))
   const baselineJson = option('--existing-json'), baselineDb = option('--existing-db')
   if (Boolean(baselineJson) === Boolean(baselineDb)) return yield* Effect.fail(new ArchiveError({ message: 'provide exactly one --existing-json <Wrangler SELECT export> or --existing-db <SQLite file>' }))
   let existing, existingCoverage = [], baselineSha256
@@ -33,9 +46,18 @@ Effect.runPromise(Effect.gen(function* () {
     existing = out.prices; existingCoverage = out.days
   }
   const observations = [], coverage = [], inputs = []
-  const inputDir = option('--input-dir'), rawDir = option('--raw-dir')
-  if (inputDir && rawDir) return yield* Effect.fail(new ArchiveError({ message: 'choose --input-dir (derived) or --raw-dir' }))
-  if (inputDir) {
+  const inputDir = option('--input-dir'), rawDir = option('--raw-dir'), historyDir = option('--history-dir')
+  if ([inputDir, rawDir, historyDir, option('--snapshot'), yearArg].filter(Boolean).length > 1) {
+    return yield* Effect.fail(new ArchiveError({ message: 'choose exactly one history, derived, raw or snapshot input' }))
+  }
+  if (historyDir) {
+    const archive = yield* readHistory(historyDir)
+    if (from < archive.manifest.range.from || to > archive.manifest.range.to) return yield* Effect.fail(new ArchiveError({ message: 'repository history import must stay inside audited 2017-03-27..2026-09-15 range' }))
+    for (const observation of historyObservations(archive)) {
+      if (observation.date >= from && observation.date <= to) observations.push(observation)
+    }
+    inputs.push(...archive.manifest.years.map((year) => ({ path: `${historyDir}/${year.file}`, sha256: year.sha256, raw_ref: `git:${archive.manifest.source.commit}:${year.provenance.path}` })))
+  } else if (inputDir) {
     const provenance = yield* jsonFile(`${inputDir}/provenance.json`).pipe(Effect.flatMap(Schema.decodeUnknown(ProvenanceSchema)))
     const manifest = yield* jsonFile('docs/qa/pr12/repair-manifest.json').pipe(Effect.flatMap(Schema.decodeUnknown(RecoveryManifestSchema)))
     if (from < manifest.repairRange.from || to > manifest.repairRange.to) return yield* Effect.fail(new ArchiveError({ message: 'derived archive import must stay inside audited 2017-03-27..2026-09-15 range' }))
@@ -58,8 +80,7 @@ Effect.runPromise(Effect.gen(function* () {
       inputs.push({ path: `${rawDir}/${file}` })
     }
   } else {
-    const year = args.find((s) => /^\d{4}$/.test(s))
-    const path = option('--snapshot') ?? (year ? `data/snapshots/${year}.json` : 'data/snapshots/latest.json')
+    const path = option('--snapshot') ?? (yearArg ? `data/snapshots/${yearArg}.json` : 'data/snapshots/latest.json')
     observations.push(...snapshotObservations(yield* jsonFile(path), path)); inputs.push({ path })
     // Snapshot prices alone carry no independently verified scope completion.
   }
@@ -70,7 +91,7 @@ Effect.runPromise(Effect.gen(function* () {
   const report = { ...plan.report, generatedAt: yield* timestamp, target, applied: false, baseline: baselineJson ?? baselineDb, baselineSha256, baselineCoverageKnown: Boolean(baselineDb || option('--coverage-json')),
     baselineLimit: baselineJson ? 'Static SELECT export: regenerate immediately before applying; runtime guard rejects non-PIHPS key collisions. Coverage counts require --coverage-json.' : 'Read-only local SQLite snapshot; concurrent writes after planning are not included.',
     inputs, unknownWeekdays, observedDates: dates.size, unverifiedObservedDates: [...dates].filter((date) => !coverage.some((d) => d.iso === date && d.verified)).length,
-    coverageEvidence: inputDir ? 'Derived observations only: original HTTP scopes are unknown for every imported date.' : 'Only original raw scopes with successful responses and no preserved fallback cells establish completion.',
+    coverageEvidence: inputDir || historyDir ? 'Derived observations only: original HTTP scopes are unknown for every imported date.' : 'Only original raw scopes with successful responses and no preserved fallback cells establish completion.',
     newestVerifiedLiveDate: coverage.filter((d) => d.verified && d.liveCells > 0).map((d) => d.iso).sort().at(-1) ?? null,
     sqlSha256: createHash('sha256').update(plan.sql).digest('hex') }
   yield* io(() => mkdir(dirname(output), { recursive: true }))

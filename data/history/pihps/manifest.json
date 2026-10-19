@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "id": "pihps",
+    "level": "eceran",
+    "kind": "derived-year-series",
+    "commit": "ef85f27904b044bd343a56dcdd77a46d28eb1205",
+    "originalHttpResponses": false,
+    "sourceCompletionEvidence": "unknown"
+  },
+  "range": {
+    "from": "2017-03-27",
+    "to": "2026-09-15"
+  },
+  "counts": {
+    "dates": 2449,
+    "observations": 791426,
+    "nullCells": 139194
+  },
+  "unknownWeekdays": [
+    "2017-03-28",
+    "2017-06-26",
+    "2017-06-27",
+    "2017-06-28",
+    "2017-06-29",
+    "2017-09-01",
+    "2018-06-01",
+    "2018-06-14",
+    "2018-06-15",
+    "2018-06-27",
+    "2019-06-05",
+    "2020-01-01",
+    "2020-12-25",
+    "2021-01-01",
+    "2021-05-12",
+    "2021-05-13",
+    "2021-05-14",
+    "2022-02-28",
+    "2022-03-03",
+    "2022-05-02",
+    "2022-05-03",
+    "2022-05-26",
+    "2022-06-01"
+  ],
+  "years": [
+    {
+      "year": 2017,
+      "file": "2017.json",
+      "sha256": "8b4e90c8bafc2a2cf621d8feef2362536d5cd29716b39be938f192e953ee10db",
+      "bytes": 428097,
+      "from": "2017-03-27",
+      "to": "2017-12-29",
+      "dates": 194,
+      "observations": 46813,
+      "nullCells": 26907,
+      "provenance": {
+        "path": "public/series/2017.json",
+        "sha256": "3fbaef36a0bdfeb423b917c43fa9a202c18673218fef659263e5a6d69f915c41"
+      }
+    },
+    {
+      "year": 2018,
+      "file": "2018.json",
+      "sha256": "c5b509f9adfaada7c334282bd9b3f3cec989297b7a3b34d48584ee808d0919ca",
+      "bytes": 588740,
+      "from": "2018-01-01",
+      "to": "2018-12-31",
+      "dates": 257,
+      "observations": 83282,
+      "nullCells": 14378,
+      "provenance": {
+        "path": "public/series/2018.json",
+        "sha256": "a304d292cde828d9c7ed8f8f7e1d434fb85d453628fa3adcea46133dc310efae"
+      }
+    },
+    {
+      "year": 2019,
+      "file": "2019.json",
+      "sha256": "52e770fc549b66c5720d14abe8fb2cc9e47acf67116bc0c3915c70d268476332",
+      "bytes": 595926,
+      "from": "2019-01-01",
+      "to": "2019-12-31",
+      "dates": 260,
+      "observations": 84528,
+      "nullCells": 14272,
+      "provenance": {
+        "path": "public/series/2019.json",
+        "sha256": "cda7971068c4cbb8e202d5607d976b58ddcec1775075fcbfe0263a133b9b7327"
+      }
+    },
+    {
+      "year": 2020,
+      "file": "2020.json",
+      "sha256": "5fa067e0ae9cd1dc51496f82d5d4a025286400853a414c01a2bbb5406d5af716",
+      "bytes": 594309,
+      "from": "2020-01-02",
+      "to": "2020-12-31",
+      "dates": 260,
+      "observations": 83010,
+      "nullCells": 15790,
+      "provenance": {
+        "path": "public/series/2020.json",
+        "sha256": "8813090f783372709b50794214c27fbf01edfd660b4de4595a960dfd504181f4"
+      }
+    },
+    {
+      "year": 2021,
+      "file": "2021.json",
+      "sha256": "52d20136a6fe6ece6a60f5619c379889ad328ac7903888945184e03f2c8b1c5e",
+      "bytes": 590307,
+      "from": "2021-01-04",
+      "to": "2021-12-31",
+      "dates": 257,
+      "observations": 84362,
+      "nullCells": 13298,
+      "provenance": {
+        "path": "public/series/2021.json",
+        "sha256": "5a3f2fd516cf5efcb8cfbd94a792b9554654a6e88851274b1d6ae1fcd1c1d2c0"
+      }
+    },
+    {
+      "year": 2022,
+      "file": "2022.json",
+      "sha256": "d66e56369a6a990dd8c503a5995534146d77be12a2457192ed087d122c2e7242",
+      "bytes": 584166,
+      "from": "2022-01-03",
+      "to": "2022-12-30",
+      "dates": 254,
+      "observations": 83742,
+      "nullCells": 12778,
+      "provenance": {
+        "path": "public/series/2022.json",
+        "sha256": "27a8f8373055b59a00db09d44817d94944d4ab234c4f3649fe379d91607046cd"
+      }
+    },
+    {
+      "year": 2023,
+      "file": "2023.json",
+      "sha256": "e3bf5b10b550f9fc2395eb9e0b337b8264aeab56977e339c7f4b2a167019eb2d",
+      "bytes": 599017,
+      "from": "2023-01-02",
+      "to": "2023-12-29",
+      "dates": 260,
+      "observations": 86780,
+      "nullCells": 12020,
+      "provenance": {
+        "path": "public/series/2023.json",
+        "sha256": "d6da5e563363080dd7d4676dacbee9f266c5080138070d1ee244f4d5a999e34c"
+      }
+    },
+    {
+      "year": 2024,
+      "file": "2024.json",
+      "sha256": "3f8fa32e741bd3fd5bd9dd366907da487d48a08068e7942dd1cf9cde21ac6852",
+      "bytes": 604128,
+      "from": "2024-01-01",
+      "to": "2024-12-31",
+      "dates": 262,
+      "observations": 88069,
+      "nullCells": 11491,
+      "provenance": {
+        "path": "public/series/2024.json",
+        "sha256": "d78e5cec9c2c87175b0a37d1be3075823d7b02c60954142f93cb03e3a16c2b54"
+      }
+    },
+    {
+      "year": 2025,
+      "file": "2025.json",
+      "sha256": "3052bb58fb15df5dca836ffb59af9c287b32e6176a70c20b217be1b521f2b808",
+      "bytes": 603027,
+      "from": "2025-01-01",
+      "to": "2025-12-31",
+      "dates": 261,
+      "observations": 88340,
+      "nullCells": 10840,
+      "provenance": {
+        "path": "public/series/2025.json",
+        "sha256": "a36dbd54aa63df9a31d8669d5d2692f63f9a266dd17cc41f07bf2014fa93af29"
+      }
+    },
+    {
+      "year": 2026,
+      "file": "2026.json",
+      "sha256": "0cbe2c634d2ed497757c9922781b10d3bac6c97d242694bb482cb690a6132baa",
+      "bytes": 427139,
+      "from": "2026-01-01",
+      "to": "2026-09-15",
+      "dates": 184,
+      "observations": 62500,
+      "nullCells": 7420,
+      "provenance": {
+        "path": "public/series/2026.json",
+        "sha256": "37a10e03a869ad2d3f32e0ed8e2548257911706ee618bfe581ba356c963b4982"
+      }
+    }
+  ]
+}

@@ -136,12 +136,14 @@ dashboard-only and is not applied here.
 ## Audited historical recovery (19 October 2026)
 
 The production audit found 8,040 official provincial observations on 24 dates,
-2026-09-16 through 2026-10-19, and no earlier rows. The existing repository-derived
-archive is pinned to commit `ef85f27904b044bd343a56dcdd77a46d28eb1205`, paths
-`public/series/2017.json` through `2026.json`. Recovery checks the committed
-[repair manifest](docs/qa/pr12/repair-manifest.json) SHA-256 for each file and
-validates dates, commodity/province columns, lengths and positive integer prices
-with Effect Schema. It does not merge code from that commit. Use Node 24 for
+2026-09-16 through 2026-10-19, and no earlier rows. This is dated production
+evidence, not a current remote query. The tracked recovery archive now lives in
+[`data/history/pihps/`](data/history/pihps/README.md). Its derived source is
+pinned to commit `ef85f27904b044bd343a56dcdd77a46d28eb1205`, paths
+`public/series/2017.json` through `2026.json`. The version-1 archive manifest
+records original and output hashes, ranges, observation/null counts and unknown
+weekdays. Validation checks Effect schemas, unique keys and recomputed counts.
+The original HTTP responses remain unavailable. Use Node 24 for
 these CLI commands (`node:sqlite` reads explicitly selected local databases).
 
 The repair interval is **2017-03-27 through 2026-09-15 inclusive**: 2,449 observed
@@ -151,18 +153,23 @@ columns are ignored. Current national values still use the mean of observed
 provinces rounded to Rp 50. Every recovered observation retains its original
 `git:<commit>:public/series/<year>.json` provenance in `raw_ref`.
 
-For a clean checkout, fetch and verify the pinned Git object before recovery.
-The runbook includes complete local/remote baseline-export commands. Recover
-into ignored local storage, then use a complete durable local baseline for SQL
-and a JSON dry-run report:
+A clean checkout contains the complete audited archive; fetching the old commit
+or recovering ignored files is no longer required. The repository owns durable
+history, and D1 serves the application. Keep the archive outside the frontend
+bundle. The yearly JSON totals 5,614,856 bytes; observation-per-line arrays would
+use 31,418,501 bytes. Plain columnar JSON preserves nulls and stays reviewable.
+
+Validate and rebuild deterministically, then use a complete local baseline for
+SQL and a JSON dry-run report:
 
 ```sh
-rtk git fetch origin ef85f27904b044bd343a56dcdd77a46d28eb1205
-rtk git rev-parse FETCH_HEAD
-rtk pnpm exec node scripts/recover-pihps-history.mjs --out data/archive/pihps-derived
+rtk pnpm history:pihps:validate
+rtk pnpm history:pihps:rebuild
+rtk git diff --exit-code -- data/history/pihps
 rtk proxy mkdir -p data/repairs
+rtk pnpm exec wrangler d1 execute monitor-pangan --local --file db/schema.sql --json
 rtk proxy pnpm exec wrangler d1 execute monitor-pangan --local --command 'SELECT * FROM prices_daily ORDER BY date, commodity_id, region_code, level' --json > data/repairs/prices-before.local.json
-rtk pnpm exec node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-json data/repairs/prices-before.local.json --out data/repairs/historical.sql
+rtk pnpm history:pihps:restore --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-json data/repairs/prices-before.local.json --out data/repairs/historical.sql
 ```
 
 The baseline must be one complete `SELECT * FROM prices_daily` Wrangler
@@ -184,7 +191,9 @@ original request statuses, so **none of the 2,449 dates creates `source_days`
 completion markers**. Current ingestion owns existing source-day/job metadata.
 There is no weekly full-history cron.
 
-Local validation commands (already exercised; no production writes):
+The original #36 local validation used the commands below (dated evidence; no
+production writes). Current archive restoration evidence is recorded in
+[issue #37 verification](docs/qa/issue-37/verification.md):
 
 ```sh
 rtk pnpm exec wrangler d1 execute monitor-pangan --local --file db/schema.sql --json
@@ -221,7 +230,7 @@ without writing the file. Locate the intended `.sqlite` file under the local
 Wrangler state directory and supply its full path:
 
 ```sh
-rtk pnpm exec node scripts/seed-d1.mjs --input-dir data/archive/pihps-derived --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-db /absolute/path/to/local-d1.sqlite --out data/repairs/historical-repeat.sql
+rtk pnpm history:pihps:restore --from 2017-03-27 --to 2026-09-15 --target local --dry-run --existing-db /absolute/path/to/local-d1.sqlite --out data/repairs/historical-repeat.sql
 ```
 
 After the local import this reports zero inserts/updates and 791,426 unchanged

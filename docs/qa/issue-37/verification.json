@@ -1,0 +1,146 @@
+{
+  "date": "2026-10-19",
+  "target": "isolated local Wrangler/D1 only",
+  "productionChanged": false,
+  "archive": {
+    "range": {
+      "from": "2017-03-27",
+      "to": "2026-09-15"
+    },
+    "counts": {
+      "dates": 2449,
+      "observations": 791426,
+      "nullCells": 139194
+    },
+    "unknownWeekdays": 23,
+    "yearlyBytes": 5614856,
+    "manifestSha256": "8fac848c2d853a1f50fffb17274837c083716d8471627bab889b68e8a2da3d96"
+  },
+  "cleanSourceExport": {
+    "gitObjectsPresent": false,
+    "ignoredArchivePresent": false,
+    "credentialsCopied": false,
+    "dependencyStrategy": "shared installed frozen-lockfile node_modules"
+  },
+  "initialDryRun": {
+    "inserts": 791426,
+    "updates": 0,
+    "unchanged": 0,
+    "coverageChanges": 0,
+    "observedDates": 2449,
+    "unverifiedObservedDates": 2449,
+    "newestVerifiedLiveDate": null,
+    "sqlSha256": "d1887afae8f13c3b035b70707601971f193e085207159cfa456bcdc19ac237e7"
+  },
+  "wrangler": {
+    "first": {
+      "executionResults": 1138,
+      "allSucceeded": true
+    },
+    "repeat": {
+      "executionResults": 1138,
+      "allSucceeded": true
+    }
+  },
+  "verifiedFirst": {
+    "full": {
+      "cells": 791426,
+      "sha256": "49320d930a5fb194012f93a4d964751c61085a32a75b9de9586f56f5b4538ad5"
+    },
+    "recent": {
+      "cells": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "dates": 2449,
+    "coverage": 0,
+    "jobs": 0,
+    "fixtures": [
+      {
+        "date": "2018-10-09",
+        "canonicalCells": 38,
+        "pricedCount": 34,
+        "nationalAvg": 11700
+      },
+      {
+        "date": "2025-10-30",
+        "canonicalCells": 38,
+        "pricedCount": 34,
+        "nationalAvg": 15750
+      }
+    ]
+  },
+  "verifiedRepeat": {
+    "full": {
+      "cells": 791426,
+      "sha256": "49320d930a5fb194012f93a4d964751c61085a32a75b9de9586f56f5b4538ad5"
+    },
+    "recent": {
+      "cells": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "dates": 2449,
+    "coverage": 0,
+    "jobs": 0,
+    "fixtures": [
+      {
+        "date": "2018-10-09",
+        "canonicalCells": 38,
+        "pricedCount": 34,
+        "nationalAvg": 11700
+      },
+      {
+        "date": "2025-10-30",
+        "canonicalCells": 38,
+        "pricedCount": 34,
+        "nationalAvg": 15750
+      }
+    ]
+  },
+  "repeatDryRun": {
+    "inserts": 0,
+    "updates": 0,
+    "unchanged": 791426,
+    "coverageChanges": 0
+  },
+  "rebuild": {
+    "runs": 2,
+    "byteIdenticalFiles": 12
+  },
+  "tests": {
+    "explicitFiles": 6,
+    "passed": 50,
+    "fullSizeSqliteReplayEffectiveWrites": 0,
+    "existingOfficialConflictPreserved": true,
+    "newerOfficialRowPreserved": true,
+    "dayJobMetadataPreserved": true
+  },
+  "requiredGates": {
+    "typecheck": "passed",
+    "targetedTests": "passed",
+    "build": "passed"
+  },
+  "review": {
+    "findings": 0,
+    "sourceCellsCompared": 930620,
+    "allPricesAndNullsMatched": true
+  },
+  "followupReview": {
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "high",
+    "axes": [
+      "security/standards/KISS/DRY",
+      "spec/correctness/regressions"
+    ],
+    "originalHead": "fdf608600b5642015ac3c50aa601156966e71db0",
+    "findings": 1,
+    "fixed": 1,
+    "remaining": 0,
+    "finding": "Numeric option paths were misclassified as positional snapshot years.",
+    "resolution": "Use node:util parseArgs, separate options from positionals, and reuse the validated positional year.",
+    "regressionTestRedThenGreen": true,
+    "bothReviewersApproved": true,
+    "finalTestsPassed": 50,
+    "finalTestDurationSeconds": 36.39,
+    "concurrentTimeoutRunsCountAsPassingEvidence": false
+  }
+}
