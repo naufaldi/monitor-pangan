@@ -24,11 +24,11 @@
 **Edge Cases:** Duplicate/invalid dates, wrong columns/lengths, nulls, invalid prices, extra files, hash/count drift, out-of-range values, malformed source files, interrupted or overlapping publishers.
 **Definition of Done:** Canonical data round-trips; corrupt files fail before publication; previous output survives failure; repeated rebuild has identical bytes.
 
-- [ ] Write real parser/filesystem tests. A malformed price must fail even when its file hash is updated; duplicate dates and missing province columns must fail.
-- [ ] Run `rtk pnpm exec vitest run scripts/pihps-history.test.mjs` and observe missing-function failures.
-- [ ] Implement Effect schemas, deterministic serializer/statistics and manifest verification, reusing the existing audited recovery contract.
-- [ ] Implement a sibling stage, exclusive lock, validated publication and rollback; expose CLI validate/build/rebuild entrypoints.
-- [ ] Run targeted tests plus `scripts/price-import.test.mjs` after extracting traversal.
+- [x] Write real parser/filesystem tests. A malformed price must fail even when its file hash is updated; duplicate dates and missing province columns must fail.
+- [x] Run `rtk pnpm exec vitest run scripts/pihps-history.test.mjs` and observe missing-function failures.
+- [x] Implement Effect schemas, deterministic serializer/statistics and manifest verification, reusing the existing audited recovery contract.
+- [x] Implement a sibling stage, exclusive lock, validated publication and rollback; expose CLI validate/build/rebuild entrypoints.
+- [x] Run targeted tests plus `scripts/price-import.test.mjs` after extracting traversal.
 
 ## Task 2: Bounded restore and complete archive
 
@@ -38,11 +38,11 @@
 **Edge Cases:** Corrupt archive, multiple input flags, out-of-range restore, official disagreement, non-PIHPS collision, newer rows, metadata/citizen retention, duplicate import.
 **Definition of Done:** Named validation/rebuild/restore commands work; import matches all 38 cells for 2018-10-09 and 2025-10-30, averages 11700 and 15750, and replay changes zero rows.
 
-- [ ] Write failing CLI restore tests against a real SQLite baseline and the two committed fixture files.
-- [ ] Add the history input option, reject ambiguous inputs and preserve existing importer modes.
-- [ ] Bootstrap the ten files using hash-pinned recovered source and record full audit counts.
-- [ ] Run validate, rebuild twice and compare all file hashes.
-- [ ] Run real local Wrangler in isolated persistence, apply generated SQL, compare both fixtures and replay changes.
+- [x] Write failing CLI restore tests against a real SQLite baseline and the two committed fixture files.
+- [x] Add the history input option, reject ambiguous inputs and preserve existing importer modes.
+- [x] Bootstrap the ten files using hash-pinned recovered source and record full audit counts.
+- [x] Run validate, rebuild twice and compare all file hashes.
+- [x] Run real local Wrangler in isolated persistence, apply generated SQL, compare both fixtures and replay changes.
 
 ## Task 3: Document and verify the recovery contract
 
@@ -52,7 +52,19 @@
 **Edge Cases:** Missing old object, clean checkout, divergent baseline, validation failure, unknown coverage and raw-evidence limitations.
 **Definition of Done:** Current checkout owns the restore path, archive ownership/provenance and size choice are documented, and required gates pass.
 
-- [ ] Replace old-object recovery as the default workflow, retaining it only as historical bootstrap documentation.
-- [ ] Record exact clean-checkout local-D1 commands and measured results; explain that D1 serves the application.
-- [ ] Run `rtk pnpm typecheck`, explicit affected tests, `rtk pnpm build`; inspect frontend assets and Git diff.
-- [ ] Review issue acceptance criteria against evidence and finish on the feature branch.
+- [x] Replace old-object recovery as the default workflow, retaining it only as historical bootstrap documentation.
+- [x] Record exact clean-checkout local-D1 commands and measured results; explain that D1 serves the application.
+- [x] Run `rtk pnpm typecheck`, explicit affected tests, `rtk pnpm build`; inspect frontend assets and Git diff.
+- [x] Review issue acceptance criteria against evidence and finish on the feature branch.
+
+
+## Verification outcome
+
+Implemented on `feat/37-pihps-history-archive` from main after #36 merged.
+Typecheck, 49 tests across six explicit files, and production build passed.
+An isolated source export with no old Git objects or ignored archive restored
+791,426 prices through real local Wrangler/D1. Both 38-cell fixtures matched;
+replay preserved the full-row checksum, and a refreshed plan had zero inserts or
+updates. Two rebuilds preserved every archive file byte-for-byte. Independent
+review found no issues and compared every price/null with the pinned originals.
+See `docs/qa/issue-37/verification.md` and `.json`. No production changes.

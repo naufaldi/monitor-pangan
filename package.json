@@ -25,6 +25,9 @@
     "normalize": "node scripts/normalize.mjs",
     "ingest": "pnpm run scrape && pnpm run scrape:pihps && pnpm run opendata && pnpm run normalize",
     "seed": "node scripts/seed-d1.mjs",
+    "history:pihps:validate": "node scripts/history-pihps.mjs validate",
+    "history:pihps:rebuild": "node scripts/history-pihps.mjs rebuild",
+    "history:pihps:restore": "node scripts/seed-d1.mjs --history-dir data/history/pihps",
     "db:apply": "wrangler d1 execute monitor-pangan --local --file=./db/schema.sql",
     "db:seed": "wrangler d1 execute monitor-pangan --local --file=./data/seed.sql",
     "db:setup": "pnpm run db:apply && pnpm run db:seed"

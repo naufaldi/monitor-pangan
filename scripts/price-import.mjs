@@ -22,14 +22,16 @@ const DerivedSchema = Schema.Struct({ year: Schema.String, dates: Schema.Array(D
   doc.dates.length > 0 && doc.dates.every((d, i) => d.startsWith(`${doc.year}-`) && isTradingDay(d) && (i === 0 || d > doc.dates[i - 1])) &&
   Object.keys(doc.values).length === COMMODITY_ROWS.length && COMMODITY_ROWS.every(([id]) =>
     doc.values[id] && Object.keys(doc.values[id]).length === REGION_ROWS.length + 1 && [...REGION_ROWS.map(([code]) => code), 'nasional'].every((code) => doc.values[id][code]?.length === doc.dates.length))))
-export const derivedObservations = (input, raw_ref) => Schema.decodeUnknown(DerivedSchema)(input).pipe(Effect.map((doc) => {
+/** Traverse a schema-validated series. Both recovered and repository archives use the same provincial mapping. */
+export const observationsFromSeries = (doc, raw_ref) => {
   const rows = []
   for (const [commodity_id] of COMMODITY_ROWS) for (const [region_code] of REGION_ROWS) for (let i = 0; i < doc.dates.length; i++) {
     const price = doc.values[commodity_id][region_code][i]
     if (price != null) rows.push({ date: doc.dates[i], commodity_id, region_code, level: 'eceran', price, source_id: 'pihps', raw_ref })
   }
   return rows
-}))
+}
+export const derivedObservations = (input, raw_ref) => Schema.decodeUnknown(DerivedSchema)(input).pipe(Effect.map((doc) => observationsFromSeries(doc, raw_ref)))
 export const snapshotObservations = (snap, raw_ref = 'snapshot') => {
   const parsed = Schema.decodeUnknownSync(Schema.Struct({ rows: Schema.Array(Schema.Unknown) }))(snap)
   return parsed.rows.filter((row) => row?.price != null).map((row) => Schema.decodeUnknownSync(ObservationSchema)({ ...row, raw_ref }))
