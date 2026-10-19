@@ -25,4 +25,4 @@ bucket_name = "monitor-pangan-laporan"
 R2_BUCKET_NAME = "monitor-pangan-laporan"
 
 [triggers]
-crons = ["15 7 * * 1-5", "15 10 * * 1-5"]
+crons = ["15 7 * * MON-FRI", "15 10 * * MON-FRI"]

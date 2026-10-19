@@ -1,6 +1,7 @@
 import { assert, it } from "@effect/vitest"
-import { Effect } from "effect"
-import worker, { type WorkerEnv } from "./index.ts"
+import { Effect, Layer, TestClock } from "effect"
+import worker, { handleScheduled, type WorkerEnv } from "./index.ts"
+import { PihpsFetchError, PihpsSource, PriceStore } from "./ingest.ts"
 import { sqliteFixture } from "./sqlite-test.ts"
 
 const json = (response: Response) => Effect.promise(() => response.json() as Promise<Record<string, unknown>>)
@@ -46,4 +47,33 @@ it.effect("preserves freshness JSON, HTML injection, admin metadata, citizen API
   const asset = yield* fetch("/assets/app.css")
   assert.strictEqual(asset.headers.get("content-type"), "text/css")
   assert.strictEqual(yield* text(asset), "body{}")
+}))
+
+it.effect("scheduled execution stays failed after recording an upstream failure", () => Effect.gen(function* () {
+  yield* TestClock.setTime(1792401300000)
+  const failure = yield* Effect.flip(handleScheduled()).pipe(Effect.provide(Layer.mergeAll(
+    Layer.succeed(PihpsSource, { fetchGrid: () => Effect.fail(new PihpsFetchError({ message: "upstream" })) }),
+    Layer.succeed(PriceStore, {
+      coverageSince: () => Effect.succeed([]),
+      upsertDay: () => Effect.succeed(0),
+      recordJob: () => Effect.void,
+      freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
+    }),
+  )))
+  assert.strictEqual(failure._tag, "PihpsFetchError")
+}))
+
+it.effect("the actual scheduled handler rejects waitUntil when coverage storage fails", () => Effect.gen(function* () {
+  const fixture = yield* sqliteFixture
+  const db = { ...fixture.db, prepare: (sql: string) => {
+    const statement = fixture.db.prepare(sql)
+    if (!sql.startsWith("SELECT date, status FROM source_days")) return statement
+    return { ...statement, bind: () => ({ ...statement, all: <T>() => Promise.reject<T>(new Error("injected coverage failure")) }) }
+  } }
+  let pending: Promise<unknown> | undefined
+  worker.scheduled(undefined, environment(db), { waitUntil: (promise) => { pending = promise } })
+  assert.ok(pending)
+  const failure = yield* Effect.flip(Effect.tryPromise({ try: () => pending!, catch: () => "scheduled rejected" as const }))
+  assert.strictEqual(failure, "scheduled rejected")
+  assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM job_runs WHERE status = 'error'").get()?.count, 1)
 }))

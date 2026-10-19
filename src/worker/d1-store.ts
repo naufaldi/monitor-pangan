@@ -1,8 +1,9 @@
-import { Effect, Layer } from "effect"
+import { Effect, Layer, Schema } from "effect"
 import { COMMODITY_ROWS, REGION_ROWS } from "../data/pihps-catalog.ts"
 import type { FreshPayload } from "../data/fresh-payload.ts"
 import type { PihpsPriceCell } from "../data/pihps-grid.ts"
 import { PriceStore, StoreError, type JobRecord } from "./ingest.ts"
+import { CoverageDaySchema, type CoverageDay } from "./ingest-plan.ts"
 import { LAPORAN_MIGRATION_SQL } from "./laporan-schema.ts"
 
 export interface D1Prepared {
@@ -55,14 +56,10 @@ CREATE TABLE IF NOT EXISTS source_days (
   checked_at TEXT NOT NULL,
   PRIMARY KEY (date, source_id)
 );
-${COMMODITY_ROWS.map(
-  ([id, name, unit]) =>
-    `INSERT OR IGNORE INTO commodities (id, name, unit) VALUES (${sqlString(id)}, ${sqlString(name)}, ${sqlString(unit)});`,
-).join("\n")}
-${REGION_ROWS.map(
-  ([code, name]) =>
-    `INSERT OR IGNORE INTO regions (code, name, level) VALUES (${sqlString(code)}, ${sqlString(name)}, 'province');`,
-).join("\n")}
+INSERT OR IGNORE INTO commodities (id, name, unit) VALUES
+${COMMODITY_ROWS.map(([id, name, unit]) => `(${sqlString(id)}, ${sqlString(name)}, ${sqlString(unit)})`).join(",\n")};
+INSERT OR IGNORE INTO regions (code, name, level) VALUES
+${REGION_ROWS.map(([code, name]) => `(${sqlString(code)}, ${sqlString(name)}, 'province')`).join(",\n")};
 ${LAPORAN_MIGRATION_SQL}
 `
 
@@ -77,16 +74,10 @@ export const migrationStatements = (sql: string = MIGRATE_SQL): readonly string[
 
 const migrated = new WeakMap<D1Database, Promise<void>>()
 
-const runStatements = (db: D1Database, statements: readonly string[], index: number): Promise<void> => {
-  const statement = statements[index]
-  if (statement === undefined) return Promise.resolve()
-  return db.prepare(statement).run().then(() => runStatements(db, statements, index + 1))
-}
-
 const migrate = (db: D1Database): Promise<void> => {
   const existing = migrated.get(db)
   if (existing !== undefined) return existing
-  const pending = runStatements(db, migrationStatements(), 0).then(
+  const pending = db.batch(migrationStatements().map((statement) => db.prepare(statement))).then(
     () => undefined,
     (cause: unknown) => {
       if (migrated.get(db) === pending) migrated.delete(db)
@@ -111,59 +102,53 @@ export const d1PriceStoreLayer = (db: D1Database) => {
     catch: storeError,
   })
 
-  const latestCheckedDate = ensure.pipe(
-    Effect.andThen(() =>
-      Effect.tryPromise({
-        try: () =>
-          db
-            .prepare("SELECT MAX(date) AS latest FROM source_days WHERE source_id = 'pihps'")
-            .all<{ latest: string | null }>(),
-        catch: storeError,
-      }),
-    ),
-    Effect.map((out) => out.results[0]?.latest ?? null),
+  const coverageSince = (after: string) => ensure.pipe(
+    Effect.andThen(() => Effect.tryPromise({
+      try: () => db.prepare("SELECT date, status FROM source_days WHERE source_id = 'pihps' AND date > ? ORDER BY date").bind(after).all<unknown>(),
+      catch: storeError,
+    })),
+    Effect.flatMap(Schema.decodeUnknown(Schema.Struct({ results: Schema.Array(CoverageDaySchema) }))),
+    Effect.map((out) => out.results),
+    Effect.mapError(storeError),
   )
 
-  const upsertDay = (
-    date: string,
-    status: "live" | "empty",
-    rows: readonly PihpsPriceCell[],
-    checkedAt: string,
-  ) =>
-    Effect.gen(function* () {
+  // JSON input keeps each SQL statement below D1's 100 bound-parameter limit.
+  const insertPrices = (rows: readonly PihpsPriceCell[], replace: boolean) => db.prepare(`
+    INSERT INTO prices_daily (date, commodity_id, region_code, level, price, source_id)
+    SELECT json_extract(value, '$.date'), json_extract(value, '$.commodityId'),
+      json_extract(value, '$.regionCode'), 'eceran', json_extract(value, '$.price'), 'pihps'
+    FROM json_each(?) WHERE true
+    ON CONFLICT (date, commodity_id, region_code, level) ${replace ? "DO UPDATE SET price = excluded.price, source_id = excluded.source_id" : "DO NOTHING"}
+  `).bind(JSON.stringify(rows))
+  const marker = (date: string, status: CoverageDay["status"], checkedAt: string) => db.prepare(`
+    INSERT INTO source_days (date, source_id, status, checked_at) VALUES (?, 'pihps', ?, ?)
+    ON CONFLICT (date, source_id) DO UPDATE SET status = excluded.status, checked_at = excluded.checked_at
+    WHERE source_days.status != 'live' OR excluded.status = 'live'
+  `).bind(date, status, checkedAt)
+  const Changes = Schema.Array(Schema.Struct({ meta: Schema.Struct({ changes: Schema.Number.pipe(Schema.int(), Schema.nonNegative()) }) }))
+
+  const upsertDay = (date: string, status: CoverageDay["status"], rows: readonly PihpsPriceCell[], checkedAt: string) => Effect.suspend(() => {
+    let confirmed = 0
+    return Effect.gen(function* () {
       yield* ensure
-      const chunks: PihpsPriceCell[][] = []
-      for (let i = 0; i < rows.length; i += 40) chunks.push([...rows.slice(i, i + 40)])
-      yield* Effect.forEach(
-        chunks,
-        (chunk) =>
-          Effect.tryPromise({
-            try: () =>
-              db.batch(
-                chunk.map((row) =>
-                  db
-                    .prepare(
-                      "INSERT OR REPLACE INTO prices_daily (date, commodity_id, region_code, level, price, source_id) VALUES (?, ?, ?, 'eceran', ?, 'pihps')",
-                    )
-                    .bind(row.date, row.commodityId, row.regionCode, row.price),
-                ),
-              ),
-            catch: storeError,
-          }),
-        { concurrency: 1 },
-      )
+      // First commit only new cells. Existing good cells cannot change on a failed refresh.
+      for (let i = 0; i < rows.length; i += 40) {
+        const result = yield* Effect.tryPromise({
+          try: () => db.batch([insertPrices(rows.slice(i, i + 40), false)]),
+          catch: storeError,
+        }).pipe(Effect.flatMap(Schema.decodeUnknown(Changes)), Effect.mapError(storeError))
+        confirmed += result.reduce((count, statement) => count + statement.meta.changes, 0)
+      }
+      // D1 batches are transactional: refresh existing cells and publish completion together.
       yield* Effect.tryPromise({
-        try: () =>
-          db
-            .prepare(
-              "INSERT OR REPLACE INTO source_days (date, source_id, status, checked_at) VALUES (?, 'pihps', ?, ?)",
-            )
-            .bind(date, status, checkedAt)
-            .run(),
+        try: () => rows.length > 0 && status === "live"
+          ? db.batch([insertPrices(rows, true), marker(date, status, checkedAt)])
+          : marker(date, status, checkedAt).run(),
         catch: storeError,
       })
       return rows.length
-    })
+    }).pipe(Effect.mapError((error) => new StoreError({ message: error.message, rowsUpserted: confirmed })))
+  })
 
   const recordJob = (job: JobRecord) =>
     ensure.pipe(
@@ -209,7 +194,7 @@ export const d1PriceStoreLayer = (db: D1Database) => {
     )
 
   return Layer.succeed(PriceStore, {
-    latestCheckedDate,
+    coverageSince,
     upsertDay,
     recordJob,
     freshSince,

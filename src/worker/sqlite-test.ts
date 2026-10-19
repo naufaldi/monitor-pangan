@@ -19,11 +19,17 @@ export const sqliteFixture = Effect.gen(function* () {
   const prepare = (sql: string, values: SQLInputValue[] = []): D1Prepared => ({
     bind: (...bound) => prepare(sql, bound as SQLInputValue[]),
     all: <T>() => Promise.resolve({ results: sqlite.prepare(sql).all(...values) as T[] }),
-    run: () => Promise.resolve(sqlite.prepare(sql).run(...values)),
+    run: () => Promise.resolve({ meta: { changes: Number(sqlite.prepare(sql).run(...values).changes) } }),
   })
   const db: D1Database = {
     prepare,
-    batch: (statements) => Promise.all(statements.map((statement) => statement.run())),
+    batch: (statements) => {
+      sqlite.exec("BEGIN")
+      return Promise.all(statements.map((statement) => Promise.resolve().then(() => statement.run()))).then(
+        (results) => { sqlite.exec("COMMIT"); return results },
+        (cause: unknown) => { sqlite.exec("ROLLBACK"); return Promise.reject(cause) },
+      )
+    },
     exec: (sql) => Promise.resolve(sqlite.exec(sql)),
   }
   yield* ensureMigrated(db)

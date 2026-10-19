@@ -114,8 +114,12 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
   return new Response(injectFreshScript(stamped, payload), { status: asset.status, headers })
 })
 
-/** One trading day per run. Weekday crons after the 13:00 WIB release cover the next day. */
-export const CRON_MAX_DAYS = 1
+/** One survey day at each weekday trigger, allowing delayed same-day publication. */
+const CRON_MAX_DAYS = 1
+
+export const handleScheduled = Effect.fn("Worker.scheduled")(function* () {
+  return yield* ingestRecent(CRON_MAX_DAYS)
+})
 
 type WaitUntil = { waitUntil(promise: Promise<unknown>): void }
 
@@ -133,10 +137,7 @@ export default {
   scheduled(_event: unknown, env: WorkerEnv, ctx: WaitUntil): void {
     ctx.waitUntil(
       Effect.runPromise(
-        ingestRecent(CRON_MAX_DAYS).pipe(
-          Effect.provide(workerLayer(env)),
-          Effect.catchAllCause((cause) => Effect.logError(cause)),
-        ),
+        handleScheduled().pipe(Effect.provide(workerLayer(env))),
       ),
     )
   },
