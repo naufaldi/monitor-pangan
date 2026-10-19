@@ -1,8 +1,21 @@
-import { Effect, Either } from "effect"
+import { Effect, Either, Schema } from "effect"
 import { assert, it } from "@effect/vitest"
 import { provider } from "./provider.ts"
 import { UnknownCommodityError, UnknownDateError } from "./price-schema.ts"
 import { decodeSnapshot, decodeTrendSeries } from "./price-schema.ts"
+import { FreshPayloadSchema } from "./fresh-payload.ts"
+
+it.effect("rejects invalid external fresh observations before overlay application", () =>
+  Effect.gen(function*() {
+    for (const price of [0, -100, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+      const result = yield* Effect.either(Schema.decodeUnknown(FreshPayloadSchema)({
+        latestDate: "2026-09-28",
+        dates: ["2026-09-28"],
+        prices: { "2026-09-28:beras:31": price },
+      }))
+      assert.ok(Either.isLeft(result))
+    }
+  }))
 
 it.effect("decodes a live provider snapshot", () =>
   Effect.gen(function*() {

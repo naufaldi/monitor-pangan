@@ -3,11 +3,45 @@ import { assert, it } from "@effect/vitest"
 import { applyFreshPrices, clearFreshPrices, STATIC_LIVE_THROUGH } from "./fresh-prices.ts"
 import { LIVE_PRICES } from "./prices.gen.ts"
 import { SNAPSHOT_META } from "./snapshot.gen.ts"
+import { decodeSnapshot } from "./price-schema.ts"
 import { dataBadge, isSnapshotLoaded, latestLiveDate, liveSurveyDates, pageSourceNote, provider } from "./provider.ts"
 
 const LIVE_DATE = "2026-09-16"
 const SAMPLE_DATE = "2026-09-17"
 const MISSING_LIVE_PROVINCES = ["21", "61", "65", "93", "94", "95", "96"]
+
+it.effect("invalid fresh observations become missing rows in schema-valid snapshots", () =>
+  Effect.gen(function*() {
+    for (const price of [0, -100, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+      applyFreshPrices({
+        latestDate: "2026-09-28",
+        dates: ["2026-09-28"],
+        prices: { "2026-09-28:beras:31": price },
+      })
+      const snapshot = provider.snapshot("2026-09-28", "beras")
+      assert.strictEqual(snapshot.rows.find((row) => row.regionCode === "31")?.price, null)
+      assert.strictEqual(snapshot.nationalAvg, null)
+      assert.strictEqual(snapshot.pricedCount, 0)
+      assert.strictEqual(isSnapshotLoaded("2026-09-28", "beras"), false)
+      yield* decodeSnapshot(snapshot)
+    }
+  }).pipe(Effect.ensuring(Effect.sync(() => clearFreshPrices()))))
+
+it.effect("an invalid fresh cell does not discard valid provincial observations", () =>
+  Effect.gen(function*() {
+    applyFreshPrices({
+      latestDate: "2026-09-28",
+      dates: ["2026-09-28"],
+      prices: { "2026-09-28:beras:31": 0, "2026-09-28:beras:32": 16950 },
+    })
+    const snapshot = provider.snapshot("2026-09-28", "beras")
+    assert.strictEqual(snapshot.rows.find((row) => row.regionCode === "31")?.price, null)
+    assert.strictEqual(snapshot.rows.find((row) => row.regionCode === "32")?.price, 16950)
+    assert.strictEqual(snapshot.nationalAvg, 16950)
+    assert.strictEqual(snapshot.pricedCount, 1)
+    assert.strictEqual(isSnapshotLoaded("2026-09-28", "beras"), true)
+    yield* decodeSnapshot(snapshot)
+  }).pipe(Effect.ensuring(Effect.sync(() => clearFreshPrices()))))
 
 it.effect("metadata-only history has no bundled national price", () => Effect.sync(() => {
   const date = "2017-03-27"
