@@ -1,8 +1,10 @@
+import type { ReactNode } from "react"
 import { Badge, Delta, SectionHeader, StatusMessage, cardClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPct, formatPrice, trendDirection } from "#/lib/format.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 
 type ProvincePanelProps = {
+  action?: ReactNode
   commodityName: string
   provinceName: string | null
   price: number | null
@@ -15,6 +17,7 @@ type ProvincePanelProps = {
 
 /** Side detail for the selected province, or the national summary. */
 export function ProvincePanel({
+  action,
   commodityName,
   provinceName,
   price,
@@ -48,6 +51,7 @@ export function ProvincePanel({
         <p className="mt-4 text-sm text-slate">
           Klik provinsi di peta untuk melihat detail harganya.
         </p>
+        {action}
       </aside>
     )
   }
@@ -62,6 +66,7 @@ export function ProvincePanel({
         <StatusMessage tone="empty" title="Tidak ada data" bare className="mt-3 px-0 py-0">
           Provinsi ini tidak disurvei PIHPS pada tanggal ini, atau sumbernya kosong.
         </StatusMessage>
+        {action}
       </aside>
     )
   }
@@ -92,6 +97,7 @@ export function ProvincePanel({
           : "Harga di sini lebih murah dari rata-rata nasional."}
       </p>}
       {range != null && <p className="tabular-nums mt-2 text-sm text-slate">{range}</p>}
+      {action}
     </aside>
   )
 }

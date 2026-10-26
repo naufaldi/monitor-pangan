@@ -1,32 +1,24 @@
 import { Delta, Panel, StatusMessage, cn, eyebrowClass, focusRing, selectedRowClass } from "@monitor-pangan/ui"
-import { formatPct, formatPrice } from "#/lib/format.ts"
-import type { PriceUnit } from "#/data/catalog.ts"
-import type { TrendDirection } from "#/data/provider.ts"
-
-export type MoverItem = {
-  commodityId: string
-  name: string
-  unit: PriceUnit
-  lastPrice: number
-  changePct: number
-  direction: TrendDirection
-}
+import { formatPct, formatPrice, formatSeriesDate } from "#/lib/format.ts"
+import type { MoverItem } from "#/lib/movers.ts"
 
 type MoversListProps = {
   items: MoverItem[]
   activeId: string
   onSelect: (id: string) => void
   rangeLabel: string
+  scopeLabel: string
+  aggregationLabel: string
+  totalCount: number
 }
 
-const DESCRIPTION = "Nasional, urut dari perubahan terbesar"
-
-/** National movers over a labeled range, grouped by direction and sorted by changePct. */
-export function MoversList({ items, activeId, onSelect, rangeLabel }: MoversListProps) {
+/** Only observed comparisons are ranked; every row names its effective endpoints. */
+export function MoversList({ items, activeId, onSelect, rangeLabel, scopeLabel, aggregationLabel, totalCount }: MoversListProps) {
+  const description = `${scopeLabel} · ${aggregationLabel}. Observasi tersedia dalam rentang dipilih; urut dari perubahan terbesar. ${totalCount - items.length} komoditas belum memiliki dua observasi yang dapat dibandingkan.`
   if (items.length === 0) {
     return (
-      <Panel title={`Pergerakan ${rangeLabel}`} description={DESCRIPTION}>
-        <StatusMessage tone="empty" title="Belum ada data." bare />
+      <Panel title={`Pergerakan ${rangeLabel}`} description={description}>
+        <StatusMessage tone="empty" title="Cakupan belum cukup" bare>Perlu setidaknya dua observasi untuk menghitung perubahan pada wilayah dan rentang ini.</StatusMessage>
       </Panel>
     )
   }
@@ -46,7 +38,7 @@ export function MoversList({ items, activeId, onSelect, rangeLabel }: MoversList
   if (flat.length > 0) groups.push({ title: "Stabil", rows: flat })
 
   return (
-    <Panel title={`Pergerakan ${rangeLabel}`} description={DESCRIPTION}>
+    <Panel title={`Pergerakan ${rangeLabel}`} description={description}>
       {groups.map((group) =>
         group.rows.length === 0 ? null : (
           <div key={group.title} className="border-b border-hairline last:border-b-0">
@@ -74,6 +66,7 @@ export function MoversList({ items, activeId, onSelect, rangeLabel }: MoversList
                         <span className="text-sm text-slate">
                           {formatPrice(item.lastPrice, item.unit)}
                         </span>
+                        <span className="text-xs text-slate">{formatSeriesDate(item.from, item.resolution)} – {formatSeriesDate(item.to, item.resolution)}</span>
                       </span>
                       <Delta direction={item.direction} className="shrink-0 whitespace-nowrap text-sm">
                         {formatPct(item.changePct)}

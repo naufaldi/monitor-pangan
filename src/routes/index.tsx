@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { createFileRoute, useRouterState } from "@tanstack/react-router"
-import { Button, PageHeader, PageShell, StickyToolbar, StatusMessage } from "@monitor-pangan/ui"
+import { useCallback, useEffect, useMemo } from "react"
+import { createFileRoute, Link, useRouterState } from "@tanstack/react-router"
+import { Button, PageHeader, PageShell, StickyToolbar, StatusMessage, buttonClass } from "@monitor-pangan/ui"
 
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
+import { CsvButton } from "#/components/CsvButton.tsx"
 import { DatePicker } from "#/components/DatePicker.tsx"
 import { MapView } from "#/components/MapView.tsx"
 import { PriceTable } from "#/components/PriceTable.tsx"
@@ -14,6 +15,7 @@ import { isSnapshotLoaded, latestLiveDate, provider, type Snapshot } from "#/dat
 import { usePageSourceNote, useVintage } from "#/data/vintage.tsx"
 import { homeSelectedDate, parseHomeSearch } from "#/lib/commodity-search.ts"
 import { formatDateLong, formatPrice } from "#/lib/format.ts"
+import { snapshotCsv } from "#/lib/price-csv.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 
 export const Route = createFileRoute("/")({
@@ -42,10 +44,12 @@ function HomePage() {
     }
   }, [rawDate, dates, navigate])
   const commodityId = search.komoditas ?? COMMODITIES[0]?.id ?? ""
-  const [selectedCode, setSelectedCode] = useState<string | null>(null)
+  const selectedCode = search.provinsi ?? null
+  const setSelectedCode = (code: string | null) => {
+    void navigate({ search: (previous) => ({ ...previous, provinsi: code ?? undefined }) })
+  }
 
   const setCommodityId = (id: string) => {
-    setSelectedCode(null)
     void navigate({ search: (prev) => ({ ...prev, komoditas: id }) })
   }
 
@@ -87,6 +91,7 @@ function HomePage() {
             void navigate({ search: (previous) => ({ ...previous, tanggal: next === latestLiveDate() ? undefined : next }) })
           }}
         />
+        <CsvButton file={request.status === "ready" ? snapshotCsv(request.data, provinces, selectedCode) : null} />
       </StickyToolbar>
 
       {request.status === "loading" ? (
@@ -134,6 +139,7 @@ function HomeSnapshot({ snapshotKey, snapshot, provinces, selectedCode, onSelect
             />
           </div>
           <ProvincePanel
+            action={<Link to="/tren" search={{ komoditas: snapshot.commodity.id, ...(selectedCode == null ? {} : { provinsi: selectedCode }) }} className={buttonClass("rect", false, "mt-4 self-start")}>Lihat tren {selected?.name ?? "nasional"}</Link>}
             commodityName={snapshot.commodity.name}
             provinceName={selected?.name ?? null}
             price={selectedPrice}
