@@ -6,6 +6,11 @@ import tailwindcss from "@tailwindcss/vite"
 const config = defineConfig({
   server: {
     port: 3001,
+    // Keep browser requests on the Vite origin while the local Worker owns APIs and photos.
+    proxy: {
+      "/api/": "http://127.0.0.1:8787",
+      "/foto/": "http://127.0.0.1:8787",
+    },
   },
   resolve: { tsconfigPaths: true },
   build: {

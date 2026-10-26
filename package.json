@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "dev": "vite dev --port 3001",
+    "dev:worker": "wrangler dev --local --ip 127.0.0.1 --port 8787",
     "generate-routes": "node scripts/generate-routes.mjs generate",
     "build": "pnpm generate-routes && vite build && node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/stamp-social-html.mjs",
     "preview": "vite preview",

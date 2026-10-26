@@ -48,10 +48,15 @@ pnpm build
 kode. CI menjalankan seluruh suite. Jangan menjalankan suite dalam watch mode.
 
 Vite menjalankan antarmuka dan menyediakan bundel snapshot/riwayat yang masuk
-repo. Vite sendiri tidak menjalankan endpoint Worker, D1, Turnstile, atau R2.
-Tanpa API lokal, UI dapat menampilkan data bundel dengan peringatan pembaruan;
-permintaan riwayat yang tidak ada di bundel dan kiriman warga memerlukan Worker.
-Data lokal yang tersedia tidak membuktikan keadaan produksi.
+repo. Vite meneruskan `/api/` dan `/foto/` ke Worker lokal di `127.0.0.1:8787`.
+Jalankan Worker di terminal terpisah dengan langkah di bawah. Proxy ini hanya
+berlaku saat pengembangan dan tidak menghubungi API produksi.
+
+Tanpa Worker lokal, UI masih dapat menampilkan data harga bundel dengan
+peringatan pembaruan. Daftar laporan warga, kiriman, moderasi, dan permintaan
+riwayat yang tidak ada di bundel memerlukan Worker. Tombol `Coba lagi` tidak
+dapat menjalankan Worker yang belum aktif. Data lokal yang tersedia tidak
+membuktikan keadaan produksi.
 
 ## Runtime Worker lokal
 
@@ -63,8 +68,16 @@ HTML dengan batas waktu; pembacaan health di browser tidak menghalangi render.
 ```sh
 pnpm db:setup                    # schema dan seed di D1 lokal saja
 pnpm build
-pnpm exec wrangler dev --local --port 8787
+pnpm dev:worker                  # terminal 1: API, D1, R2, dan aset hasil build
+pnpm dev                         # terminal 2: UI dengan hot reload dan proxy API
 ```
+
+Gunakan URL Vite untuk mengembangkan UI. `http://127.0.0.1:8787` menyajikan UI
+hasil build. Keduanya membaca API dan penyimpanan Worker lokal yang sama.
+Setelah mengubah konfigurasi Vite, mulai ulang proses Vite yang sudah berjalan.
+Jika daftar laporan gagal dimuat, pastikan Worker aktif. Respons
+`/api/laporan?outlet=pasar&window=1&limit=20` harus berupa JSON. Database tanpa
+laporan yang ditinjau menghasilkan `rows: []`, bukan error atau halaman HTML.
 
 Seed lokal bukan seluruh arsip historis. Untuk memulihkan riwayat, ikuti
 [runbook PIHPS](docs/operations/pihps.md) dan gunakan target lokal yang eksplisit.
