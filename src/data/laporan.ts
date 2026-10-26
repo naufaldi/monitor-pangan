@@ -140,12 +140,16 @@ export const ReportsPayloadSchema = Schema.Struct({
   resumeCursor: Schema.NullOr(Schema.String),
 })
 
+export const REPORT_PRICE_MIN = 100
+export const REPORT_PRICE_MAX = 1_000_000
+const PLACE_CODE = /^\d{4}$/
+
 export const SubmitBodySchema = Schema.Struct({
   id: Schema.UUID,
   commodityId: Schema.String,
   outlet: OutletSchema,
-  price: Schema.Int.pipe(Schema.between(100, 1_000_000)),
-  placeCode: Schema.String.pipe(Schema.pattern(/^\d{4}$/)),
+  price: Schema.Int.pipe(Schema.between(REPORT_PRICE_MIN, REPORT_PRICE_MAX)),
+  placeCode: Schema.String.pipe(Schema.pattern(PLACE_CODE)),
   alias: Schema.NullOr(Schema.String.pipe(Schema.maxLength(40))),
   photo: Schema.Boolean,
   turnstileToken: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(2048)),
@@ -178,6 +182,21 @@ const URL_LIKE = /https?:\/\/|www\./i
 /** Alias text that would publish a link. */
 export function aliasHasUrl(alias: string): boolean {
   return URL_LIKE.test(alias)
+}
+
+export type ReportField = "price" | "place" | "alias"
+export type ReportFieldErrors = Partial<Record<ReportField, string>>
+
+/** Field messages the visitor can fix before a check token is spent. Same bounds as SubmitBodySchema. */
+export function reportFieldErrors(input: { price: number | null; placeCode: string; alias: string }): ReportFieldErrors {
+  const errors: ReportFieldErrors = {}
+  if (input.price == null) errors.price = "Isi harga yang Anda lihat."
+  else if (!Number.isInteger(input.price) || input.price < REPORT_PRICE_MIN || input.price > REPORT_PRICE_MAX) {
+    errors.price = "Harga harus antara Rp 100 dan Rp 1.000.000."
+  }
+  if (!PLACE_CODE.test(input.placeCode)) errors.place = "Pilih kota atau kabupaten."
+  if (aliasHasUrl(input.alias)) errors.alias = "Nama panggilan tidak boleh berisi tautan."
+  return errors
 }
 
 /** The outlet the map is not showing. Province medians still read both. */

@@ -1,16 +1,29 @@
 import { useId, useState, type ReactNode, type SelectHTMLAttributes } from "react"
 import { Input, Select, buttonClass, cardClass, cn, focusRing, type InputProps } from "./primitives.tsx"
 
-type FieldInputProps = InputProps & { label: string; hideLabel?: boolean; hint?: string; error?: string; wrapperClassName?: string }
+type FieldInputProps = InputProps & {
+  label: string
+  hideLabel?: boolean
+  hint?: string
+  error?: string
+  /** Short fixed text inside the field before the value, such as a currency. */
+  leading?: string
+  wrapperClassName?: string
+}
 
 /** Keep the visible label and validation feedback connected to the input. */
-export function FieldInput({ label, hideLabel = false, hint, error, wrapperClassName, id, ...rest }: FieldInputProps) {
+export function FieldInput({ label, hideLabel = false, hint, error, leading, wrapperClassName, id, className, ...rest }: FieldInputProps) {
   const autoId = useId()
   const fieldId = id ?? autoId
   const description = [rest["aria-describedby"], hint ? `${fieldId}-hint` : null, error ? `${fieldId}-error` : null].filter(Boolean).join(" ") || undefined
   return <div className={cn("flex flex-col gap-1", wrapperClassName)}>
     <label htmlFor={fieldId} className={cn("text-sm text-slate", hideLabel && "sr-only")}>{label}</label>
-    <Input {...rest} id={fieldId} aria-describedby={description} aria-invalid={error ? true : rest["aria-invalid"]} />
+    {leading == null
+      ? <Input {...rest} id={fieldId} className={className} aria-describedby={description} aria-invalid={error ? true : rest["aria-invalid"]} />
+      : <div className="relative">
+        <span aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-semibold text-ink">{leading}</span>
+        <Input {...rest} id={fieldId} className={cn("h-11 w-full py-0 pr-3 pl-10", className)} aria-describedby={description} aria-invalid={error ? true : rest["aria-invalid"]} />
+      </div>}
     {hint ? <p id={`${fieldId}-hint`} className="text-xs text-slate">{hint}</p> : null}
     {error ? <p id={`${fieldId}-error`} className="text-xs text-ember">{error}</p> : null}
   </div>
@@ -47,7 +60,7 @@ export function ChevronBadge({ flipped }: { flipped?: boolean }) {
 /** Single-line combobox trigger. Same height, radius and border as Input and Select. */
 export function fieldTriggerClass(className?: string): string {
   return cn(
-    "flex h-11 w-full items-center gap-2 rounded-lg border border-hairline bg-paper pr-1.5 pl-3 text-left text-sm font-semibold text-ink",
+    "flex h-11 w-full items-center gap-2 rounded-lg border border-hairline bg-paper pr-1.5 pl-3 text-left text-sm font-semibold text-ink aria-invalid:border-ember",
     focusRing,
     press,
     className,

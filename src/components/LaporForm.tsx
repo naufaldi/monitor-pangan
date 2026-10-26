@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState, type FormEvent } from "react"
+import { useEffect, useId, useRef, useState, type FormEvent } from "react"
+import { Link } from "@tanstack/react-router"
 import { Data, Effect, Schema } from "effect"
-import { Button, Card, FieldInput, FieldSelect, FileInput, Input, StatusMessage, buttonClass } from "@monitor-pangan/ui"
+import { Button, Card, FieldInput, FieldSelect, FileInput, StatusMessage, buttonClass } from "@monitor-pangan/ui"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { PlaceSelect } from "#/components/PlaceSelect.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { fetchTurnstileSiteKey, postReport, putPhoto, LaporanClientError } from "#/data/laporan-client.ts"
-import { SAVED_COPY, SubmitBodySchema, aliasHasUrl, type Outlet } from "#/data/laporan.ts"
+import { SAVED_COPY, SubmitBodySchema, reportFieldErrors, type Outlet, type ReportField, type ReportFieldErrors } from "#/data/laporan.ts"
 import { formatRupiahAmount, parseRupiahInput } from "#/lib/format.ts"
 import { downscaleToJpeg } from "#/lib/photo.ts"
 import { receiptLink } from "#/data/receipt.ts"
@@ -16,6 +17,7 @@ class CheckNotReady extends Data.TaggedError("CheckNotReady")<{}> {}
 
 const DraftSchema = SubmitBodySchema.omit("turnstileToken")
 const KEEPS_INPUT = "Isian Anda tetap tersimpan."
+const FIELD_ORDER: readonly ReportField[] = ["price", "place", "alias"]
 
 type CheckNotice = { tone: "loading" | "empty" | "error"; title: string; detail?: string; retry: boolean }
 
@@ -25,7 +27,9 @@ function checkNotice(state: TurnstileState): CheckNotice | null {
     case "Spent":
       return null
     case "Loading":
-      return { tone: "loading", title: "Menyiapkan pemeriksaan kiriman.", retry: false }
+      return { tone: "loading", title: "Menyiapkan pemeriksaan kiriman…", retry: false }
+    case "Interactive":
+      return { tone: "empty", title: "Centang kotak pemeriksaan di atas untuk mengirim laporan.", retry: false }
     case "Unconfigured":
       return { tone: "empty", title: "Pengiriman laporan belum dibuka.", detail: "Pemeriksaan kiriman belum diaktifkan.", retry: false }
     case "Expired":
@@ -76,6 +80,11 @@ export function LaporForm() {
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null)
   const [photoFailed, setPhotoFailed] = useState(false)
   const [pending, setPending] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<ReportFieldErrors>({})
+  // A new key mounts a fresh check after a sent report; the previous widget is disposed on success.
+  const [widgetKey, setWidgetKey] = useState(0)
+  const idPrefix = useId()
+  const fieldId = (field: ReportField) => `${idPrefix}-${field}`
   const widgetRef = useRef<HTMLDivElement | null>(null)
   const widget = useRef<TurnstileWidget | null>(null)
   const busy = useRef(false)
@@ -111,7 +120,7 @@ export function LaporForm() {
       mounted.dispose()
       if (widget.current === mounted) widget.current = null
     }
-  }, [siteKey])
+  }, [siteKey, widgetKey])
 
   const retryCheck = () => {
     if (check._tag === "Failed" && check.cause === "config") setMetaAttempt((attempt) => attempt + 1)
@@ -124,8 +133,12 @@ export function LaporForm() {
     setError(null)
     const parsedPrice = price ?? Number.NaN
     const aliasValue = alias.trim() === "" ? null : alias.trim()
-    if (aliasValue != null && aliasHasUrl(aliasValue)) {
-      setError("Alias tidak boleh berisi tautan.")
+    // Field mistakes are answered here, before a check token can be spent on a request.
+    const errors = reportFieldErrors({ price, placeCode, alias: aliasValue ?? "" })
+    setFieldErrors(errors)
+    const firstInvalid = FIELD_ORDER.find((field) => errors[field] != null)
+    if (firstInvalid != null) {
+      document.getElementById(fieldId(firstInvalid))?.focus()
       return
     }
     busy.current = true
@@ -184,6 +197,21 @@ export function LaporForm() {
     )
   }
 
+  const clearFieldError = (field: ReportField) => setFieldErrors((current) => (current[field] == null ? current : { ...current, [field]: undefined }))
+
+  // Keeps commodity, outlet, place and alias: a second report is usually from the same market.
+  const reportAnother = () => {
+    submissionId.current = null
+    busy.current = false
+    setPrice(null)
+    setFile(null)
+    setPhotoFailed(false)
+    setReceiptUrl(null)
+    setSavedId(null)
+    setCheck({ _tag: "Loading" })
+    setWidgetKey((key) => key + 1)
+  }
+
   if (savedId != null) {
     return (
       <Card padding="lg" className="flex flex-col gap-2">
@@ -194,11 +222,16 @@ export function LaporForm() {
           <p className="text-sm text-slate">Simpan tautan status ini. Siapa pun yang memilikinya dapat melihat status laporan. Tautan tidak membuka foto, alias, atau catatan moderator.</p>
         </> : <p className="text-sm text-slate">Tautan privat hanya diberikan saat laporan pertama kali tersimpan. Tautan tidak dapat diterbitkan ulang dari nomor laporan.</p>}
         {photoFailed ? <p className="text-sm text-slate">Foto tidak terunggah. Laporan tetap menunggu tinjauan.</p> : null}
+        <div className="flex flex-wrap gap-2 pt-2">
+          <Button variant="rect" onClick={reportAnother}>Lapor harga lain</Button>
+          <Link to="/laporan" className={buttonClass("rect", false, "inline-flex items-center")}>Lihat Laporan Warga</Link>
+        </div>
       </Card>
     )
   }
 
   const notice = checkNotice(check)
+  const unit = COMMODITIES.find((commodity) => commodity.id === commodityId)?.unit ?? "kg"
 
   return (
     <form onSubmit={onSubmit} className="flex w-full max-w-xl flex-col gap-4">
@@ -211,24 +244,40 @@ export function LaporForm() {
         <option value="pasar">Pasar</option>
         <option value="ritel">Ritel</option>
       </FieldSelect>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-slate">Harga</span>
-        <div className="relative">
-          <span aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-semibold">
-            Rp
-          </span>
-          <Input
-            inputMode="numeric"
-            autoComplete="off"
-            value={price == null ? "" : formatRupiahAmount(price)}
-            onChange={(event) => setPrice(parseRupiahInput(event.target.value))}
-            aria-label="Harga"
-            className="h-11 w-full py-0 pr-3 pl-10 tabular-nums"
-          />
-        </div>
-      </label>
-      <PlaceSelect value={placeCode} onChange={setPlaceCode} />
-      <FieldInput label="Nama panggilan, boleh kosong" value={alias} maxLength={40} onChange={(event) => setAlias(event.target.value)} aria-label="Nama panggilan" />
+      <FieldInput
+        id={fieldId("price")}
+        label={`Harga per ${unit}`}
+        leading="Rp"
+        inputMode="numeric"
+        autoComplete="off"
+        value={price == null ? "" : formatRupiahAmount(price)}
+        onChange={(event) => {
+          setPrice(parseRupiahInput(event.target.value))
+          clearFieldError("price")
+        }}
+        error={fieldErrors.price}
+        className="tabular-nums"
+      />
+      <PlaceSelect
+        id={fieldId("place")}
+        value={placeCode}
+        onChange={(code) => {
+          setPlaceCode(code)
+          clearFieldError("place")
+        }}
+        error={fieldErrors.place}
+      />
+      <FieldInput
+        id={fieldId("alias")}
+        label="Nama panggilan, boleh kosong"
+        value={alias}
+        maxLength={40}
+        onChange={(event) => {
+          setAlias(event.target.value)
+          clearFieldError("alias")
+        }}
+        error={fieldErrors.alias}
+      />
       <FileInput label="Foto, boleh kosong" accept="image/*" onFile={setFile} />
       <div ref={widgetRef} />
       {notice != null ? (
@@ -243,15 +292,16 @@ export function LaporForm() {
       {error != null ? (
         <StatusMessage tone="error" title={error} />
       ) : null}
-      <Button type="submit" variant="primary" disabled={pending || check._tag !== "Ready"}>
-        Kirim laporan
+      {/* Stays pressable while the check runs, so field mistakes surface before the visitor waits on it. */}
+      <Button type="submit" variant="primary" disabled={pending || check._tag === "Unconfigured"} aria-busy={pending || undefined}>
+        {pending ? "Mengirim laporan…" : "Kirim laporan"}
       </Button>
     </form>
   )
 }
 
 function submitError(failure: LaporanClientError | CheckNotReady, withPhoto: boolean): string {
-  if (failure._tag === "CheckNotReady") return "Pemeriksaan kiriman belum siap. Tunggu hingga selesai, lalu kirim lagi."
+  if (failure._tag === "CheckNotReady") return "Selesaikan pemeriksaan kiriman di atas, lalu kirim lagi."
   // The Worker answers 503 only when a photo is attached and photo upload is not configured.
   if (failure.status === 503 && withPhoto) {
     return "Unggahan foto belum tersedia, jadi laporan belum terkirim. Isian dan foto tetap tersimpan; coba lagi nanti."

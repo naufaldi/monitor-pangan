@@ -11,3 +11,11 @@ it.effect("connects a field label, unit hint and validation message without losi
   assert.ok(html.includes('aria-invalid="true"'))
   assert.ok(html.includes('id="quantity-error"'))
 }))
+
+it.effect("keeps a leading currency outside the accessible value and still links the error", () => Effect.sync(() => {
+  const html = renderToStaticMarkup(createElement(FieldInput, { id: "harga", label: "Harga per kg", leading: "Rp", error: "Isi harga." }))
+  assert.ok(html.includes('aria-hidden="true"'))
+  assert.ok(html.includes('>Rp</span>'))
+  assert.ok(html.includes('aria-describedby="harga-error"'))
+  assert.ok(html.includes('aria-invalid="true"'))
+}))

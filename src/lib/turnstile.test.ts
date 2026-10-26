@@ -137,7 +137,7 @@ it.effect("reports a challenge failure and recovers through retry", () =>
   }),
 )
 
-it.effect("drops an expired or timed-out token and says so", () =>
+it.effect("drops an expired token and says so", () =>
   Effect.sync(() => {
     const browser = fakeBrowser()
     const form = mounted(browser)
@@ -146,9 +146,34 @@ it.effect("drops an expired or timed-out token and says so", () =>
     browser.widget("w1")["expired-callback"]()
     assert.strictEqual(form.last(), "Expired")
     assert.strictEqual(form.widget.take(), null)
-    browser.widget("w1").callback("again")
+  }),
+)
+
+it.effect("asks the visitor to answer a visible challenge instead of saying it is still loading", () =>
+  Effect.sync(() => {
+    const browser = fakeBrowser()
+    const form = mounted(browser)
+    browser.scriptLoads(browser.scripts[0]!)
+    browser.widget("w1")["before-interactive-callback"]()
+    assert.strictEqual(form.last(), "Interactive")
+    assert.strictEqual(form.widget.take(), null)
+    browser.widget("w1")["after-interactive-callback"]()
+    assert.strictEqual(form.last(), "Loading")
+    browser.widget("w1").callback("token")
+    assert.strictEqual(form.last(), "Ready")
+    assert.strictEqual(form.widget.take(), "token")
+  }),
+)
+
+it.effect("treats an unanswered challenge timeout as waiting for the visitor, not as an error", () =>
+  Effect.sync(() => {
+    const browser = fakeBrowser()
+    const form = mounted(browser)
+    browser.scriptLoads(browser.scripts[0]!)
+    browser.widget("w1")["before-interactive-callback"]()
     browser.widget("w1")["timeout-callback"]()
-    assert.strictEqual(form.last(), "Expired")
+    assert.strictEqual(form.last(), "Interactive")
+    assert.isFalse(form.states.some((state) => state._tag === "Expired" || state._tag === "Failed"))
     assert.strictEqual(form.widget.take(), null)
   }),
 )
