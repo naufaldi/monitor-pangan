@@ -8,6 +8,22 @@ const config = defineConfig({
     port: 3001,
   },
   resolve: { tsconfigPaths: true },
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [{
+            // Keep generated commodity histories out of the shared runtime chunk.
+            name: (id) => {
+              const commodity = /[\\/]data[\\/]trends[\\/]([a-z-]+)\.gen\.ts$/.exec(id)?.[1]
+              return commodity == null ? null : `trend-${commodity}`
+            },
+            test: /[\\/]data[\\/]trends[\\/]/,
+          }],
+        },
+      },
+    },
+  },
   plugins: [
     tailwindcss(),
     tanstackStart({

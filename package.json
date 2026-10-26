@@ -12,8 +12,8 @@
   ],
   "scripts": {
     "dev": "vite dev --port 3001",
-    "generate-routes": "tsr generate",
-    "build": "tsr generate && vite build && node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/stamp-social-html.mjs",
+    "generate-routes": "node scripts/generate-routes.mjs generate",
+    "build": "pnpm generate-routes && vite build && node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/stamp-social-html.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

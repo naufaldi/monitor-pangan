@@ -2,6 +2,7 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { Effect, Schema } from "effect";
 import { ArchiveError, io, readRaw, summarizeRaw, timestamp } from "./pihps-scrape.mjs";
 import { mondayOf, monthBucket } from "../src/lib/civil-date.ts";
+import { renderTrendModules } from "./trend-modules.ts";
 
 Effect.runPromise(Effect.gen(function* () {
 const now = yield* timestamp;
@@ -221,17 +222,11 @@ yield* io(() => writeFile(
   "src/data/prices.gen.ts",
   `export const LIVE_PRICES: Record<string, number> = {\n${recentEntries.join("\n")}\n};\n`,
 ));
-const series = (store) =>
-  [...store.entries()]
-    .map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)},`)
-    .join("\n");
-yield* io(() => writeFile(
-  "src/data/trends.gen.ts",
-  `export const TREND_WEEKS: string[] = ${JSON.stringify(weeks)};\n` +
-    `export const TREND_WEEKLY: Record<string, (number|null)[]> = {\n${series(weekly)}\n};\n` +
-    `export const TREND_MONTHS: string[] = ${JSON.stringify(months)};\n` +
-    `export const TREND_MONTHLY: Record<string, (number|null)[]> = {\n${series(monthly)}\n};\n`,
-));
+yield* io(() => mkdir("src/data/trends", { recursive: true }));
+const trendModules = renderTrendModules({ weeks, weekly: Object.fromEntries(weekly), months, monthly: Object.fromEntries(monthly) });
+for (const [path, source] of Object.entries(trendModules)) {
+  yield* io(() => writeFile(`src/data/${path}`, source));
+}
 yield* io(() => writeFile(
   "src/data/snapshot.gen.ts",
   `export const SNAPSHOT_META: { level: string; source: string; pricesLive: boolean; fetchedAt: string; dates: string[]; liveDates: string[] } = ${JSON.stringify({ level: "eceran", source: "pihps", pricesLive: liveTotal > 0, fetchedAt: now, dates: allDates, liveDates: [...liveByDate.keys()].sort() }, null, 2)};\n`,
