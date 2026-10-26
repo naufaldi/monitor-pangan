@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
-import { Effect, Schema } from "effect"
+import { Data, Effect, Schema } from "effect"
 import { Button, Card, FieldSelect, FileInput, Input, StatusMessage } from "@monitor-pangan/ui"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { PlaceSelect } from "#/components/PlaceSelect.tsx"
@@ -8,17 +8,55 @@ import { fetchTurnstileSiteKey, postReport, putPhoto, LaporanClientError } from 
 import { SAVED_COPY, SubmitBodySchema, aliasHasUrl, type Outlet } from "#/data/laporan.ts"
 import { formatRupiahAmount, parseRupiahInput } from "#/lib/format.ts"
 import { downscaleToJpeg } from "#/lib/photo.ts"
+import { browserTurnstileLoader, mountTurnstile, type TurnstileState, type TurnstileWidget } from "#/lib/turnstile.ts"
 
-type TurnstileApi = {
-  render: (
-    element: HTMLElement,
-    options: {
-      sitekey: string
-      callback: (token: string) => void
-      "expired-callback": () => void
-      "error-callback": () => void
-    },
-  ) => void
+/** The check was not Ready when the report was about to be sent. */
+class CheckNotReady extends Data.TaggedError("CheckNotReady")<{}> {}
+
+const DraftSchema = SubmitBodySchema.omit("turnstileToken")
+const KEEPS_INPUT = "Isian Anda tetap tersimpan."
+
+type CheckNotice = { tone: "loading" | "empty" | "error"; title: string; detail?: string; retry: boolean }
+
+function checkNotice(state: TurnstileState): CheckNotice | null {
+  switch (state._tag) {
+    case "Ready":
+    case "Spent":
+      return null
+    case "Loading":
+      return { tone: "loading", title: "Menyiapkan pemeriksaan kiriman.", retry: false }
+    case "Unconfigured":
+      return { tone: "empty", title: "Pengiriman laporan belum dibuka.", detail: "Pemeriksaan kiriman belum diaktifkan.", retry: false }
+    case "Expired":
+      return { tone: "error", title: "Pemeriksaan kiriman kedaluwarsa.", detail: `Ulangi pemeriksaan sebelum mengirim. ${KEEPS_INPUT}`, retry: true }
+    case "Failed":
+      switch (state.cause) {
+        case "config":
+          return { tone: "error", title: "Pemeriksaan kiriman gagal dimuat.", detail: `Server tidak terjangkau. Coba lagi. ${KEEPS_INPUT}`, retry: true }
+        case "script":
+          return {
+            tone: "error",
+            title: "Pemeriksaan kiriman gagal dimuat.",
+            detail: `Periksa koneksi atau pemblokir iklan, lalu coba lagi. ${KEEPS_INPUT}`,
+            retry: true,
+          }
+        case "challenge":
+          return {
+            tone: "error",
+            title: "Pemeriksaan kiriman tidak lolos.",
+            detail: `Coba lagi. Bila terus gagal, coba peramban atau jaringan lain. ${KEEPS_INPUT}${state.code == null ? "" : ` Kode ${state.code}.`}`,
+            retry: true,
+          }
+        default: {
+          const _exhaustive: never = state.cause
+          return _exhaustive
+        }
+      }
+    default: {
+      const _exhaustive: never = state
+      return _exhaustive
+    }
+  }
 }
 
 /** Citizen report form. No account. The photo is optional and uploaded straight to R2. */
@@ -30,45 +68,52 @@ export function LaporForm() {
   const [alias, setAlias] = useState("")
   const [file, setFile] = useState<File | null>(null)
   const [siteKey, setSiteKey] = useState<string | null>(null)
-  const [token, setToken] = useState("")
+  const [metaAttempt, setMetaAttempt] = useState(0)
+  const [check, setCheck] = useState<TurnstileState>({ _tag: "Loading" })
   const [error, setError] = useState<string | null>(null)
   const [savedId, setSavedId] = useState<string | null>(null)
   const [photoFailed, setPhotoFailed] = useState(false)
   const [pending, setPending] = useState(false)
   const widgetRef = useRef<HTMLDivElement | null>(null)
+  const widget = useRef<TurnstileWidget | null>(null)
   const busy = useRef(false)
 
   useEffect(() => {
+    let live = true
+    setCheck({ _tag: "Loading" })
     void Effect.runPromise(
       fetchTurnstileSiteKey.pipe(
         Effect.match({
-          onFailure: () => setSiteKey(null),
-          onSuccess: (key) => setSiteKey(key),
+          onFailure: () => {
+            if (live) setCheck({ _tag: "Failed", cause: "config" })
+          },
+          onSuccess: (key) => {
+            if (!live) return
+            if (key == null) setCheck({ _tag: "Unconfigured" })
+            setSiteKey(key)
+          },
         }),
       ),
     )
-  }, [])
+    return () => {
+      live = false
+    }
+  }, [metaAttempt])
 
   useEffect(() => {
     if (siteKey == null || widgetRef.current == null) return
-    const element = widgetRef.current
-    const script = document.createElement("script")
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-    script.async = true
-    script.onload = () => {
-      const turnstile = (window as Window & { turnstile?: TurnstileApi }).turnstile
-      if (turnstile == null) return
-      const clearToken = () => setToken("")
-      turnstile.render(element, {
-        sitekey: siteKey,
-        callback: setToken,
-        "expired-callback": clearToken,
-        "error-callback": clearToken,
-      })
+    const mounted = mountTurnstile(widgetRef.current, siteKey, browserTurnstileLoader, setCheck)
+    widget.current = mounted
+    return () => {
+      mounted.dispose()
+      if (widget.current === mounted) widget.current = null
     }
-    document.body.append(script)
-    return () => script.remove()
   }, [siteKey])
+
+  const retryCheck = () => {
+    if (check._tag === "Failed" && check.cause === "config") setMetaAttempt((attempt) => attempt + 1)
+    else widget.current?.retry()
+  }
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -90,14 +135,19 @@ export function LaporForm() {
       placeCode,
       alias: aliasValue,
       photo: file != null,
-      turnstileToken: token,
     }
     void Effect.runPromise(
       Effect.gen(function* () {
-        const body = yield* Schema.decodeUnknown(SubmitBodySchema)(raw).pipe(
+        const draft = yield* Schema.decodeUnknown(DraftSchema)(raw).pipe(
           Effect.mapError(() => new LaporanClientError({ status: 400 })),
         )
         const jpeg = file == null ? null : yield* downscaleToJpeg(file).pipe(Effect.mapError(() => new LaporanClientError({ status: 400 })))
+        // Taken only after local checks: Siteverify spends it on any request that reaches the server.
+        const turnstileToken = widget.current?.take() ?? null
+        if (turnstileToken == null) return yield* Effect.fail(new CheckNotReady())
+        const body = yield* Schema.decodeUnknown(SubmitBodySchema)({ ...draft, turnstileToken }).pipe(
+          Effect.mapError(() => new LaporanClientError({ status: 400 })),
+        )
         const saved = yield* postReport(body)
         if (jpeg != null && saved.uploadUrl != null) {
           yield* putPhoto(saved.uploadUrl, jpeg).pipe(
@@ -112,12 +162,14 @@ export function LaporForm() {
         return saved.id
       }).pipe(
         Effect.match({
-          onFailure: () => {
+          onFailure: (failure) => {
+            widget.current?.release()
             busy.current = false
-            setError("Laporan tidak tersimpan. Periksa isian dan coba lagi.")
+            setError(submitError(failure, file != null))
             setPending(false)
           },
           onSuccess: (id) => {
+            widget.current?.dispose()
             setSavedId(id)
             setPending(false)
           },
@@ -135,6 +187,8 @@ export function LaporForm() {
       </Card>
     )
   }
+
+  const notice = checkNotice(check)
 
   return (
     <form onSubmit={onSubmit} className="flex w-full max-w-xl flex-col gap-4">
@@ -170,13 +224,30 @@ export function LaporForm() {
       </label>
       <FileInput label="Foto, boleh kosong" accept="image/*" onFile={setFile} />
       <div ref={widgetRef} />
-      {siteKey == null ? <p className="text-sm text-slate">Pemeriksaan kiriman belum siap.</p> : null}
+      {notice != null ? (
+        <StatusMessage
+          tone={notice.tone}
+          title={notice.title}
+          action={notice.retry ? <Button onClick={retryCheck} disabled={pending}>Coba lagi</Button> : null}
+        >
+          {notice.detail}
+        </StatusMessage>
+      ) : null}
       {error != null ? (
         <StatusMessage tone="error" title={error} />
       ) : null}
-      <Button type="submit" variant="primary" disabled={pending || token.length === 0}>
+      <Button type="submit" variant="primary" disabled={pending || check._tag !== "Ready"}>
         Kirim laporan
       </Button>
     </form>
   )
+}
+
+function submitError(failure: LaporanClientError | CheckNotReady, withPhoto: boolean): string {
+  if (failure._tag === "CheckNotReady") return "Pemeriksaan kiriman belum siap. Tunggu hingga selesai, lalu kirim lagi."
+  // The Worker answers 503 only when a photo is attached and photo upload is not configured.
+  if (failure.status === 503 && withPhoto) {
+    return "Unggahan foto belum tersedia, jadi laporan belum terkirim. Isian dan foto tetap tersimpan; coba lagi nanti."
+  }
+  return "Laporan tidak tersimpan. Periksa isian dan coba lagi."
 }
