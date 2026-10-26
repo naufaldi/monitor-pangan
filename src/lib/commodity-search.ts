@@ -21,8 +21,10 @@ const TimeframeSchema = Schema.Literal(...TIMEFRAMES.map((timeframe) => timefram
 /** Geography is valid even when PIHPS has no observations for it. */
 export function parseProvinceSearch(search: Record<string, unknown>): ProvinceSearch {
   const commodity = parseCommoditySearch(search)
-  return Schema.is(ProvinceCodeSchema)(search.provinsi)
-    ? { ...commodity, provinsi: search.provinsi }
+  // TanStack JSON-parses unquoted query values, so ?provinsi=31 arrives as 31.
+  const province = typeof search.provinsi === "number" && Number.isSafeInteger(search.provinsi) ? String(search.provinsi) : search.provinsi
+  return Schema.is(ProvinceCodeSchema)(province)
+    ? { ...commodity, provinsi: province }
     : commodity
 }
 

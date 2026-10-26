@@ -8,6 +8,7 @@ import { DatePicker } from "#/components/DatePicker.tsx"
 import { MapView } from "#/components/MapView.tsx"
 import { PriceTable } from "#/components/PriceTable.tsx"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
+import { SnapshotCoverage } from "#/components/PriceFreshness.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { fetchSnapshot } from "#/data/api-client.ts"
 import { usePriceRequest } from "#/data/price-request.ts"
@@ -33,7 +34,8 @@ function HomePage() {
   const rev = useVintage()
   const dates = useMemo(() => provider.dates(), [rev])
   const provinces = useMemo(() => provider.provinces(), [])
-  const search = Route.useSearch()
+  // Router merges raw search into matches; validate the object we actually consume.
+  const search = parseHomeSearch(Route.useSearch(), dates)
   const navigate = Route.useNavigate()
   const rawDate = useRouterState({ select: (state) => state.location.search.tanggal })
   const date = homeSelectedDate(search, dates, latestLiveDate())
@@ -128,6 +130,7 @@ function HomeSnapshot({ snapshotKey, snapshot, provinces, selectedCode, onSelect
   const min = prices.length > 0 ? Math.min(...prices) : null
   const max = prices.length > 0 ? Math.max(...prices) : null
   return <>
+        <SnapshotCoverage pricedCount={snapshot.pricedCount} total={snapshot.rows.length} date={snapshot.date} />
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <MapView

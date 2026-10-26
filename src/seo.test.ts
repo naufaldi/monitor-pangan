@@ -17,7 +17,7 @@ import {
   stampRouteHtml,
 } from "./seo.ts"
 
-const IDS = ["home", "tren", "daya-beli", "laporan", "lapor"] as const
+const IDS = ["home", "tren", "provinsi", "daya-beli", "laporan", "lapor"] as const
 
 it.effect("keeps static browser metadata aligned with the canvas token", () =>
   Effect.sync(() => assert.strictEqual(THEME_COLOR, color.canvas)),
@@ -40,7 +40,7 @@ it.effect("route copy is Indonesian, unique, and safe to stamp into HTML", () =>
         assert.ok(route.description.includes("PIHPS"))
       }
     }
-    assert.strictEqual(titles.size, 5)
+    assert.strictEqual(titles.size, 6)
   }),
 )
 
@@ -48,6 +48,7 @@ it.effect("social URLs are absolute and canonical URLs drop the commodity query"
   Effect.sync(() => {
     assert.strictEqual(absoluteUrl("/"), `${SITE_ORIGIN}/`)
     assert.strictEqual(absoluteUrl("/tren"), `${SITE_ORIGIN}/tren`)
+    assert.strictEqual(absoluteUrl("/provinsi"), `${SITE_ORIGIN}/provinsi`)
     assert.strictEqual(absoluteUrl("/daya-beli"), `${SITE_ORIGIN}/daya-beli`)
     assert.strictEqual(absoluteUrl("/laporan"), `${SITE_ORIGIN}/laporan`)
     assert.strictEqual(absoluteUrl("/lapor"), `${SITE_ORIGIN}/lapor`)

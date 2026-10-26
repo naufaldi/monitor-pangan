@@ -1,7 +1,7 @@
 import type { FocusEvent } from "react"
 import { Link, useSearch } from "@tanstack/react-router"
 import { navPillClass } from "@monitor-pangan/ui"
-import { parseCommoditySearch, parseProvinceSearch, parseTrendSearch } from "#/lib/commodity-search.ts"
+import { parseCommoditySearch, parseOverviewSearch, parseProvinceSearch, parseTrendSearch } from "#/lib/commodity-search.ts"
 
 const linkProps = {
   activeProps: { className: navPillClass(true) },
@@ -22,6 +22,9 @@ export function Navbar() {
       </Link>
       <Link to="/tren" search={parseTrendSearch(raw as Record<string, unknown>)} {...linkProps}>
         Grafik
+      </Link>
+      <Link to="/provinsi" search={parseOverviewSearch(raw as Record<string, unknown>)} {...linkProps}>
+        Provinsi
       </Link>
       <Link to="/daya-beli" search={parseCommoditySearch(raw as Record<string, unknown>)} {...linkProps}>
         Daya Beli

@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
-import { createMemoryHistory } from "@tanstack/react-router"
+import { createMemoryHistory, defaultParseSearch, createRootRoute, createRoute, createRouter } from "@tanstack/react-router"
 import { parseCommoditySearch, parseHomeSearch, homeSelectedDate, parseTrendSearch, parseProvinceSearch, parseOverviewSearch } from "./commodity-search.ts"
 
 it.effect("keeps a known komoditas search param and drops unknown ids", () =>
@@ -70,7 +70,33 @@ it.effect("home retains a valid province even when it has no surveyed prices", (
   assert.deepStrictEqual(parseHomeSearch({ komoditas: "beras", provinsi: "95" }, []), {
     komoditas: "beras", provinsi: "95",
   })
-  for (const provinsi of ["unknown", 31, ["31"], {}, null]) {
+  for (const provinsi of ["unknown", 999, ["31"], {}, null]) {
     assert.deepStrictEqual(parseHomeSearch({ provinsi }, []), {})
+  }
+}))
+
+it.effect("normalizes real router numeric province query values before reading them", () => Effect.sync(() => {
+  const raw: Record<string, unknown> = defaultParseSearch("?komoditas=beras&provinsi=31&rentang=7d")
+  assert.strictEqual(raw.provinsi, 31)
+  assert.deepStrictEqual(parseHomeSearch(raw, []), { komoditas: "beras", provinsi: "31" })
+  assert.deepStrictEqual(parseTrendSearch(raw), { komoditas: "beras", provinsi: "31", rentang: "7d" })
+  assert.deepStrictEqual(parseOverviewSearch(raw), { komoditas: "beras", provinsi: "31" })
+}))
+
+it.effect("actual router boundary safely consumes numeric, invalid and object province search on all routes", () => Effect.sync(() => {
+  const root = createRootRoute()
+  const home = createRoute({ getParentRoute: () => root, path: "/", validateSearch: (raw: Record<string, unknown>) => parseHomeSearch(raw, []) })
+  const trend = createRoute({ getParentRoute: () => root, path: "/tren", validateSearch: parseTrendSearch })
+  const overview = createRoute({ getParentRoute: () => root, path: "/provinsi", validateSearch: parseOverviewSearch })
+  const routeTree = root.addChildren([home, trend, overview])
+  for (const path of ["/", "/tren", "/provinsi"]) {
+    for (const [query, expected] of [["31", "31"], ["999", undefined], ["%7B%22code%22%3A31%7D", undefined]] as const) {
+      const router = createRouter({ routeTree, history: createMemoryHistory({ initialEntries: [`${path}?komoditas=beras&provinsi=${query}`] }) })
+      const raw = router.matchRoutes(router.state.location).at(-1)!.search
+      const consumed = path === "/" ? parseHomeSearch(raw, []) : path === "/tren" ? parseTrendSearch(raw) : parseOverviewSearch(raw)
+      assert.strictEqual(consumed.provinsi, expected ?? (path === "/provinsi" ? "31" : undefined))
+      assert.strictEqual(consumed.komoditas, "beras")
+      router.history.destroy()
+    }
   }
 }))

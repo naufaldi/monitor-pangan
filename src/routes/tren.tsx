@@ -43,7 +43,7 @@ function TrenPage() {
   const sourceNote = usePageSourceNote(latestLiveDate())
   const dates = useMemo(() => liveSurveyDates(), [rev])
   const provinces = useMemo(() => provider.provinces(), [])
-  const search = Route.useSearch()
+  const search = parseTrendSearch(Route.useSearch())
   const navigate = Route.useNavigate()
   const commodityId = search.komoditas ?? COMMODITIES[0]?.id ?? ""
   const regionCode = search.provinsi ?? null
@@ -80,9 +80,7 @@ function TrenPage() {
 
   const moverRange = `${formatDateShort(from)} – ${formatDateShort(to)}`
   const movers = useMemo(() => commodityMovers(COMMODITIES, regionCode,
-    { from, to, resolution: chip.resolution }, (id, region, range) =>
-      id === commodityId && series != null ? series : provider.trend(id, region, range)),
-    [commodityId, series, regionCode, from, to, chip.resolution, rev])
+    { from, to, resolution: chip.resolution }, provider.trend), [regionCode, from, to, chip.resolution, rev])
   const moverById = useMemo(() => new Map(movers.map((m) => [m.commodityId, m])), [movers])
   const tableRows = useMemo(() => {
     if (series == null) return []
