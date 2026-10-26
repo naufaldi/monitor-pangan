@@ -8,7 +8,7 @@ export function healthStatusCopy(state: FreshnessState): string {
   if (state.healthFailed) return "Status pembaruan PIHPS belum dapat diperiksa."
   switch (state.health?.status) {
     case "ok": return "Pemeriksaan PIHPS selesai."
-    case "waiting": return "Menunggu publikasi PIHPS."
+    case "waiting": return "Pembaruan PIHPS hari ini belum terkonfirmasi."
     case "degraded": return "Pembaruan PIHPS tertunda atau belum lengkap."
     case "unavailable": return "Status pembaruan PIHPS tidak tersedia."
     default: return "Status pembaruan PIHPS belum tersedia."
@@ -27,6 +27,8 @@ export function PriceFreshness() {
       title={healthStatusCopy(freshness)}
       action={!loading || needsRetry ? <Button onClick={retry} disabled={loading}>{needsRetry ? "Coba lagi" : "Periksa lagi"}</Button> : undefined}
     >
+      <p>Pemeriksaan otomatis dijadwalkan Senin–Jumat pukul 14.15 dan 17.15 WIB. Tidak ada pemeriksaan terjadwal pada akhir pekan.</p>
+      <p>Tombol periksa memuat ulang harga dan status layanan; tidak menjalankan pengambilan harga dari PIHPS.</p>
       {freshness.refreshFailed ? <p>Harga yang sudah tersedia tetap ditampilkan. Pembaruan harga gagal; data belum dapat dipastikan mutakhir.</p> : null}
       {health != null ? <>
         <p>Observasi harga terakhir dalam layanan: {health.latestPricedDate == null ? "belum tersedia" : formatDateLong(health.latestPricedDate)}.</p>
