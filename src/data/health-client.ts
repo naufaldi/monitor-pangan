@@ -5,7 +5,7 @@ export class HealthFetchError extends Data.TaggedError("HealthFetchError")<{}> {
 
 /** Only official-price routes start optional pipeline reads. */
 export function isOfficialPricePath(pathname: string): boolean {
-  return /^\/$|^\/(tren|daya-beli|provinsi)\/?$|^\/provinsi\/[^/]+\/?$/.test(pathname)
+  return /^\/$|^\/(tren|daya-beli|provinsi|keranjang)\/?$|^\/provinsi\/[^/]+\/?$/.test(pathname)
 }
 
 /** A 503 can carry useful degraded/unavailable evidence; validate before interpreting it. */

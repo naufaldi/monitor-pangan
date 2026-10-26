@@ -29,6 +29,9 @@ export function Navbar() {
       <Link to="/daya-beli" search={parseCommoditySearch(raw as Record<string, unknown>)} {...linkProps}>
         Daya Beli
       </Link>
+      <Link to="/keranjang" search={search.provinsi == null ? {} : { provinsi: search.provinsi }} {...linkProps}>
+        Keranjang
+      </Link>
       <Link to="/laporan" activeOptions={{ includeSearch: false }} {...linkProps}>
         Laporan Warga
       </Link>

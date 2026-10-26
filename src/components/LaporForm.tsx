@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
 import { Data, Effect, Schema } from "effect"
-import { Button, Card, FieldSelect, FileInput, Input, StatusMessage, buttonClass } from "@monitor-pangan/ui"
+import { Button, Card, FieldInput, FieldSelect, FileInput, Input, StatusMessage, buttonClass } from "@monitor-pangan/ui"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { PlaceSelect } from "#/components/PlaceSelect.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
@@ -228,10 +228,7 @@ export function LaporForm() {
         </div>
       </label>
       <PlaceSelect value={placeCode} onChange={setPlaceCode} />
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-slate">Nama panggilan, boleh kosong</span>
-        <Input value={alias} maxLength={40} onChange={(event) => setAlias(event.target.value)} aria-label="Nama panggilan" />
-      </label>
+      <FieldInput label="Nama panggilan, boleh kosong" value={alias} maxLength={40} onChange={(event) => setAlias(event.target.value)} aria-label="Nama panggilan" />
       <FileInput label="Foto, boleh kosong" accept="image/*" onFile={setFile} />
       <div ref={widgetRef} />
       {notice != null ? (

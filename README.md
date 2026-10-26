@@ -9,6 +9,10 @@ jalur data terpisah.
 - Peta dan tabel PIHPS dengan pilihan komoditas/tanggal yang dapat dibagikan lewat
   URL, ekspor CSV, serta halaman rincian provinsi.
 - Grafik riwayat, perubahan harga, dan perbandingan provinsi.
+- `/keranjang` menghitung estimasi jumlah belanja pilihan Anda dengan harga
+  provinsi pada dua tanggal survei. Harga yang hilang membuat total tidak lengkap.
+  Keranjang dapat disimpan di perangkat, tanpa akun atau berbagi jumlah lewat URL.
+  [Aturan perhitungan dan batas estimasi](docs/product/household-basket.md).
 - Daya Beli membandingkan UMP 2026 (Rp/bulan) dengan harga rata-rata provinsi
   (Rp/kg atau Rp/liter). Bundel UMP sudah diperiksa silang; verifikasi nomor SK
   setiap provinsi belum tuntas. Hasil ini bukan ukuran pendapatan semua warga.

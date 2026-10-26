@@ -52,6 +52,6 @@ it.effect("preserves cached usable prices after failed or empty refreshes", () =
 }).pipe(Effect.ensuring(Effect.sync(clearFreshPrices))))
 
 it.effect("keeps citizen, admin, receipt and unknown paths outside official health reads", () => Effect.sync(() => {
-  for (const path of ["/", "/tren", "/daya-beli/", "/provinsi", "/provinsi/", "/provinsi/31"]) assert.strictEqual(isOfficialPricePath(path), true)
+  for (const path of ["/", "/tren", "/daya-beli/", "/provinsi", "/provinsi/", "/provinsi/31", "/keranjang", "/keranjang/"]) assert.strictEqual(isOfficialPricePath(path), true)
   for (const path of ["/lapor", "/laporan", "/laporan-status", "/admin", "/missing"]) assert.strictEqual(isOfficialPricePath(path), false)
 }))

@@ -13,6 +13,7 @@ if (!index.includes(`<title>${ROUTE_SEO.home.title}</title>`)) {
 }
 
 const pages = [
+  ["keranjang", "dist/client/keranjang.html"],
   ["tren", "dist/client/tren.html"],
   ["provinsi", "dist/client/provinsi.html"],
   ["daya-beli", "dist/client/daya-beli.html"],
