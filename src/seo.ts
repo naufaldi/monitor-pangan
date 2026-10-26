@@ -24,17 +24,24 @@ function searchConsoleVerification(): string {
 
 export const SEARCH_CONSOLE_VERIFICATION = searchConsoleVerification()
 
-export type SeoRouteId = "home" | "tren" | "provinsi" | "daya-beli" | "laporan" | "lapor"
+export type SeoRouteId = "home" | "tren" | "provinsi" | "keranjang" | "daya-beli" | "laporan" | "lapor"
 
 export type RouteSeo = {
   readonly id: SeoRouteId
-  readonly path: "/" | "/tren" | "/provinsi" | "/daya-beli" | "/laporan" | "/lapor"
+  readonly path: "/" | "/tren" | "/provinsi" | "/keranjang" | "/daya-beli" | "/laporan" | "/lapor"
   readonly title: string
   readonly description: string
   readonly keywords: string
 }
 
 export const ROUTE_SEO: Record<SeoRouteId, RouteSeo> = {
+  keranjang: {
+    id: "keranjang",
+    path: "/keranjang",
+    title: "Estimasi Keranjang Pangan — Monitor Pangan",
+    description: "Hitung estimasi belanja dari jumlah pilihan Anda dan rata-rata provinsi PIHPS. Bandingkan dua tanggal survei dengan jumlah yang sama.",
+    keywords: "keranjang pangan, estimasi belanja, harga pangan, PIHPS, provinsi",
+  },
   home: {
     id: "home",
     path: "/",

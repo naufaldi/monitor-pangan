@@ -1,5 +1,20 @@
 import { useId, useState, type ReactNode, type SelectHTMLAttributes } from "react"
-import { Select, buttonClass, cardClass, cn, focusRing } from "./primitives.tsx"
+import { Input, Select, buttonClass, cardClass, cn, focusRing, type InputProps } from "./primitives.tsx"
+
+type FieldInputProps = InputProps & { label: string; hideLabel?: boolean; hint?: string; error?: string; wrapperClassName?: string }
+
+/** Keep the visible label and validation feedback connected to the input. */
+export function FieldInput({ label, hideLabel = false, hint, error, wrapperClassName, id, ...rest }: FieldInputProps) {
+  const autoId = useId()
+  const fieldId = id ?? autoId
+  const description = [rest["aria-describedby"], hint ? `${fieldId}-hint` : null, error ? `${fieldId}-error` : null].filter(Boolean).join(" ") || undefined
+  return <div className={cn("flex flex-col gap-1", wrapperClassName)}>
+    <label htmlFor={fieldId} className={cn("text-sm text-slate", hideLabel && "sr-only")}>{label}</label>
+    <Input {...rest} id={fieldId} aria-describedby={description} aria-invalid={error ? true : rest["aria-invalid"]} />
+    {hint ? <p id={`${fieldId}-hint`} className="text-xs text-slate">{hint}</p> : null}
+    {error ? <p id={`${fieldId}-error`} className="text-xs text-ember">{error}</p> : null}
+  </div>
+}
 
 const press =
   "transition-[scale,background-color,border-color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100"

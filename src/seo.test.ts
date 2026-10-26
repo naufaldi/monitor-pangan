@@ -17,7 +17,7 @@ import {
   stampRouteHtml,
 } from "./seo.ts"
 
-const IDS = ["home", "tren", "provinsi", "daya-beli", "laporan", "lapor"] as const
+const IDS = ["home", "tren", "provinsi", "keranjang", "daya-beli", "laporan", "lapor"] as const
 
 it.effect("keeps static browser metadata aligned with the canvas token", () =>
   Effect.sync(() => assert.strictEqual(THEME_COLOR, color.canvas)),
@@ -40,7 +40,7 @@ it.effect("route copy is Indonesian, unique, and safe to stamp into HTML", () =>
         assert.ok(route.description.includes("PIHPS"))
       }
     }
-    assert.strictEqual(titles.size, 6)
+    assert.strictEqual(titles.size, IDS.length)
   }),
 )
 
