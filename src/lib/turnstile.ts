@@ -6,6 +6,8 @@ export type TurnstileRenderOptions = {
   "expired-callback": () => void
   "error-callback": (code: string) => void
   "timeout-callback": () => void
+  "before-interactive-callback": () => void
+  "after-interactive-callback": () => void
 }
 
 export type TurnstileApi = {
@@ -25,6 +27,8 @@ export type TurnstileHost = {
 /** One owner for the check. Only `Ready` holds a token, and the widget keeps it private. */
 export type TurnstileState =
   | { readonly _tag: "Loading" }
+  /** The widget shows a challenge the visitor has to answer. */
+  | { readonly _tag: "Interactive" }
   | { readonly _tag: "Unconfigured" }
   | { readonly _tag: "Ready" }
   | { readonly _tag: "Spent" }
@@ -128,7 +132,10 @@ export const mountTurnstile = (
           sitekey: siteKey,
           callback: (next) => fromWidget({ _tag: "Ready" }, next),
           "expired-callback": () => fromWidget({ _tag: "Expired" }),
-          "timeout-callback": () => fromWidget({ _tag: "Expired" }),
+          // Turnstile resets an unanswered challenge itself, so the visitor only has to answer it again.
+          "timeout-callback": () => fromWidget({ _tag: "Interactive" }),
+          "before-interactive-callback": () => fromWidget({ _tag: "Interactive" }),
+          "after-interactive-callback": () => fromWidget({ _tag: "Loading" }),
           "error-callback": (code) => fromWidget({ _tag: "Failed", cause: "challenge", code }),
         }),
       ).pipe(Effect.orElseSucceed(() => null)),

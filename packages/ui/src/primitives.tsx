@@ -77,7 +77,7 @@ export function Badge({ tone = "ember", className, ...rest }: BadgeProps) {
 }
 
 export function inputClass(className?: string): string {
-  return cn("min-h-11 rounded-lg border border-hairline bg-paper px-3 py-1.5 text-sm", focusRing, className)
+  return cn("min-h-11 rounded-lg border border-hairline bg-paper px-3 py-1.5 text-sm aria-invalid:border-ember", focusRing, className)
 }
 
 export type InputProps = InputHTMLAttributes<HTMLInputElement> & {

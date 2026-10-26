@@ -1,5 +1,5 @@
 import type { FocusEvent } from "react"
-import { Link, useSearch } from "@tanstack/react-router"
+import { Link, useRouterState, useSearch } from "@tanstack/react-router"
 import { navPillClass } from "@monitor-pangan/ui"
 import { parseCommoditySearch, parseOverviewSearch, parseProvinceSearch, parseTrendSearch } from "#/lib/commodity-search.ts"
 
@@ -15,6 +15,8 @@ const linkProps = {
 export function Navbar() {
   const raw = useSearch({ strict: false })
   const search = parseProvinceSearch(raw as Record<string, unknown>)
+  // The report form and its private status page belong to Laporan Warga, though they are separate routes.
+  const inReports = useRouterState({ select: (state) => state.location.pathname === "/lapor" || state.location.pathname === "/laporan-status" })
   return (
     <nav aria-label="Navigasi utama" className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none]">
       <Link to="/" search={search} activeOptions={{ exact: true }} {...linkProps}>
@@ -32,7 +34,12 @@ export function Navbar() {
       <Link to="/keranjang" search={search.provinsi == null ? {} : { provinsi: search.provinsi }} {...linkProps}>
         Keranjang
       </Link>
-      <Link to="/laporan" activeOptions={{ includeSearch: false }} {...linkProps}>
+      <Link
+        to="/laporan"
+        activeOptions={{ includeSearch: false }}
+        {...linkProps}
+        inactiveProps={inReports ? { className: navPillClass(true), "aria-current": "true" } : linkProps.inactiveProps}
+      >
         Laporan Warga
       </Link>
     </nav>

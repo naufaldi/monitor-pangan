@@ -6,12 +6,16 @@ import { cn } from "#/lib/utils.ts"
 type PlaceSelectProps = {
   value: string
   onChange: (code: string) => void
+  /** Validation message from the form; marks the trigger invalid and describes it. */
+  error?: string
+  /** Id of the trigger button, so the form can move focus to it. */
+  id?: string
 }
 
 const DENIED_COPY = "Izin lokasi ditolak. Pilih kota atau kabupaten."
 
 /** Searchable kab/kota picker. Uses the shared input, not a second select primitive. */
-export function PlaceSelect({ value, onChange }: PlaceSelectProps) {
+export function PlaceSelect({ value, onChange, error, id }: PlaceSelectProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [locating, setLocating] = useState(false)
@@ -21,6 +25,7 @@ export function PlaceSelect({ value, onChange }: PlaceSelectProps) {
   const listId = useId()
   const labelId = useId()
   const valueId = useId()
+  const errorId = useId()
   const selected = PLACES.find((place) => place.code === value)
 
   useEffect(() => {
@@ -86,7 +91,10 @@ export function PlaceSelect({ value, onChange }: PlaceSelectProps) {
           Kota atau kabupaten
         </span>
         <button
+          id={id}
           type="button"
+          aria-invalid={error != null ? true : undefined}
+          aria-describedby={error != null ? errorId : undefined}
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-controls={listId}
@@ -126,6 +134,7 @@ export function PlaceSelect({ value, onChange }: PlaceSelectProps) {
             </Listbox>
           </div>
         ) : null}
+        {error != null ? <p id={errorId} className="text-xs text-ember">{error}</p> : null}
       </div>
       <Button
         type="button"
