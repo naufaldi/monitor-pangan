@@ -1,6 +1,7 @@
 import { Button, StatusMessage } from "@monitor-pangan/ui"
 import { usePriceFreshness, type FreshnessState } from "#/data/vintage.tsx"
 import { formatDateLong } from "#/lib/format.ts"
+import { formatHealthTime } from "#/data/health-copy.ts"
 
 export function healthStatusCopy(state: FreshnessState): string {
   if (state.status === "idle" || state.status === "loading") return "Memeriksa pembaruan PIHPS…"
@@ -29,7 +30,7 @@ export function PriceFreshness() {
       {freshness.refreshFailed ? <p>Harga yang sudah tersedia tetap ditampilkan. Pembaruan harga gagal; data belum dapat dipastikan mutakhir.</p> : null}
       {health != null ? <>
         <p>Observasi harga terakhir dalam layanan: {health.latestPricedDate == null ? "belum tersedia" : formatDateLong(health.latestPricedDate)}.</p>
-        <p>Pemeriksaan status layanan: {health.checkedAt}. Proses berhasil terakhir: {health.lastSuccessfulRunAt ?? "belum tersedia"}.</p>
+        <p>Pemeriksaan status layanan: {formatHealthTime(health.checkedAt)}. Proses berhasil terakhir: {formatHealthTime(health.lastSuccessfulRunAt)}.</p>
         {freshness.healthFailed ? <p>Waktu di atas berasal dari pemeriksaan sebelumnya.</p> : null}
       </> : null}
     </StatusMessage>

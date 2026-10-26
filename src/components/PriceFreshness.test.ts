@@ -4,6 +4,15 @@ import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { healthStatusCopy, SnapshotCoverage } from "./PriceFreshness.tsx"
 import type { FreshnessState } from "#/data/vintage.tsx"
+import { formatHealthTime } from "#/data/health-copy.ts"
+
+it.effect("health timestamps use readable Jakarta dates including UTC day boundaries", () => Effect.sync(() => {
+  const label = formatHealthTime("2026-10-25T18:30:00.000Z")
+  assert.ok(label.includes("26 Oktober 2026"))
+  assert.match(label, /01[.:]30/)
+  assert.ok(label.endsWith("WIB"))
+  assert.strictEqual(formatHealthTime(null), "belum tersedia")
+}))
 
 it.effect("labels waiting as publication delay and keeps error/loading copy distinct", () => Effect.sync(() => {
   const base: FreshnessState = { status: "ready", refreshFailed: false, healthFailed: false, health: null }
