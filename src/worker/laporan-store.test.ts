@@ -75,9 +75,9 @@ const memoryBucket = () => {
   return { bucket, objects, puts, gets }
 }
 
-const harness = (presign: boolean | "fail") => {
+const harness = (presign: boolean | "fail", legacy = false) => {
   const raw = new DatabaseSync(":memory:")
-  for (const statement of migrationStatements()) raw.exec(statement)
+  for (const statement of migrationStatements()) raw.exec(legacy ? statement.replace(",\n  receipt_token_hash TEXT", "") : statement)
   const photos = memoryBucket()
   const edge: LaporanEdge["Type"] = {
     adminSecret: SECRET,
@@ -139,6 +139,99 @@ const post = (origin: ReturnType<typeof harness>, id: string, patch?: Record<str
   )
 
 const auth = (secret = SECRET) => ({ authorization: `Bearer ${secret}` })
+
+const receipt = (origin: ReturnType<typeof harness>, id: string, token?: string) => origin.call(new Request(
+  `https://monitor.naufaldi.com/api/laporan/status?id=${id}`,
+  { headers: token == null ? {} : { "x-report-receipt": token } },
+))
+
+it.effect("new private receipts follow persisted decisions without leaking report details", () => Effect.gen(function* () {
+  const origin = harness(true)
+  const id = crypto.randomUUID()
+  const submitted = yield* bodyOf(yield* post(origin, id, { alias: "private-alias", photo: true }))
+  const token = String(submitted.receiptToken)
+  assert.match(token, /^[0-9a-f]{64}$/)
+  const stored = origin.cell("SELECT receipt_token_hash FROM laporan_warga WHERE id = ?", id)
+  assert.match(String(stored.receipt_token_hash), /^[0-9a-f]{64}$/)
+  assert.notStrictEqual(stored.receipt_token_hash, token)
+  for (const [action, status] of [[null, "pending"], ["approve", "reviewed"], ["takedown", "rejected"]] as const) {
+    if (action != null) {
+      const decision = yield* origin.call(new Request("https://monitor.naufaldi.com/api/admin/decide", {
+        method: "POST", headers: auth(), body: JSON.stringify(action === "approve" ? { id, action, evidence: "none" } : { id, action, note: "private-internal-note" }),
+      }))
+      assert.strictEqual(decision.status, 200)
+    }
+    const photoReads = origin.photos.gets.length
+    const response = yield* receipt(origin, id, token)
+    assert.strictEqual(origin.photos.gets.length, photoReads)
+    assert.strictEqual(response.status, 200)
+    assert.ok(response.headers.get("cache-control")?.includes("no-store"))
+    const payload = yield* bodyOf(response)
+    assert.deepStrictEqual(payload, { status })
+    const serialized = JSON.stringify(payload)
+    for (const secret of [token, "private-alias", "private-internal-note", "pending/", "decided/", SECRET]) assert.ok(!serialized.includes(secret))
+  }
+  assert.strictEqual((yield* origin.call(new Request(`https://monitor.naufaldi.com/foto/${id}`, { headers: { "x-report-receipt": token } }))).status, 404)
+  assert.strictEqual((yield* origin.call(new Request(`https://monitor.naufaldi.com/api/admin/foto/${id}`, { headers: { "x-report-receipt": token } }))).status, 401)
+}))
+
+it.effect("wrong, missing, old-row and unknown-id receipts have the same generic denial", () => Effect.gen(function* () {
+  const origin = harness(false)
+  const id = crypto.randomUUID()
+  const submitted = yield* bodyOf(yield* post(origin, id))
+  const token = String(submitted.receiptToken)
+  const responses = [yield* receipt(origin, id), yield* receipt(origin, id, "0".repeat(64)), yield* receipt(origin, crypto.randomUUID(), token)]
+  origin.raw.prepare("UPDATE laporan_warga SET receipt_token_hash = NULL WHERE id = ?").run(id)
+  responses.push(yield* receipt(origin, id, token))
+  for (const response of responses) {
+    assert.strictEqual(response.status, 404)
+    assert.deepStrictEqual(yield* bodyOf(response), { error: "receipt_unavailable" })
+    assert.ok(response.headers.get("cache-control")?.includes("no-store"))
+  }
+}))
+
+it.effect("submission retries cannot replace or disclose the existing receipt secret", () => Effect.gen(function* () {
+  const origin = harness(false)
+  const id = crypto.randomUUID()
+  const first = yield* bodyOf(yield* post(origin, id))
+  const token = String(first.receiptToken)
+  yield* origin.call(new Request("https://monitor.naufaldi.com/api/admin/decide", {
+    method: "POST", headers: auth(), body: JSON.stringify({ id, action: "approve", evidence: "none" }),
+  }))
+  const stored = origin.cell("SELECT receipt_token_hash, price FROM laporan_warga WHERE id = ?", id)
+  const second = yield* bodyOf(yield* post(origin, id, { price: 90000 }))
+  assert.strictEqual(second.receiptToken, null)
+  assert.strictEqual(second.status, "pending", "submission replay must not disclose persisted moderation status")
+  assert.deepStrictEqual(origin.cell("SELECT receipt_token_hash, price FROM laporan_warga WHERE id = ?", id), stored)
+  assert.strictEqual(origin.count("laporan_warga"), 1)
+  assert.deepStrictEqual(yield* bodyOf(yield* receipt(origin, id, token)), { status: "reviewed" })
+  assert.strictEqual((yield* origin.call(new Request(`https://monitor.naufaldi.com/api/laporan/status?id=${id}&token=${token}`))).status, 404)
+}))
+
+it.effect("cold migration adds a nullable receipt column without granting old reports access", () => Effect.gen(function* () {
+  const origin = harness(false, true)
+  const id = crypto.randomUUID()
+  origin.raw.prepare(`INSERT INTO laporan_warga (id, commodity_id, outlet, price, place_code, seen_on, alias, status, submitted_at)
+    VALUES (?, 'beras', 'pasar', 16000, '3273', '2026-10-23', 'existing-alias', 'pending', '2026-10-23T00:00:00Z')`).run(id)
+  const denied = yield* receipt(origin, id, "a".repeat(64))
+  assert.strictEqual(denied.status, 404)
+  const saved = yield* bodyOf(yield* post(origin, id))
+  assert.strictEqual(saved.receiptToken, null)
+  assert.deepStrictEqual(origin.cell("SELECT price, alias, status, receipt_token_hash FROM laporan_warga WHERE id = ?", id),
+    Object.assign(Object.create(null), { price: 16000, alias: "existing-alias", status: "pending", receipt_token_hash: null }))
+  const fresh = yield* bodyOf(yield* post(origin, crypto.randomUUID()))
+  assert.match(String(fresh.receiptToken), /^[0-9a-f]{64}$/)
+}))
+
+it.effect("concurrent same-id retries issue at most one usable capability", () => Effect.gen(function* () {
+  const origin = harness(false)
+  const id = crypto.randomUUID()
+  const results = yield* Effect.all([post(origin, id).pipe(Effect.flatMap(bodyOf)), post(origin, id).pipe(Effect.flatMap(bodyOf))], { concurrency: 2 })
+  const issued = results.filter((result) => result.receiptToken != null)
+  assert.strictEqual(issued.length, 1)
+  assert.strictEqual(origin.count("laporan_warga"), 1)
+  assert.strictEqual((yield* receipt(origin, id, String(issued[0]!.receiptToken))).status, 200)
+}))
 
 it.effect("schema.sql and the worker migration share the laporan_warga statements", () =>
   Effect.sync(() => {

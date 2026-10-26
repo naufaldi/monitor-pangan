@@ -5,6 +5,7 @@ import {
   type DecideBody,
   type LaporanQuery,
   ReportsPayloadSchema,
+  SubmitResponseSchema,
   type SubmitBody,
 } from "#/data/laporan.ts"
 
@@ -54,11 +55,11 @@ export const fetchTurnstileSiteKey = Effect.gen(function* () {
   return typeof key === "string" && key.length > 0 ? key : null
 })
 
-export const postReport = (body: SubmitBody) =>
+export const postReport = (body: SubmitBody, fetcher: typeof fetch = fetch) =>
   Effect.gen(function* () {
     const response = yield* Effect.tryPromise({
       try: () =>
-        fetch("/api/laporan", {
+        fetcher("/api/laporan", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify(body),
@@ -67,12 +68,7 @@ export const postReport = (body: SubmitBody) =>
     })
     const json = yield* readJson(response)
     if (!response.ok) return yield* Effect.fail(failed(response.status))
-    const uploadUrl =
-      typeof json === "object" && json != null && "uploadUrl" in json && typeof json.uploadUrl === "string"
-        ? json.uploadUrl
-        : null
-    const id = typeof json === "object" && json != null && "id" in json && typeof json.id === "string" ? json.id : body.id
-    return { id, uploadUrl }
+    return yield* Schema.decodeUnknown(SubmitResponseSchema)(json).pipe(Effect.mapError(() => failed(response.status)))
   })
 
 export const putPhoto = (uploadUrl: string, blob: Blob) =>

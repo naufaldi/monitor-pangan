@@ -9,12 +9,14 @@ import {
   type PublicReport,
   type ReportStatus,
   type ReportsPayload,
+  type ReceiptStatus,
   type SubmitBody,
 } from "#/data/laporan.ts"
 import { placeByCode } from "#/data/places.ts"
 import { LIST_PAGE_SIZE, MAX_PAGE_SIZE, reportHasPhoto, windowStart } from "#/lib/laporan.ts"
 import type { D1Database } from "./d1-store.ts"
 import { ensureMigrated } from "./d1-store.ts"
+import { hashReceiptToken, newReceiptToken, receiptHashMatches } from "./receipt-token.ts"
 
 export class LaporanStoreError extends Data.TaggedError("LaporanStoreError")<{
   readonly message: string
@@ -34,6 +36,7 @@ export type SubmitResult = {
   id: string
   created: boolean
   photoKey: string | null
+  receiptToken: string | null
 }
 
 export type AdminPending = {
@@ -129,6 +132,7 @@ export class LaporanStore extends Context.Tag("LaporanStore")<
     ) => Effect.Effect<DecideResult, DecisionConflict | ReportMissing | LaporanStoreError>
     readonly publicPhoto: (id: string) => Effect.Effect<StoredPhoto | null, LaporanStoreError>
     readonly adminPhoto: (id: string) => Effect.Effect<StoredPhoto | null, LaporanStoreError>
+    readonly receiptStatus: (id: string, token: string) => Effect.Effect<ReceiptStatus | null, LaporanStoreError>
   }
 >() {}
 
@@ -368,11 +372,15 @@ export const laporanStoreLayer = (db: D1Database, bucket: PhotoBucket) => {
       if (alias != null && (alias.length > 40 || aliasHasUrl(alias))) {
         return yield* Effect.fail(new SubmitRejected({ message: "invalid" }))
       }
+      const existing = yield* load(body.id)
+      if (existing != null) return { id: existing.id, created: false, photoKey: existing.photo_key, receiptToken: null }
+      const receiptToken = yield* newReceiptToken.pipe(Effect.mapError(() => new LaporanStoreError({ message: "receipt unavailable" })))
+      const receiptHash = yield* hashReceiptToken(receiptToken).pipe(Effect.mapError(() => new LaporanStoreError({ message: "receipt unavailable" })))
       const photoKey = body.photo ? `pending/${body.id}.jpg` : null
       const written = yield* exec(
         `INSERT OR IGNORE INTO laporan_warga (
-          id, commodity_id, outlet, price, place_code, seen_on, alias, photo_key, status, evidence, submitted_at, reviewed_at, review_note
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL, ?, NULL, NULL)`,
+          id, commodity_id, outlet, price, place_code, seen_on, alias, photo_key, status, evidence, submitted_at, reviewed_at, review_note, receipt_token_hash
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL, ?, NULL, NULL, ?)`,
         body.id,
         body.commodityId,
         body.outlet,
@@ -382,11 +390,26 @@ export const laporanStoreLayer = (db: D1Database, bucket: PhotoBucket) => {
         alias === "" ? null : alias,
         photoKey,
         submittedAt,
+        receiptHash,
       )
       const row = yield* load(body.id)
       if (row == null) return yield* Effect.fail(new LaporanStoreError({ message: "missing row" }))
-      return { id: row.id, created: changesOf(written) > 0, photoKey: row.photo_key }
+      const created = changesOf(written) > 0
+      return { id: row.id, created, photoKey: row.photo_key, receiptToken: created ? receiptToken : null }
     })
+
+  const receiptStatus = (id: string, token: string) => Effect.gen(function* () {
+    yield* ready
+    // One primary-key lookup. No photo, alias, or moderator-note read is needed.
+    const out = yield* run<{ status: string; receipt_token_hash: string | null }>(
+      "SELECT status, receipt_token_hash FROM laporan_warga WHERE id = ?", id,
+    )
+    const row = out.results[0]
+    const hash = yield* hashReceiptToken(token).pipe(Effect.mapError(() => new LaporanStoreError({ message: "receipt unavailable" })))
+    if (!receiptHashMatches(hash, row?.receipt_token_hash ?? null)) return null
+    const status = row == null ? null : asStatus(row.status)
+    return status == null ? null : { status }
+  })
 
   const reports = (query: LaporanQuery, today: string, nowMs: number) =>
     Effect.gen(function* () {
@@ -551,5 +574,6 @@ export const laporanStoreLayer = (db: D1Database, bucket: PhotoBucket) => {
     decide,
     publicPhoto: (id) => readPhoto(id, "public"),
     adminPhoto: (id) => readPhoto(id, "admin"),
+    receiptStatus,
   })
 }

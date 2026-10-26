@@ -80,10 +80,21 @@ export const migrationStatements = (sql: string = MIGRATE_SQL): readonly string[
 
 const migrated = new WeakMap<D1Database, Promise<void>>()
 
+/** CREATE IF NOT EXISTS does not add columns to reports written by older Workers. */
+const ensureReceiptColumn = (db: D1Database): Promise<void> => {
+  const hasColumn = () => db.prepare("SELECT name FROM pragma_table_info('laporan_warga') WHERE name = 'receipt_token_hash'")
+    .all<{ name: string }>().then((out) => out.results.some((row) => row.name === "receipt_token_hash"))
+  return hasColumn().then((exists) => exists ? undefined : db.prepare("ALTER TABLE laporan_warga ADD COLUMN receipt_token_hash TEXT").run().then(
+    () => undefined,
+    // Another cold isolate may have added the same column. Only that case is safe.
+    (cause: unknown) => hasColumn().then((added) => added ? undefined : Promise.reject(cause)),
+  ))
+}
+
 const migrate = (db: D1Database): Promise<void> => {
   const existing = migrated.get(db)
   if (existing !== undefined) return existing
-  const pending = db.batch(migrationStatements().map((statement) => db.prepare(statement))).then(
+  const pending = db.batch(migrationStatements().map((statement) => db.prepare(statement))).then(() => ensureReceiptColumn(db)).then(
     () => undefined,
     (cause: unknown) => {
       if (migrated.get(db) === pending) migrated.delete(db)
