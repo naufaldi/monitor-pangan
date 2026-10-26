@@ -1,5 +1,6 @@
 import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
+import { color } from "@monitor-pangan/ui"
 
 import { SNAPSHOT_META } from "./data/snapshot.gen.ts"
 import {
@@ -8,6 +9,7 @@ import {
   SEARCH_CONSOLE_VERIFICATION,
   SITE_DESCRIPTION,
   SITE_ORIGIN,
+  THEME_COLOR,
   absoluteUrl,
   jsonLd,
   seoLinks,
@@ -16,6 +18,10 @@ import {
 } from "./seo.ts"
 
 const IDS = ["home", "tren", "daya-beli", "laporan", "lapor"] as const
+
+it.effect("keeps static browser metadata aligned with the canvas token", () =>
+  Effect.sync(() => assert.strictEqual(THEME_COLOR, color.canvas)),
+)
 
 it.effect("route copy is Indonesian, unique, and safe to stamp into HTML", () =>
   Effect.sync(() => {

@@ -1,0 +1,36 @@
+{
+  "environment": "isolated-local-Wrangler-D1-R2",
+  "origin": "http://localhost:8792",
+  "reportId": "7cdcef41-3f48-463d-93e2-09134bc9765c",
+  "result": "pass-controlled-local-photo-flow",
+  "widget": "emulated after Cloudflare test widget returned 300030",
+  "siteverify": "real Cloudflare request with documented dummy secret and dummy token",
+  "uploadTransport": "emulated same-origin endpoint writes to local R2 binding",
+  "reportStatus": "pending",
+  "price": 15000,
+  "placeCode": "3273",
+  "publicRows": 0,
+  "publicPhotoStatus": 404,
+  "unauthorizedAdminPhotoStatus": 401,
+  "authorizedAdminPhotoStatus": 200,
+  "inputBytes": 2374660,
+  "jpegBytes": 280551,
+  "width": 1254,
+  "height": 1254,
+  "hasExif": false,
+  "production": {
+    "result": "blocked",
+    "metadata": {
+      "turnstileSiteKey": null
+    },
+    "submitted": false,
+    "photoSelected": true,
+    "cliInfrastructureRequests": false
+  },
+  "checks": {
+    "typecheck": "pass",
+    "targetedTestFiles": 15,
+    "targetedTests": 67,
+    "build": "pass on final source in active worktree, including six prerendered routes"
+  }
+}

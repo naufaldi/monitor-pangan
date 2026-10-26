@@ -1,0 +1,47 @@
+{
+  "mobileSort": {
+    "buttons": [
+      {
+        "height": 44,
+        "right": 135.6640625,
+        "text": "Termahal"
+      },
+      {
+        "height": 44,
+        "right": 246.328125,
+        "text": "Termurah"
+      },
+      {
+        "height": 44,
+        "right": 356.9921875,
+        "text": "Nama A–Z"
+      }
+    ],
+    "firstRow": "Nusa Tenggara BaratRp 13.900/kg▼ -15,0%",
+    "scrollWidth": 390,
+    "width": 390
+  },
+  "alphaFirst": "AcehRp 15.700/kg▼ -4,0%",
+  "descendingFirst": "Kalimantan TengahRp 19.950/kg▲ +22,0%",
+  "desktopSort": {
+    "buttons": [
+      {
+        "height": 44,
+        "right": 980.359375,
+        "text": "Termahal"
+      },
+      {
+        "height": 44,
+        "right": 1078.9765625,
+        "text": "Termurah"
+      },
+      {
+        "height": 44,
+        "right": 1183,
+        "text": "Nama A–Z"
+      }
+    ],
+    "scrollWidth": 1280,
+    "width": 1280
+  }
+}
