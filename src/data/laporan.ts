@@ -9,6 +9,17 @@ export type Evidence = (typeof EVIDENCES)[number]
 export const REPORT_STATUSES = ["pending", "reviewed", "rejected"] as const
 export type ReportStatus = (typeof REPORT_STATUSES)[number]
 
+export const ReceiptTokenSchema = Schema.String.pipe(Schema.pattern(/^[0-9a-f]{64}$/))
+export const ReceiptStatusSchema = Schema.Struct({ status: Schema.Literal(...REPORT_STATUSES) })
+export type ReceiptStatus = typeof ReceiptStatusSchema.Type
+
+/** Optional receipt keeps older Worker responses and callers compatible. */
+export const SubmitResponseSchema = Schema.Struct({
+  id: Schema.UUID,
+  uploadUrl: Schema.optionalWith(Schema.NullOr(Schema.String), { default: () => null }),
+  receiptToken: Schema.optionalWith(Schema.NullOr(ReceiptTokenSchema), { default: () => null }),
+})
+
 /** One reviewed citizen report. Shares no field with a PIHPS price cell. */
 export type PublicReport = {
   id: string

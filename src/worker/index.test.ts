@@ -90,6 +90,26 @@ it.effect("serves the report page shell when the freshness lookup never settles"
   assert.ok(!body.includes('id="mp-pihps-fresh"'))
 }))
 
+it.effect("receipt HTML is private and performs no optional price lookup", () => Effect.gen(function* () {
+  const db = yield* sqliteFixture
+  let freshnessReads = 0
+  const stalled = Layer.succeed(PriceStore, {
+    coverageSince: () => Effect.succeed([]), upsertDay: () => Effect.succeed(0), recordJob: () => Effect.void,
+    freshSince: () => { freshnessReads++; return Effect.never },
+  })
+  const response = yield* handleRequest(new Request("https://example.test/laporan-status?id=d11db382-4e67-4e33-a972-090f987874d8")).pipe(
+    Effect.provide(stalled), Effect.provide(workerLayer(environment(db.db))),
+  )
+  assert.strictEqual(response.status, 200)
+  assert.strictEqual(freshnessReads, 0)
+  assert.strictEqual(response.headers.get("cache-control"), "no-store")
+  assert.strictEqual(response.headers.get("x-robots-tag"), "noindex, nofollow")
+  assert.strictEqual(response.headers.get("referrer-policy"), "no-referrer")
+  const body = yield* text(response)
+  assert.ok(body.includes('content="noindex, nofollow"'))
+  assert.ok(!body.includes('id="mp-pihps-fresh"'))
+}))
+
 it.effect("scheduled execution stays failed after recording an upstream failure", () => Effect.gen(function* () {
   yield* TestClock.setTime(1792401300000)
   const failure = yield* Effect.flip(handleScheduled()).pipe(Effect.provide(Layer.mergeAll(

@@ -108,8 +108,9 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
     try: () => asset.text(),
     catch: (cause) => new AssetError({ message: String(cause) }),
   })
+  const receiptPage = /^\/laporan-status\/?$/.test(url.pathname)
   const store = yield* PriceStore
-  const payload = yield* store.freshSince(STATIC_LIVE_THROUGH).pipe(
+  const payload = receiptPage ? null : yield* store.freshSince(STATIC_LIVE_THROUGH).pipe(
     Effect.flatMap(Schema.decodeUnknown(FreshPayloadSchema)),
     Effect.timeout(HTML_FRESH_BUDGET),
     Effect.catchAll(() => Effect.logError({ event: "pihps_freshness_unavailable", surface: "html" }).pipe(Effect.as(null))),
@@ -119,8 +120,9 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
   headers.set("cache-control", "no-store")
   headers.delete("content-length")
   const admin = url.pathname === "/admin" || url.pathname === "/admin/"
-  if (admin) headers.set("x-robots-tag", "noindex, nofollow")
-  const stamped = admin ? stampAdminRobots(html) : html
+  if (admin || receiptPage) headers.set("x-robots-tag", "noindex, nofollow")
+  if (receiptPage) headers.set("referrer-policy", "no-referrer")
+  const stamped = admin || receiptPage ? stampAdminRobots(html) : html
   return new Response(payload == null ? stamped : injectFreshScript(stamped, payload), { status: asset.status, headers })
 })
 

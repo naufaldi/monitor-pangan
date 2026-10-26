@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
 import { Data, Effect, Schema } from "effect"
-import { Button, Card, FieldSelect, FileInput, Input, StatusMessage } from "@monitor-pangan/ui"
+import { Button, Card, FieldSelect, FileInput, Input, StatusMessage, buttonClass } from "@monitor-pangan/ui"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { PlaceSelect } from "#/components/PlaceSelect.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
@@ -8,6 +8,7 @@ import { fetchTurnstileSiteKey, postReport, putPhoto, LaporanClientError } from 
 import { SAVED_COPY, SubmitBodySchema, aliasHasUrl, type Outlet } from "#/data/laporan.ts"
 import { formatRupiahAmount, parseRupiahInput } from "#/lib/format.ts"
 import { downscaleToJpeg } from "#/lib/photo.ts"
+import { receiptLink } from "#/data/receipt.ts"
 import { browserTurnstileLoader, mountTurnstile, type TurnstileState, type TurnstileWidget } from "#/lib/turnstile.ts"
 
 /** The check was not Ready when the report was about to be sent. */
@@ -72,11 +73,13 @@ export function LaporForm() {
   const [check, setCheck] = useState<TurnstileState>({ _tag: "Loading" })
   const [error, setError] = useState<string | null>(null)
   const [savedId, setSavedId] = useState<string | null>(null)
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null)
   const [photoFailed, setPhotoFailed] = useState(false)
   const [pending, setPending] = useState(false)
   const widgetRef = useRef<HTMLDivElement | null>(null)
   const widget = useRef<TurnstileWidget | null>(null)
   const busy = useRef(false)
+  const submissionId = useRef<string | null>(null)
 
   useEffect(() => {
     let live = true
@@ -127,8 +130,10 @@ export function LaporForm() {
     }
     busy.current = true
     setPending(true)
+    // An uncertain network response must retry the same report rather than insert twice.
+    submissionId.current ??= crypto.randomUUID()
     const raw = {
-      id: crypto.randomUUID(),
+      id: submissionId.current,
       commodityId,
       outlet,
       price: parsedPrice,
@@ -159,7 +164,7 @@ export function LaporForm() {
         } else if (jpeg != null) {
           setPhotoFailed(true)
         }
-        return saved.id
+        return saved
       }).pipe(
         Effect.match({
           onFailure: (failure) => {
@@ -168,9 +173,10 @@ export function LaporForm() {
             setError(submitError(failure, file != null))
             setPending(false)
           },
-          onSuccess: (id) => {
+          onSuccess: (saved) => {
             widget.current?.dispose()
-            setSavedId(id)
+            setSavedId(saved.id)
+            setReceiptUrl(saved.receiptToken == null ? null : receiptLink(saved.id, saved.receiptToken))
             setPending(false)
           },
         }),
@@ -183,6 +189,10 @@ export function LaporForm() {
       <Card padding="lg" className="flex flex-col gap-2">
         <p className="font-bold">{SAVED_COPY}</p>
         <p className="text-sm text-slate">Nomor laporan {savedId}</p>
+        {receiptUrl != null ? <>
+          <a className={buttonClass("rect")} href={receiptUrl} referrerPolicy="no-referrer">Lihat status laporan</a>
+          <p className="text-sm text-slate">Simpan tautan status ini. Siapa pun yang memilikinya dapat melihat status laporan. Tautan tidak membuka foto, alias, atau catatan moderator.</p>
+        </> : <p className="text-sm text-slate">Tautan privat hanya diberikan saat laporan pertama kali tersimpan. Tautan tidak dapat diterbitkan ulang dari nomor laporan.</p>}
         {photoFailed ? <p className="text-sm text-slate">Foto tidak terunggah. Laporan tetap menunggu tinjauan.</p> : null}
       </Card>
     )
@@ -249,5 +259,5 @@ function submitError(failure: LaporanClientError | CheckNotReady, withPhoto: boo
   if (failure.status === 503 && withPhoto) {
     return "Unggahan foto belum tersedia, jadi laporan belum terkirim. Isian dan foto tetap tersimpan; coba lagi nanti."
   }
-  return "Laporan tidak tersimpan. Periksa isian dan coba lagi."
+  return "Belum dapat memastikan laporan tersimpan. Periksa isian dan coba lagi."
 }

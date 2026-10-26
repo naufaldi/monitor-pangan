@@ -1,6 +1,8 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from "@tanstack/react-router"
 import { Badge } from "@monitor-pangan/ui"
 import { Navbar } from "../components/Navbar.tsx"
+import { PriceFreshness } from "../components/PriceFreshness.tsx"
+import { isOfficialPricePath } from "../data/health-client.ts"
 import { useDataBadge, useVintage, VintageProvider } from "../data/vintage.tsx"
 import { dataBadgeTone, latestLiveDate, provider } from "../data/provider.ts"
 import { homeSelectedDate, parseHomeSearch } from "../lib/commodity-search.ts"
@@ -24,8 +26,9 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
   return (
-    <VintageProvider>
+    <VintageProvider enabled={isOfficialPricePath(pathname)}>
       <Shell />
     </VintageProvider>
   )
@@ -38,7 +41,7 @@ function Shell() {
   const dates = provider.dates()
   const homeDate = pathname === "/" ? homeSelectedDate(parseHomeSearch(search, dates), dates, latestLiveDate()) : undefined
   const badge = useDataBadge(homeDate)
-  const pihpsBadge = !/^\/(laporan|lapor|admin)\/?$/.test(pathname)
+  const pihpsBadge = isOfficialPricePath(pathname)
   return (
     <div className="min-h-svh bg-canvas text-ink">
       <header className="border-b border-hairline bg-paper">
@@ -59,6 +62,7 @@ function Shell() {
           <Navbar />
         </div>
       </header>
+      {pihpsBadge ? <div className="mx-auto w-full max-w-6xl px-4 pt-4"><PriceFreshness /></div> : null}
       <Outlet />
     </div>
   )

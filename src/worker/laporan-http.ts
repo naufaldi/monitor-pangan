@@ -1,6 +1,6 @@
 import { Context, Data, DateTime, Effect, Layer, Schema } from "effect"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { DecideBodySchema, SubmitBodySchema } from "#/data/laporan.ts"
+import { DecideBodySchema, ReceiptTokenSchema, SubmitBodySchema } from "#/data/laporan.ts"
 import { todayInJakarta } from "#/lib/jakarta-today.ts"
 import { LIST_PAGE_SIZE } from "#/lib/laporan.ts"
 import { bearerMatches } from "./admin-auth.ts"
@@ -115,6 +115,7 @@ export const handleLaporan = Effect.fn("Laporan.handle")(function* (request: Req
   if (
     pathname !== "/api/laporan" &&
     pathname !== "/api/laporan/meta" &&
+    pathname !== "/api/laporan/status" &&
     !pathname.startsWith("/api/admin/") &&
     !pathname.startsWith("/foto/")
   ) {
@@ -128,6 +129,16 @@ export const handleLaporan = Effect.fn("Laporan.handle")(function* (request: Req
 
   if (pathname === "/api/laporan" && request.method === "GET") return yield* listReports(url)
   if (pathname === "/api/laporan" && request.method === "POST") return yield* submitReport(request)
+
+  if (pathname === "/api/laporan/status" && request.method === "GET") {
+    const id = uuidParam(url.searchParams.get("id") ?? "")
+    const token = request.headers.get("x-report-receipt")
+    const deny = () => json({ error: "receipt_unavailable" }, 404)
+    if (id == null || !Schema.is(ReceiptTokenSchema)(token)) return deny()
+    const store = yield* LaporanStore
+    const receipt = yield* store.receiptStatus(id, token)
+    return receipt == null ? deny() : json(receipt)
+  }
 
   const publicPhoto = /^\/foto\/([^/]+)$/.exec(pathname)
   if (publicPhoto != null && request.method === "GET") {
@@ -215,7 +226,8 @@ const submitReport = Effect.fn("Laporan.submit")(function* (request: Request) {
     saved.photoKey != null && saved.photoKey.startsWith("pending/") && edge.presign != null
       ? yield* edge.presign(saved.id, now.epochMillis).pipe(Effect.catchAll(() => Effect.succeed(null)))
       : null
-  return json({ id: saved.id, status: "pending", uploadUrl })
+  // Preserve the generic acknowledgment: replaying a UUID cannot reveal a decision.
+  return json({ id: saved.id, status: "pending", uploadUrl, receiptToken: saved.receiptToken })
 })
 
 const decideReport = Effect.fn("Laporan.decide")(function* (request: Request) {

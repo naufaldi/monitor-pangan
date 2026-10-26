@@ -5,6 +5,8 @@ import { Badge, PageHeader, PageShell, StickyToolbar } from "@monitor-pangan/ui"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { DayaBeliSummary } from "#/components/DayaBeliSummary.tsx"
 import { DayaBeliTable } from "#/components/DayaBeliTable.tsx"
+import { SnapshotCoverage } from "#/components/PriceFreshness.tsx"
+import { WageProvenance } from "#/components/WageProvenance.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import {
   dataBadge,
@@ -12,7 +14,7 @@ import {
   liveSurveyDates,
   provider,
 } from "#/data/provider.ts"
-import { UMP_2026, UMP_LAST_VERIFIED, UMP_YEAR } from "#/data/wages.ts"
+import { UMP_2026, UMP_YEAR } from "#/data/wages.ts"
 import { affordabilityEnds, buildAffordabilityRows } from "#/lib/daya-beli.ts"
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { usePageSourceNote, useVintage } from "#/data/vintage.tsx"
@@ -80,7 +82,7 @@ function DayaBeliPage() {
   const priceNote = usePageSourceNote(priceDate)
   const snapshot = useMemo(
     () => provider.snapshot(priceDate, commodity.id),
-    [priceDate, commodity.id],
+    [priceDate, commodity.id, rev],
   )
   const rows = useMemo(() => {
     const prices = new Map(snapshot.rows.map((row) => [row.regionCode, row.price]))
@@ -145,6 +147,7 @@ function DayaBeliPage() {
         </p>
       ) : (
         <>
+          <SnapshotCoverage pricedCount={snapshot.pricedCount} total={snapshot.rows.length} date={snapshot.date} />
           <DayaBeliSummary
             commodityName={commodity.name}
             unit={commodity.unit}
@@ -177,15 +180,13 @@ function DayaBeliPage() {
               UMP hanya berlaku bagi pekerja formal. Sel kosong = data tidak
               tersedia (termasuk Papua pecahan 93–96), bukan nol.
             </p>
-            <p className="text-xs text-slate">
-              UMP {UMP_YEAR} terakhir diverifikasi {formatDateShort(UMP_LAST_VERIFIED)}.
-            </p>
+            <WageProvenance />
           </section>
         </>
       )}
 
       <footer className="pb-6 text-xs text-slate">
-        Upah: UMP {UMP_YEAR} tiap provinsi (Kepgub). {priceNote}
+        Upah: bundel UMP {UMP_YEAR} per provinsi; verifikasi tiap Kepgub belum tuntas. {priceNote}
       </footer>
     </PageShell>
   )

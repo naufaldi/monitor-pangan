@@ -1,25 +1,27 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { ChartHighlights } from "#/components/ChartHighlights.tsx"
 import { ChartSummaryStrip } from "#/components/ChartSummaryStrip.tsx"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
-import { MoversList, type MoverItem } from "#/components/MoversList.tsx"
+import { CsvButton } from "#/components/CsvButton.tsx"
+import { MoversList } from "#/components/MoversList.tsx"
 import { TrendChart } from "#/components/TrendChart.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { fetchTrend } from "#/data/api-client.ts"
 import { usePriceRequest } from "#/data/price-request.ts"
-import { isSnapshotLoaded, latestLiveDate, liveSurveyDates, provider } from "#/data/provider.ts"
+import { isSnapshotLoaded, latestLiveDate, liveSurveyDates, provider, type TrendDirection } from "#/data/provider.ts"
 import { usePageSourceNote, useVintage } from "#/data/vintage.tsx"
 import {
   chartHighlights,
   chartStrip,
   isThinProvince,
   limitedProvinceCopy,
-  realPoints,
 } from "#/lib/chart-summary.ts"
-import { DEFAULT_TIMEFRAME, TIMEFRAMES, type TimeframeId, timeframeById, windowRange } from "#/lib/chart-window.ts"
-import { parseCommoditySearch } from "#/lib/commodity-search.ts"
+import { DEFAULT_TIMEFRAME, TIMEFRAMES, timeframeById, windowRange } from "#/lib/chart-window.ts"
+import { parseTrendSearch } from "#/lib/commodity-search.ts"
+import { commodityMovers, resolutionLabel } from "#/lib/movers.ts"
+import { trendCsv } from "#/lib/price-csv.ts"
 import { formatDateShort, formatPct, formatPrice, formatSeriesDate } from "#/lib/format.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 import { Button, FieldSelect, PageHeader, PageShell, SegmentedControl, StickyToolbar, StatusMessage, tableClass, tdClass, thClass } from "@monitor-pangan/ui"
@@ -31,7 +33,7 @@ export const Route = createFileRoute("/tren")({
     links: seoLinks("tren"),
     scripts: seoScripts("tren"),
   }),
-  validateSearch: (search: Record<string, unknown>) => parseCommoditySearch(search),
+  validateSearch: (search: Record<string, unknown>) => parseTrendSearch(search),
   component: TrenPage,
 })
 
@@ -41,11 +43,11 @@ function TrenPage() {
   const sourceNote = usePageSourceNote(latestLiveDate())
   const dates = useMemo(() => liveSurveyDates(), [rev])
   const provinces = useMemo(() => provider.provinces(), [])
-  const search = Route.useSearch()
+  const search = parseTrendSearch(Route.useSearch())
   const navigate = Route.useNavigate()
   const commodityId = search.komoditas ?? COMMODITIES[0]?.id ?? ""
-  const [regionCode, setRegionCode] = useState<string | null>(null)
-  const [timeframe, setTimeframe] = useState<TimeframeId>(DEFAULT_TIMEFRAME)
+  const regionCode = search.provinsi ?? null
+  const timeframe = search.rentang ?? DEFAULT_TIMEFRAME
   const chip = timeframeById(timeframe) ?? timeframeById(DEFAULT_TIMEFRAME) ?? TIMEFRAMES[3]!
   const { from, to } = windowRange(dates, chip.days)
   const dataSpan =
@@ -68,8 +70,7 @@ function TrenPage() {
   const series = request.status === "ready" ? request.data : null
 
   const province = provinces.find((p) => p.code === regionCode) ?? null
-  const focusPoints =
-    series?.selected != null && realPoints(series.selected).length > 0 ? series.selected : series?.national ?? []
+  const focusPoints = series?.selected ?? series?.national ?? []
   const strip = useMemo(() => chartStrip(focusPoints), [focusPoints])
   const highlights = useMemo(() => chartHighlights(focusPoints), [focusPoints])
   const limitedCopy =
@@ -77,28 +78,9 @@ function TrenPage() {
       ? limitedProvinceCopy(province.name)
       : null
 
-  const moverRange = useMemo(() => {
-    const r = provider.trend(COMMODITIES[0]?.id ?? "", null, { resolution: "month" }).range
-    return `${formatDateShort(r.from)} – ${formatDateShort(r.to)}`
-  }, [rev])
-
-  const movers = useMemo<MoverItem[]>(
-    () =>
-      COMMODITIES.flatMap((c) => {
-        const s = provider.trend(c.id, null, { resolution: "month" })
-        const lastPrice = s.national.at(-1)?.price
-        if (lastPrice == null) return []
-        return [{
-          commodityId: c.id,
-          name: c.name,
-          unit: c.unit,
-          lastPrice,
-          changePct: s.changePct,
-          direction: s.direction,
-        }]
-      }),
-    [rev],
-  )
+  const moverRange = `${formatDateShort(from)} – ${formatDateShort(to)}`
+  const movers = useMemo(() => commodityMovers(COMMODITIES, regionCode,
+    { from, to, resolution: chip.resolution }, provider.trend), [regionCode, from, to, chip.resolution, rev])
   const moverById = useMemo(() => new Map(movers.map((m) => [m.commodityId, m])), [movers])
   const tableRows = useMemo(() => {
     if (series == null) return []
@@ -109,6 +91,7 @@ function TrenPage() {
       selected: selectedByDate.get(point.date),
     }))
   }, [series])
+  const csvFile = useMemo(() => series == null ? null : trendCsv(series, province, timeframe), [series, province, timeframe])
 
   return (
     <PageShell>
@@ -121,14 +104,14 @@ function TrenPage() {
             onChange={setCommodityId}
             hintFor={(c) => {
               const m = moverById.get(c.id)
-              return m == null ? undefined : `${formatPrice(m.lastPrice, m.unit)} · ${formatPct(m.changePct)}`
+              return m == null ? undefined : `${formatPrice(m.lastPrice, m.unit)} · ${directionLabel(m.direction)} ${formatPct(m.changePct)}`
             }}
           />
         </div>
         <FieldSelect
           label="Provinsi"
           value={regionCode ?? ""}
-          onChange={(e) => setRegionCode(e.target.value === "" ? null : e.target.value)}
+          onChange={(e) => { void navigate({ search: (previous) => ({ ...previous, provinsi: e.target.value || undefined }) }) }}
           wrapperClassName="min-w-48"
         >
           <option value="">Nasional</option>
@@ -141,7 +124,7 @@ function TrenPage() {
             label="Rentang waktu"
             options={TIMEFRAMES.map((t) => ({ value: t.id, label: t.label }))}
             value={timeframe}
-            onChange={setTimeframe}
+            onChange={(rentang) => { void navigate({ search: (previous) => ({ ...previous, rentang }) }) }}
           />
           {dataSpan !== "" ? (
             <span className="tabular-nums text-xs text-slate" aria-label="Rentang data tersedia">
@@ -149,6 +132,7 @@ function TrenPage() {
             </span>
           ) : null}
         </div>
+        <CsvButton file={csvFile} />
       </StickyToolbar>
 
       {request.status === "loading" ? (
@@ -205,11 +189,24 @@ function TrenPage() {
         </details>
       ) : null}
 
-      <MoversList items={movers} activeId={commodityId} onSelect={setCommodityId} rangeLabel={moverRange} />
+      <MoversList items={movers} activeId={commodityId} onSelect={setCommodityId} rangeLabel={moverRange}
+        scopeLabel={province?.name ?? "Nasional"} aggregationLabel={resolutionLabel(chip.resolution)} totalCount={COMMODITIES.length} />
 
       <footer className="pb-6 text-xs text-slate">
-        Tren dihitung dari rata-rata nasional per tanggal survei. {sourceNote}
+        Tren membandingkan rata-rata survei {province?.name ?? "nasional"}. Pergerakan memakai observasi yang sudah tersedia di aplikasi; tanggal awal dan akhir aktual tercantum pada tiap komoditas. {sourceNote}
       </footer>
     </PageShell>
   )
+}
+
+function directionLabel(direction: TrendDirection): string {
+  switch (direction) {
+    case "up": return "naik"
+    case "down": return "turun"
+    case "flat": return "stabil"
+    default: {
+      const exhaustive: never = direction
+      return exhaustive
+    }
+  }
 }

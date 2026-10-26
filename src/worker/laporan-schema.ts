@@ -13,7 +13,8 @@ export const LAPORAN_STATEMENTS = [
   evidence TEXT CHECK (evidence IS NULL OR evidence IN ('receipt', 'board', 'none')),
   submitted_at TEXT NOT NULL,
   reviewed_at TEXT,
-  review_note TEXT
+  review_note TEXT,
+  receipt_token_hash TEXT
 )`,
   `CREATE INDEX IF NOT EXISTS laporan_warga_status_seen ON laporan_warga (status, seen_on)`,
   `CREATE INDEX IF NOT EXISTS laporan_warga_status_seen_id ON laporan_warga (status, seen_on, id)`,

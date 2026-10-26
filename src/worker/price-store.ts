@@ -1,4 +1,5 @@
-import { Context, Data, DateTime, Effect, Layer, Option, Schema } from "effect"
+import { Context, Data, Effect, Layer, Schema } from "effect"
+import { IsoTimestampSchema } from "../data/health-schema.ts"
 import { COMMODITIES } from "../data/catalog.ts"
 import { REGION_ROWS } from "../data/pihps-catalog.ts"
 import {
@@ -20,11 +21,7 @@ export class PriceReadStore extends Context.Tag("PriceReadStore")<PriceReadStore
 }>() {}
 
 /** Stored UTC instants accept the two canonical formats already written by ingestion. */
-export const IsoTimestampSchema = Schema.String.pipe(Schema.filter((value) => {
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value)) return false
-  const parsed = DateTime.make(value)
-  return Option.isSome(parsed) && DateTime.formatIso(parsed.value) === (value.includes(".") ? value : value.replace("Z", ".000Z"))
-}))
+export { IsoTimestampSchema } from "../data/health-schema.ts"
 const JobEvidenceSchema = Schema.Struct({ started_at: IsoTimestampSchema, status: Schema.Literal("complete", "error", "failed") })
 const HealthEvidenceSchema = Schema.Struct({
   coverage: Schema.Array(Schema.Struct({ date: CivilDateSchema, status: Schema.Literal("live", "empty", "pending", "error"), checked_at: IsoTimestampSchema })),

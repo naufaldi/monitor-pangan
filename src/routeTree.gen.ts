@@ -14,6 +14,8 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as DayaBeliRouteImport } from './routes/daya-beli'
 import { Route as LaporRouteImport } from './routes/lapor'
 import { Route as LaporanRouteImport } from './routes/laporan'
+import { Route as LaporanStatusRouteImport } from './routes/laporan-status'
+import { Route as ProvinsiRouteImport } from './routes/provinsi'
 import { Route as TrenRouteImport } from './routes/tren'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +43,16 @@ const LaporanRoute = LaporanRouteImport.update({
   path: '/laporan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LaporanStatusRoute = LaporanStatusRouteImport.update({
+  id: '/laporan-status',
+  path: '/laporan-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProvinsiRoute = ProvinsiRouteImport.update({
+  id: '/provinsi',
+  path: '/provinsi',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TrenRoute = TrenRouteImport.update({
   id: '/tren',
   path: '/tren',
@@ -53,6 +65,8 @@ export interface FileRoutesByFullPath {
   '/daya-beli': typeof DayaBeliRoute
   '/lapor': typeof LaporRoute
   '/laporan': typeof LaporanRoute
+  '/laporan-status': typeof LaporanStatusRoute
+  '/provinsi': typeof ProvinsiRoute
   '/tren': typeof TrenRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +75,8 @@ export interface FileRoutesByTo {
   '/daya-beli': typeof DayaBeliRoute
   '/lapor': typeof LaporRoute
   '/laporan': typeof LaporanRoute
+  '/laporan-status': typeof LaporanStatusRoute
+  '/provinsi': typeof ProvinsiRoute
   '/tren': typeof TrenRoute
 }
 export interface FileRoutesById {
@@ -70,15 +86,41 @@ export interface FileRoutesById {
   '/daya-beli': typeof DayaBeliRoute
   '/lapor': typeof LaporRoute
   '/laporan': typeof LaporanRoute
+  '/laporan-status': typeof LaporanStatusRoute
+  '/provinsi': typeof ProvinsiRoute
   '/tren': typeof TrenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/daya-beli' | '/lapor' | '/laporan' | '/tren'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/daya-beli'
+    | '/lapor'
+    | '/laporan'
+    | '/laporan-status'
+    | '/provinsi'
+    | '/tren'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/daya-beli' | '/lapor' | '/laporan' | '/tren'
+  to:
+    | '/'
+    | '/admin'
+    | '/daya-beli'
+    | '/lapor'
+    | '/laporan'
+    | '/laporan-status'
+    | '/provinsi'
+    | '/tren'
   id:
-    '__root__' | '/' | '/admin' | '/daya-beli' | '/lapor' | '/laporan' | '/tren'
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/daya-beli'
+    | '/lapor'
+    | '/laporan'
+    | '/laporan-status'
+    | '/provinsi'
+    | '/tren'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -87,6 +129,8 @@ export interface RootRouteChildren {
   DayaBeliRoute: typeof DayaBeliRoute
   LaporRoute: typeof LaporRoute
   LaporanRoute: typeof LaporanRoute
+  LaporanStatusRoute: typeof LaporanStatusRoute
+  ProvinsiRoute: typeof ProvinsiRoute
   TrenRoute: typeof TrenRoute
 }
 
@@ -127,6 +171,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LaporanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/laporan-status': {
+      id: '/laporan-status'
+      path: '/laporan-status'
+      fullPath: '/laporan-status'
+      preLoaderRoute: typeof LaporanStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provinsi': {
+      id: '/provinsi'
+      path: '/provinsi'
+      fullPath: '/provinsi'
+      preLoaderRoute: typeof ProvinsiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tren': {
       id: '/tren'
       path: '/tren'
@@ -143,6 +201,8 @@ const rootRouteChildren: RootRouteChildren = {
   DayaBeliRoute: DayaBeliRoute,
   LaporRoute: LaporRoute,
   LaporanRoute: LaporanRoute,
+  LaporanStatusRoute: LaporanStatusRoute,
+  ProvinsiRoute: ProvinsiRoute,
   TrenRoute: TrenRoute,
 }
 export const routeTree = rootRouteImport

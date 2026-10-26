@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { createFileRoute, useRouterState } from "@tanstack/react-router"
-import { Button, PageHeader, PageShell, StickyToolbar, StatusMessage } from "@monitor-pangan/ui"
+import { useCallback, useEffect, useMemo } from "react"
+import { createFileRoute, Link, useRouterState } from "@tanstack/react-router"
+import { Button, PageHeader, PageShell, StickyToolbar, StatusMessage, buttonClass } from "@monitor-pangan/ui"
 
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
+import { CsvButton } from "#/components/CsvButton.tsx"
 import { DatePicker } from "#/components/DatePicker.tsx"
 import { MapView } from "#/components/MapView.tsx"
 import { PriceTable } from "#/components/PriceTable.tsx"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
+import { SnapshotCoverage } from "#/components/PriceFreshness.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { fetchSnapshot } from "#/data/api-client.ts"
 import { usePriceRequest } from "#/data/price-request.ts"
@@ -14,6 +16,7 @@ import { isSnapshotLoaded, latestLiveDate, provider, type Snapshot } from "#/dat
 import { usePageSourceNote, useVintage } from "#/data/vintage.tsx"
 import { homeSelectedDate, parseHomeSearch } from "#/lib/commodity-search.ts"
 import { formatDateLong, formatPrice } from "#/lib/format.ts"
+import { snapshotCsv } from "#/lib/price-csv.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 
 export const Route = createFileRoute("/")({
@@ -31,7 +34,8 @@ function HomePage() {
   const rev = useVintage()
   const dates = useMemo(() => provider.dates(), [rev])
   const provinces = useMemo(() => provider.provinces(), [])
-  const search = Route.useSearch()
+  // Router merges raw search into matches; validate the object we actually consume.
+  const search = parseHomeSearch(Route.useSearch(), dates)
   const navigate = Route.useNavigate()
   const rawDate = useRouterState({ select: (state) => state.location.search.tanggal })
   const date = homeSelectedDate(search, dates, latestLiveDate())
@@ -42,10 +46,12 @@ function HomePage() {
     }
   }, [rawDate, dates, navigate])
   const commodityId = search.komoditas ?? COMMODITIES[0]?.id ?? ""
-  const [selectedCode, setSelectedCode] = useState<string | null>(null)
+  const selectedCode = search.provinsi ?? null
+  const setSelectedCode = (code: string | null) => {
+    void navigate({ search: (previous) => ({ ...previous, provinsi: code ?? undefined }) })
+  }
 
   const setCommodityId = (id: string) => {
-    setSelectedCode(null)
     void navigate({ search: (prev) => ({ ...prev, komoditas: id }) })
   }
 
@@ -87,6 +93,7 @@ function HomePage() {
             void navigate({ search: (previous) => ({ ...previous, tanggal: next === latestLiveDate() ? undefined : next }) })
           }}
         />
+        <CsvButton file={request.status === "ready" ? snapshotCsv(request.data, provinces, selectedCode) : null} />
       </StickyToolbar>
 
       {request.status === "loading" ? (
@@ -123,6 +130,7 @@ function HomeSnapshot({ snapshotKey, snapshot, provinces, selectedCode, onSelect
   const min = prices.length > 0 ? Math.min(...prices) : null
   const max = prices.length > 0 ? Math.max(...prices) : null
   return <>
+        <SnapshotCoverage pricedCount={snapshot.pricedCount} total={snapshot.rows.length} date={snapshot.date} />
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <MapView
@@ -134,6 +142,7 @@ function HomeSnapshot({ snapshotKey, snapshot, provinces, selectedCode, onSelect
             />
           </div>
           <ProvincePanel
+            action={<Link to="/tren" search={{ komoditas: snapshot.commodity.id, ...(selectedCode == null ? {} : { provinsi: selectedCode }) }} className={buttonClass("rect", false, "mt-4 self-start")}>Lihat tren {selected?.name ?? "nasional"}</Link>}
             commodityName={snapshot.commodity.name}
             provinceName={selected?.name ?? null}
             price={selectedPrice}

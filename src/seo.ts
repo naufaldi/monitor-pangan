@@ -24,11 +24,11 @@ function searchConsoleVerification(): string {
 
 export const SEARCH_CONSOLE_VERIFICATION = searchConsoleVerification()
 
-export type SeoRouteId = "home" | "tren" | "daya-beli" | "laporan" | "lapor"
+export type SeoRouteId = "home" | "tren" | "provinsi" | "daya-beli" | "laporan" | "lapor"
 
 export type RouteSeo = {
   readonly id: SeoRouteId
-  readonly path: "/" | "/tren" | "/daya-beli" | "/laporan" | "/lapor"
+  readonly path: "/" | "/tren" | "/provinsi" | "/daya-beli" | "/laporan" | "/lapor"
   readonly title: string
   readonly description: string
   readonly keywords: string
@@ -52,6 +52,13 @@ export const ROUTE_SEO: Record<SeoRouteId, RouteSeo> = {
       "Grafik pergerakan harga pangan strategis Indonesia. Lihat komoditas yang naik atau turun pada survei PIHPS.",
     keywords:
       "tren harga pangan, grafik harga, kenaikan harga, penurunan harga, komoditas strategis, PIHPS",
+  },
+  provinsi: {
+    id: "provinsi",
+    path: "/provinsi",
+    title: "Harga Pangan Provinsi — Monitor Pangan",
+    description: "Sepuluh komoditas pangan per provinsi pada tanggal survei yang sama. Bandingkan rata-rata provinsi dengan nasional dan perubahan harga PIHPS.",
+    keywords: "harga pangan provinsi, harga beras, komoditas, PIHPS, rata-rata survei, harga nasional",
   },
   "daya-beli": {
     id: "daya-beli",
