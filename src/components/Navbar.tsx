@@ -3,7 +3,9 @@ import { Link, useRouterState, useSearch } from "@tanstack/react-router"
 import { navPillClass } from "@monitor-pangan/ui"
 import { parseCommoditySearch, parseOverviewSearch, parseProvinceSearch, parseTrendSearch } from "#/lib/commodity-search.ts"
 
+// A pill marks the route, not its filters: date, province or commodity params never clear it.
 const linkProps = {
+  activeOptions: { includeSearch: false },
   activeProps: { className: navPillClass(true) },
   inactiveProps: { className: navPillClass(false) },
   onFocus: (event: FocusEvent<HTMLAnchorElement>) => {
@@ -19,7 +21,7 @@ export function Navbar() {
   const inReports = useRouterState({ select: (state) => state.location.pathname === "/lapor" || state.location.pathname === "/laporan-status" })
   return (
     <nav aria-label="Navigasi utama" className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none]">
-      <Link to="/" search={search} activeOptions={{ exact: true }} {...linkProps}>
+      <Link to="/" search={search} {...linkProps} activeOptions={{ exact: true, includeSearch: false }}>
         Peta
       </Link>
       <Link to="/tren" search={parseTrendSearch(raw as Record<string, unknown>)} {...linkProps}>
@@ -36,7 +38,6 @@ export function Navbar() {
       </Link>
       <Link
         to="/laporan"
-        activeOptions={{ includeSearch: false }}
         {...linkProps}
         inactiveProps={inReports ? { className: navPillClass(true), "aria-current": "true" } : linkProps.inactiveProps}
       >
