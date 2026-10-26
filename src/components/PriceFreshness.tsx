@@ -38,6 +38,7 @@ export function PriceFreshness() {
 }
 
 /** Always pass the actual selected snapshot, never global health evidence. */
-export function SnapshotCoverage({ pricedCount, total, date }: { pricedCount: number; total: number; date: string }) {
+export function SnapshotCoverage({ pricedCount, total, date, compact = false }: { pricedCount: number; total: number; date: string; compact?: boolean }) {
+  if (compact) return <p className="text-xs text-slate">{pricedCount} dari {total} provinsi<span className="sr-only"> memiliki harga pada {formatDateLong(date)}. Provinsi tanpa observasi tetap kosong, bukan nol.</span></p>
   return <p role="status" className="text-sm text-slate">Cakupan {formatDateLong(date)}: {pricedCount} dari {total} provinsi memiliki harga untuk komoditas ini. Provinsi tanpa observasi tetap kosong, bukan nol.</p>
 }

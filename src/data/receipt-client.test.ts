@@ -23,10 +23,11 @@ it.effect("receipt links reload with the capability in the fragment and only the
 
 it.effect("receipt consumption revalidates raw router search values before URL or API use", () => Effect.sync(() => {
   for (const raw of ["31", "null", "true", '{"unexpected":"value"}', '["unexpected"]']) {
-    const search = defaultParseSearch(`?id=${encodeURIComponent(raw)}`)
+    const search: Record<string, unknown> = defaultParseSearch(`?id=${encodeURIComponent(raw)}`)
     assert.strictEqual(parseReceiptCredentials(search.id, `#receipt=${token}`), null)
   }
-  assert.deepStrictEqual(parseReceiptCredentials(defaultParseSearch(`?id=${id}`).id, `#receipt=${token}`), credentials)
+  const validSearch: Record<string, unknown> = defaultParseSearch(`?id=${id}`)
+  assert.deepStrictEqual(parseReceiptCredentials(validSearch.id, `#receipt=${token}`), credentials)
 }))
 
 it.effect("status reads send the capability only in a protected header and strip extra response fields", () => Effect.gen(function* () {

@@ -34,3 +34,10 @@ it.effect("coverage describes the selected snapshot including confirmed empty ob
     assert.ok(html.includes("bukan nol"))
   }
 }))
+
+it.effect("compact coverage preserves the date and missing-data explanation for assistive reading", () => Effect.sync(() => {
+  const html = renderToStaticMarkup(createElement(SnapshotCoverage, { pricedCount: 31, total: 38, date: "2026-10-26", compact: true }))
+  assert.ok(html.includes("31 dari 38 provinsi"))
+  assert.ok(html.includes("26 Oktober 2026"))
+  assert.ok(html.includes("bukan nol"))
+}))

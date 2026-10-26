@@ -76,9 +76,9 @@ function ProvincePage() {
           <th className={thClass("start")}>Jelajahi</th>
         </tr></thead>
         <tbody>{rows.map((row) => <tr key={row.commodity.id} className="border-t border-hairline">
-          <td className={tdClass("start")}>
+          <td className={tdClass("start", "min-w-40")}>
             <p>{row.commodity.name}</p>
-            {row.current.status === "ready" ? <SnapshotCoverage pricedCount={row.current.snapshot.pricedCount} total={row.current.snapshot.rows.length} date={row.current.snapshot.date} /> : null}
+            {row.current.status === "ready" ? <SnapshotCoverage compact pricedCount={row.current.snapshot.pricedCount} total={row.current.snapshot.rows.length} date={row.current.snapshot.date} /> : null}
           </td>
           <td className={tdClass("end")}>
             {row.price != null ? formatPrice(row.price, row.commodity.unit) : <span>{row.current.status === "loading" ? "Memuat…" : row.current.status === "error" ? "Gagal dimuat" : "Tidak ada data"} · Rp/{row.commodity.unit}</span>}
@@ -93,7 +93,7 @@ function ProvincePage() {
               <p className="text-xs text-slate">Dari {formatPrice(row.previousPrice!, row.commodity.unit)}</p>
             </>}
           </td>
-          <td className={tdClass("start")}><div className="flex flex-wrap gap-2">
+          <td className={tdClass("start")}><div className="flex gap-2">
             <Link to="/" search={{ komoditas: row.commodity.id, provinsi: search.provinsi, tanggal: date }} className={buttonClass("rect")}>Peta</Link>
             <Link to="/tren" search={{ komoditas: row.commodity.id, provinsi: search.provinsi }} className={buttonClass("rect")}>Grafik</Link>
           </div></td>
