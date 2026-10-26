@@ -51,7 +51,7 @@ function ProvincePage() {
       <DatePicker dates={dates} value={date} onChange={setPinnedDate} />
     </StickyToolbar>
 
-    <Card>
+    <Card padding="md">
       <StatList columns={3}>
         <Stat label="Tanggal survei seluruh komoditas" value={formatDateLong(date)} hint="Satu tanggal yang sama; harga kosong tetap kosong." />
         <Stat label="Cakupan provinsi ini" value={`${pricedCount} dari ${rows.length} komoditas`} hint={loading ? "Sebagian harga masih dimuat." : "Harga yang tersedia pada tanggal dipilih."} />
