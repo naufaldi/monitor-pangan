@@ -4,6 +4,7 @@ import { parseReceiptCredentials, receiptLink } from "./receipt.ts"
 import { fetchReceiptStatus } from "./receipt-client.ts"
 import { postReport } from "./laporan-client.ts"
 import type { SubmitBody } from "./laporan.ts"
+import { defaultParseSearch } from "@tanstack/react-router"
 
 const id = "d11db382-4e67-4e33-a972-090f987874d8"
 const token = "a".repeat(64)
@@ -18,6 +19,14 @@ it.effect("receipt links reload with the capability in the fragment and only the
   assert.strictEqual(parseReceiptCredentials(id, ""), null)
   assert.strictEqual(parseReceiptCredentials("invalid", url.hash), null)
   assert.strictEqual(parseReceiptCredentials(id, "#receipt=bad"), null)
+}))
+
+it.effect("receipt consumption revalidates raw router search values before URL or API use", () => Effect.sync(() => {
+  for (const raw of ["31", "null", "true", '{"unexpected":"value"}', '["unexpected"]']) {
+    const search = defaultParseSearch(`?id=${encodeURIComponent(raw)}`)
+    assert.strictEqual(parseReceiptCredentials(search.id, `#receipt=${token}`), null)
+  }
+  assert.deepStrictEqual(parseReceiptCredentials(defaultParseSearch(`?id=${id}`).id, `#receipt=${token}`), credentials)
 }))
 
 it.effect("status reads send the capability only in a protected header and strip extra response fields", () => Effect.gen(function* () {
