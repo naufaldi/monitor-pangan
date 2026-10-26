@@ -8,6 +8,18 @@ import { homeSelectedDate } from "#/lib/commodity-search.ts"
 import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
+import { WageProvenance } from "#/components/WageProvenance.tsx"
+import { UMP_SOURCE_NOTE } from "#/data/wages.ts"
+
+it.effect("wage provenance states the incomplete decree checks and limits the cross-check date", () => Effect.sync(() => {
+  const html = renderToStaticMarkup(createElement(WageProvenance))
+  assert.ok(html.includes(UMP_SOURCE_NOTE))
+  assert.ok(html.includes("verifikasi nomor SK per provinsi belum tuntas"))
+  assert.ok(html.includes("25 September 2026"))
+  assert.ok(html.includes("bukan bukti verifikasi setiap Kepgub"))
+  assert.ok(!html.includes("terakhir diverifikasi"))
+  assert.ok(!html.includes("href="))
+}))
 
 const JAKARTA_28_SEP = 1790579700000
 

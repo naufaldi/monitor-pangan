@@ -16,11 +16,11 @@ export function bootFreshPricesFromDocument(): void {
 }
 
 /** Ask the worker for PIHPS rows newer than the baked snapshot. */
-export const refreshFreshPrices = Effect.fn("FreshPrices.refresh")(function* () {
+export const refreshFreshPrices = Effect.fn("FreshPrices.refresh")(function* (fetcher: typeof fetch = fetch) {
   const url = `/api/pihps/fresh?after=${STATIC_LIVE_THROUGH}`
   const json: unknown = yield* Effect.tryPromise({
-    try: () =>
-      fetch(url, { headers: { accept: "application/json" }, cache: "no-store" }).then((res) => {
+    try: (signal) =>
+      fetcher(url, { signal, headers: { accept: "application/json" }, cache: "no-store" }).then((res) => {
         if (!res.ok) return Promise.reject(new Error(`HTTP ${res.status}`))
         return res.json()
       }),
@@ -29,8 +29,9 @@ export const refreshFreshPrices = Effect.fn("FreshPrices.refresh")(function* () 
   const payload = yield* Schema.decodeUnknown(FreshPayloadSchema)(json).pipe(
     Effect.mapError((error) => new FreshFetchError({ message: String(error) })),
   )
-  applyFreshPrices(payload)
+  // A successful empty store read must not discard a usable HTML or prior overlay.
+  if (payload.dates.length > 0) applyFreshPrices(payload)
   return payload
-})
+}, (effect) => effect.pipe(Effect.timeout("5 seconds"), Effect.mapError(() => new FreshFetchError({ message: "Freshness unavailable" }))))
 
 bootFreshPricesFromDocument()

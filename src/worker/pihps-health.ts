@@ -1,19 +1,9 @@
 import { DateTime, Effect, Schema } from "effect"
 import { STATIC_LIVE_THROUGH } from "../data/fresh-prices.ts"
-import { CivilDateSchema } from "../data/price-schema.ts"
+import { PihpsHealthSchema } from "../data/health-schema.ts"
 import { nextIsoDay, isTradingDay } from "../lib/civil-date.ts"
-import { IsoTimestampSchema, PihpsHealthReadStore } from "./price-store.ts"
-
-export const PihpsHealthSchema = Schema.Struct({
-  status: Schema.Literal("ok", "waiting", "degraded", "unavailable"),
-  checkedAt: IsoTimestampSchema,
-  latestCheckedDate: Schema.NullOr(CivilDateSchema),
-  latestPricedDate: Schema.NullOr(CivilDateSchema),
-  oldestUnresolvedDate: Schema.NullOr(CivilDateSchema),
-  lastAttemptAt: Schema.NullOr(IsoTimestampSchema),
-  lastAttemptOutcome: Schema.NullOr(Schema.Literal("complete", "error")),
-  lastSuccessfulRunAt: Schema.NullOr(IsoTimestampSchema),
-})
+import { PihpsHealthReadStore } from "./price-store.ts"
+export { PihpsHealthSchema } from "../data/health-schema.ts"
 
 const JAKARTA = DateTime.zoneUnsafeMakeNamed("Asia/Jakarta")
 
