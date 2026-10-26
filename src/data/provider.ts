@@ -327,6 +327,11 @@ export function dataBadge(date: string): string {
   return "Data contoh"
 }
 
+/** Sample data is a warning; an official PIHPS date is informational. */
+export function dataBadgeTone(badge: string): "ember" | "neutral" {
+  return badge === "Data contoh" ? "ember" : "neutral"
+}
+
 /**
  * Footer sentence for the PIHPS day on screen.
  * The "not today" clause is only true when that civil date is before `today` (Asia/Jakarta).

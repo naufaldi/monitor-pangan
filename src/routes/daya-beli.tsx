@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
-import { Badge } from "@monitor-pangan/ui"
+import { Badge, PageHeader, PageShell, StickyToolbar } from "@monitor-pangan/ui"
 
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { DayaBeliSummary } from "#/components/DayaBeliSummary.tsx"
@@ -116,9 +116,10 @@ function DayaBeliPage() {
   const isSample = dataBadge(latestLiveDate()) === "Data contoh"
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4">
-      <div className="sticky top-0 z-30 -mx-4 border-b border-hairline bg-canvas/90 px-4 py-3 backdrop-blur">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <PageShell>
+      <PageHeader title="Daya beli pangan" visuallyHidden />
+      <StickyToolbar className="py-3">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1">
             <CommoditySelect
               commodities={COMMODITIES}
@@ -136,7 +137,7 @@ function DayaBeliPage() {
             <Badge tone="neutral">UMP {UMP_YEAR} pekerja formal</Badge>
           </div>
         </div>
-      </div>
+      </StickyToolbar>
 
       {isSample ? (
         <p className="text-sm text-slate">
@@ -186,6 +187,6 @@ function DayaBeliPage() {
       <footer className="pb-6 text-xs text-slate">
         Upah: UMP {UMP_YEAR} tiap provinsi (Kepgub). {priceNote}
       </footer>
-    </main>
+    </PageShell>
   )
 }

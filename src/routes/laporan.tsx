@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { Effect } from "effect"
-import { Button } from "@monitor-pangan/ui"
+import { Button, PageHeader, PageShell, SegmentedControl, StatusMessage } from "@monitor-pangan/ui"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { LaporanList } from "#/components/LaporanList.tsx"
 import { LaporanMap } from "#/components/LaporanMap.tsx"
@@ -15,6 +15,8 @@ import { LIST_PAGE_SIZE, mapAndProvinceRows } from "#/lib/laporan.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 
 const provinces = new Set(loadProvinces().map((province) => province.code))
+
+type RequestStatus = "loading" | "ready" | "error"
 
 const loadWindow = (outlet: Outlet, commodityId: string | null) =>
   Effect.gen(function* () {
@@ -58,11 +60,19 @@ function LaporanPage() {
   const [listRows, setListRows] = useState<readonly PublicReport[]>([])
   const [more, setMore] = useState<{ windowOnly: boolean; cursor: string | null } | null>(null)
   const [windowEmpty, setWindowEmpty] = useState(false)
-  const [loadError, setLoadError] = useState(false)
+  const [attempt, setAttempt] = useState(0)
+  const requestKey = `${outlet}:${commodityId ?? ""}:${attempt}`
+  const [request, setRequest] = useState<{ key: string; status: RequestStatus }>({ key: requestKey, status: "loading" })
+  const status = request.key === requestKey ? request.status : "loading"
+  const [olderStatus, setOlderStatus] = useState<RequestStatus>("ready")
+  const loadingOlder = useRef(false)
   const requestGen = useRef(0)
 
   useEffect(() => {
     const generation = requestGen.current
+    setRequest({ key: requestKey, status: "loading" })
+    setOlderStatus("ready")
+    loadingOlder.current = false
     void Effect.runPromise(
       Effect.gen(function* () {
         const [selected, other, listed] = yield* Effect.all(
@@ -89,7 +99,7 @@ function LaporanPage() {
             setListRows([])
             setWindowEmpty(false)
             setMore(null)
-            setLoadError(true)
+            setRequest({ key: requestKey, status: "error" })
           },
           onSuccess: (loaded) => {
             if (requestGen.current !== generation) return
@@ -97,7 +107,7 @@ function LaporanPage() {
             setProvinceRows(loaded.split.provinceRows)
             setListRows(loaded.listed.rows)
             setWindowEmpty(loaded.split.mapRows.length === 0)
-            setLoadError(false)
+            setRequest({ key: requestKey, status: "ready" })
             if (loaded.listed.nextCursor != null) {
               setMore({ windowOnly: true, cursor: loaded.listed.nextCursor })
             } else if (loaded.listed.resumeCursor != null || loaded.split.mapRows.length === 0) {
@@ -112,10 +122,12 @@ function LaporanPage() {
     return () => {
       requestGen.current += 1
     }
-  }, [outlet, commodityId])
+  }, [outlet, commodityId, requestKey])
 
   const loadOlder = () => {
-    if (more == null) return
+    if (more == null || status !== "ready" || loadingOlder.current) return
+    loadingOlder.current = true
+    setOlderStatus("loading")
     const request = more
     const generation = requestGen.current
     void Effect.runPromise(
@@ -129,10 +141,13 @@ function LaporanPage() {
         Effect.match({
           onFailure: () => {
             if (requestGen.current !== generation) return
-            setMore(null)
+            loadingOlder.current = false
+            setOlderStatus("error")
           },
           onSuccess: (page) => {
             if (requestGen.current !== generation) return
+            loadingOlder.current = false
+            setOlderStatus("ready")
             if (page.rows.length === 0) {
               setMore(null)
               return
@@ -155,27 +170,19 @@ function LaporanPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6">
-      <header className="flex flex-col gap-1">
-        <h2 className="text-lg font-bold">Laporan Warga</h2>
-        <p className="text-sm text-slate">Harga yang dilaporkan warga. Bukan data PIHPS.</p>
-      </header>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          active={outlet === "pasar"}
-          onClick={() => void navigate({ search: (prev) => ({ ...prev, outlet: undefined }) })}
-        >
-          {outletLabel("pasar")}
-        </Button>
-        <Button
-          type="button"
-          active={outlet === "ritel"}
-          onClick={() => void navigate({ search: (prev) => ({ ...prev, outlet: "ritel" }) })}
-        >
-          {outletLabel("ritel")}
-        </Button>
-      </div>
+    <PageShell>
+      <PageHeader title="Laporan Warga" description="Harga yang dilaporkan warga. Bukan data PIHPS." />
+      <SegmentedControl
+        label="Jenis tempat"
+        options={[
+          { value: "pasar", label: outletLabel("pasar") },
+          { value: "ritel", label: outletLabel("ritel") },
+        ] as const}
+        value={outlet}
+        onChange={(next) =>
+          void navigate({ search: (prev) => ({ ...prev, outlet: next === "ritel" ? "ritel" : undefined }) })
+        }
+      />
       <CommoditySelect
         commodities={COMMODITIES}
         value={commodityId ?? ""}
@@ -186,28 +193,42 @@ function LaporanPage() {
           })
         }
       />
-      <LaporanMap
-        rows={mapRows}
-        outlet={outlet}
-        commodityId={commodityId}
-        onProvince={(code) => void navigate({ search: (prev) => ({ ...prev, provinsi: code }) })}
-      />
-      {loadError ? (
-        <p className="text-sm text-slate">Daftar laporan tidak bisa dimuat.</p>
-      ) : windowEmpty ? (
-        <p className="text-sm text-slate">
-          {EMPTY_WINDOW_COPY} {NO_PIN_COPY}
-        </p>
+      {status === "loading" ? (
+        <StatusMessage tone="loading" title="Memuat laporan…" />
+      ) : status === "error" ? (
+        <StatusMessage
+          tone="error"
+          title="Daftar laporan tidak bisa dimuat."
+          action={<Button onClick={() => setAttempt((current) => current + 1)}>Coba lagi</Button>}
+        >
+          Periksa koneksi lalu coba lagi.
+        </StatusMessage>
       ) : (
-        <p className="text-sm text-slate">{NO_PIN_COPY}</p>
+        <>
+          <LaporanMap
+            rows={mapRows}
+            outlet={outlet}
+            commodityId={commodityId}
+            onProvince={(code) => void navigate({ search: (prev) => ({ ...prev, provinsi: code }) })}
+          />
+          {windowEmpty ? (
+            <StatusMessage tone="empty" title={EMPTY_WINDOW_COPY}>{NO_PIN_COPY}</StatusMessage>
+          ) : (
+            <p className="text-sm text-slate">{NO_PIN_COPY}</p>
+          )}
+          <LaporanProvince
+            rows={provinceRows}
+            commodityId={commodityId}
+            provinceCode={search.provinsi ?? null}
+            onProvince={(code) => void navigate({ search: (prev) => ({ ...prev, provinsi: code === "" ? undefined : code }) })}
+          />
+          <LaporanList rows={listRows} windowEmpty={windowEmpty} canLoadOlder={more != null && olderStatus === "ready"} onLoadOlder={loadOlder} />
+          {olderStatus === "loading" ? <StatusMessage tone="loading" title="Memuat laporan lebih lama…" /> : null}
+          {olderStatus === "error" ? (
+            <StatusMessage tone="error" title="Laporan lebih lama tidak bisa dimuat." action={<Button onClick={loadOlder}>Coba lagi</Button>} />
+          ) : null}
+        </>
       )}
-      <LaporanProvince
-        rows={provinceRows}
-        commodityId={commodityId}
-        provinceCode={search.provinsi ?? null}
-        onProvince={(code) => void navigate({ search: (prev) => ({ ...prev, provinsi: code === "" ? undefined : code }) })}
-      />
-      <LaporanList rows={listRows} windowEmpty={windowEmpty} canLoadOlder={more != null} onLoadOlder={loadOlder} />
-    </main>
+    </PageShell>
   )
 }

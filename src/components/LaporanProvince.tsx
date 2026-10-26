@@ -1,4 +1,4 @@
-import { Card, FieldSelect } from "@monitor-pangan/ui"
+import { Card, FieldSelect, StatusMessage } from "@monitor-pangan/ui"
 import { COMMODITIES } from "#/data/catalog.ts"
 import {
   MEDIAN_CAPTION,
@@ -89,7 +89,7 @@ function OutletRollup({
 }
 
 function CityList({ cities }: { cities: readonly { placeCode: string; name: string; count: number }[] }) {
-  if (cities.length === 0) return <p className="text-sm text-slate">Belum ada kota.</p>
+  if (cities.length === 0) return <StatusMessage tone="empty" title="Belum ada kota." bare className="px-0 py-0" />
   return (
     <ul className="text-sm">
       {cities.map((city) => (

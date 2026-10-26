@@ -1,4 +1,4 @@
-import { cardClass } from "@monitor-pangan/ui"
+import { Delta, StatusMessage, cardClass, eyebrowClass } from "@monitor-pangan/ui"
 import type { PriceUnit } from "#/data/catalog.ts"
 import type { ChartHighlights as Highlights, ChartMove } from "#/lib/chart-summary.ts"
 import type { TrendResolution } from "#/data/provider.ts"
@@ -10,44 +10,13 @@ type ChartHighlightsProps = {
   resolution: TrendResolution
 }
 
-function directionMark(pct: number): string {
-  const direction = trendDirection(pct)
-  switch (direction) {
-    case "up":
-      return "↑"
-    case "down":
-      return "↓"
-    case "flat":
-      return "→"
-    default: {
-      const _exhaustive: never = direction
-      return _exhaustive
-    }
-  }
-}
-
-function directionClass(pct: number): string {
-  const direction = trendDirection(pct)
-  switch (direction) {
-    case "up":
-      return "text-ember"
-    case "down":
-      return "text-leaf-deep"
-    case "flat":
-      return "text-slate"
-    default: {
-      const _exhaustive: never = direction
-      return _exhaustive
-    }
-  }
-}
-
 function MoveBody({ move, unit, resolution }: { move: ChartMove; unit: PriceUnit; resolution: TrendResolution }) {
   return (
     <>
-      <p className={`tabular-nums mt-1 text-sm font-bold ${directionClass(move.pct)}`}>
-        <span aria-hidden="true">{directionMark(move.pct)} </span>
-        {formatPct(move.pct)} · {formatRupiah(move.rp, true)}/{unit}
+      <p className="mt-1 text-sm">
+        <Delta direction={trendDirection(move.pct)} className="font-bold">
+          {formatPct(move.pct)} · {formatRupiah(move.rp, true)}/{unit}
+        </Delta>
       </p>
       <p className="tabular-nums text-xs text-slate">
         {formatSeriesDate(move.from.date, resolution)} → {formatSeriesDate(move.to.date, resolution)}
@@ -67,9 +36,9 @@ export function ChartHighlights({ highlights, unit, resolution }: ChartHighlight
     <section aria-label="Sorotan pergerakan" className="grid gap-3 sm:grid-cols-3">
       {cards.map((card) => (
         <article key={card.title} className={cardClass("md")}>
-          <h2 className="text-xs font-semibold text-slate">{card.title}</h2>
+          <h3 className={eyebrowClass}>{card.title}</h3>
           {card.move == null ? (
-            <p className="mt-1 text-sm text-slate">{card.empty}</p>
+            <StatusMessage tone="empty" title={card.empty} bare className="mt-1 px-0 py-0" />
           ) : (
             <MoveBody move={card.move} unit={unit} resolution={resolution} />
           )}

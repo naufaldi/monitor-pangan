@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
-import { Badge, Button, Input, cardClass, cn } from "@monitor-pangan/ui"
+import { Badge, Panel, SearchInput, SegmentedControl, StatusMessage, cn, tableClass, tdClass, thClass } from "@monitor-pangan/ui"
 
-import { sortActiveClass, tierChipClass, tierLabel, tierSwatchClass } from "#/components/daya-beli-tier.ts"
+import { tierChipClass, tierLabel, tierSwatchClass } from "#/components/daya-beli-tier.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 import {
   AFFORDABILITY_TIERS,
@@ -71,47 +71,37 @@ export function DayaBeliTable({
   const scroll = useTableScroll(visible.length)
 
   return (
-    <section
-      aria-busy={busy}
-      className={cardClass("none", cn("overflow-hidden", busy && "opacity-70"))}
-    >
-      <div className="flex flex-col gap-3 border-b border-hairline px-4 py-3">
-        <div className="min-w-0">
-          <h2 className="text-base font-bold">Per provinsi</h2>
-          <p className="tabular-nums text-sm text-slate">
-            {commodityName} · {formatDateShort(priceDate)} · {visible.length} dari {rows.length} · {ranked} ada datanya
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-          <Input
-            type="search"
+    <Panel
+      title="Per provinsi"
+      busy={busy}
+      description={
+        <span className="tabular-nums">
+          {commodityName} · {formatDateShort(priceDate)} · {visible.length} dari {rows.length} · {ranked} ada datanya
+        </span>
+      }
+      toolbar={
+        <>
+          <SearchInput
+            label="Cari provinsi"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onValueChange={setQuery}
             placeholder="Cari provinsi…"
-            aria-label="Cari provinsi"
-            className="min-h-11 w-full lg:max-w-xs"
+            className="lg:max-w-xs"
           />
-          <div role="group" aria-label="Urutkan daya beli" className="grid grid-cols-2 gap-2 lg:flex">
-            <Button
-              variant="rect"
-              active={sort === "amount-desc"}
-              aria-pressed={sort === "amount-desc"}
-              onClick={() => setSort("amount-desc")}
-              className={cn("w-full lg:w-auto", sort === "amount-desc" && sortActiveClass("amount-desc"))}
-            >
-              Daya beli tertinggi
-            </Button>
-            <Button
-              variant="rect"
-              active={sort === "amount-asc"}
-              aria-pressed={sort === "amount-asc"}
-              onClick={() => setSort("amount-asc")}
-              className={cn("w-full lg:w-auto", sort === "amount-asc" && sortActiveClass("amount-asc"))}
-            >
-              Daya beli terendah
-            </Button>
-          </div>
-        </div>
+          <SegmentedControl
+            label="Urutkan daya beli"
+            options={[
+              { value: "amount-desc", label: "Daya beli tertinggi" },
+              { value: "amount-asc", label: "Daya beli terendah" },
+            ] as const}
+            value={sort === "amount-asc" ? "amount-asc" : "amount-desc"}
+            onChange={setSort}
+            className="grid grid-cols-2 lg:flex"
+            itemClassName="w-full lg:w-auto"
+          />
+        </>
+      }
+      headerExtra={
         <ul aria-label="Skala daya beli" className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate">
           {AFFORDABILITY_TIERS.map((tier) => (
             <li key={tier} className="flex items-center gap-1.5">
@@ -124,12 +114,11 @@ export function DayaBeliTable({
             {tierLabel("gap")}
           </li>
         </ul>
-      </div>
+      }
+    >
 
       {visible.length === 0 ? (
-        <p className="px-4 py-10 text-center text-sm text-slate">
-          Tidak ada provinsi yang cocok dengan pencarian.
-        </p>
+        <StatusMessage tone="empty" title="Tidak ada provinsi yang cocok dengan pencarian." bare />
       ) : (
         <div>
           {scroll.overflow ? (
@@ -140,26 +129,26 @@ export function DayaBeliTable({
           <div className="relative">
             <div
               ref={scroll.ref}
-              className="max-h-[480px] overflow-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-leaf-deep"
+              className="max-h-[480px] overflow-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
               tabIndex={0}
               aria-label="Tabel daya beli per provinsi. Geser ke samping untuk kolom upah dan harga."
             >
-              <table className="w-full min-w-[52rem] border-separate border-spacing-0 text-left text-sm">
+              <table className={cn(tableClass, "min-w-[52rem]")}>
                 <caption className="sr-only">
                   Daya beli {commodityName} pekerja formal per provinsi, {formatDateShort(priceDate)}
                 </caption>
                 <thead>
-                  <tr className="text-xs uppercase text-slate">
-                    <th className="sticky top-0 left-0 z-30 border-b border-r border-hairline bg-muted px-4 py-2 text-left font-semibold whitespace-nowrap">
+                  <tr>
+                    <th className={thClass("start", "sticky top-0 left-0 z-30 border-r")}>
                       Provinsi
                     </th>
-                    <th className="sticky top-0 z-20 border-b border-hairline bg-muted px-4 py-2 text-right font-semibold whitespace-nowrap">
+                    <th className={thClass("end", "sticky top-0 z-20")}>
                       Daya beli pekerja formal
                     </th>
-                    <th className="sticky top-0 z-20 border-b border-hairline bg-muted px-4 py-2 text-right font-semibold whitespace-nowrap">
+                    <th className={thClass("end", "sticky top-0 z-20")}>
                       Harga rata-rata provinsi
                     </th>
-                    <th className="sticky top-0 z-20 border-b border-hairline bg-muted px-4 py-2 text-right font-semibold whitespace-nowrap">
+                    <th className={thClass("end", "sticky top-0 z-20")}>
                       UMP {wageYear} pekerja formal
                     </th>
                   </tr>
@@ -184,7 +173,7 @@ export function DayaBeliTable({
                         <tr>
                           <td
                             className={cn(
-                              "relative sticky left-0 z-10 border-r border-b border-hairline px-4 py-3 whitespace-nowrap",
+                              tdClass("start", "relative sticky left-0 z-10 border-r py-3 whitespace-nowrap"),
                               surface,
                             )}
                           >
@@ -203,7 +192,7 @@ export function DayaBeliTable({
                               ) : null}
                             </div>
                           </td>
-                          <td className={cn("border-b border-hairline px-4 py-3 text-right whitespace-nowrap text-ink", surface)}>
+                          <td className={tdClass("end", cn("py-3 text-ink", surface))}>
                             {missing || row.amount == null ? (
                               <span className="font-normal text-slate">data tidak tersedia</span>
                             ) : (
@@ -215,7 +204,7 @@ export function DayaBeliTable({
                           </td>
                           <td
                             className={cn(
-                              "tabular-nums border-b border-hairline px-4 py-3 text-right whitespace-nowrap",
+                              tdClass("end", "py-3"),
                               surface,
                               missing && "text-slate",
                             )}
@@ -224,7 +213,7 @@ export function DayaBeliTable({
                           </td>
                           <td
                             className={cn(
-                              "tabular-nums border-b border-hairline px-4 py-3 text-right whitespace-nowrap",
+                              tdClass("end", "py-3"),
                               surface,
                               row.wageRpPerBulan == null && "text-slate",
                             )}
@@ -249,6 +238,6 @@ export function DayaBeliTable({
           </div>
         </div>
       )}
-    </section>
+    </Panel>
   )
 }

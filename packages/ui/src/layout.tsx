@@ -69,5 +69,5 @@ export function StickyToolbar({ className, children }: ShellProps) {
 
 /** Nav link pill. Apply to the router <Link> itself, so the hit area equals the pill. */
 export function navPillClass(active: boolean): string {
-  return buttonClass("pill", active, "inline-flex shrink-0 items-center whitespace-nowrap")
+  return buttonClass("pill", active, "inline-flex shrink-0 scroll-mx-1 items-center whitespace-nowrap")
 }

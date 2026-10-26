@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { GeoJSON, MapContainer, Marker, TileLayer } from "react-leaflet"
 import { divIcon } from "leaflet"
 import "leaflet/dist/leaflet.css"
-import { Card, cardClass } from "@monitor-pangan/ui"
+import { Button, Card, StatusMessage, cardClass, color } from "@monitor-pangan/ui"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { provinceFeatures } from "#/data/geo.ts"
 import { CITY_MEDIAN_CAPTION, DITINJAU_COPY, PIN_COMMODITY_EMPTY, type PublicReport } from "#/data/laporan.ts"
@@ -20,7 +20,6 @@ type LaporanMapProps = {
 
 /** Neutral pins for reviewed reports. Province shapes stay unfilled. */
 export function LaporanMap({ rows, outlet, commodityId, onProvince }: LaporanMapProps) {
-  const ink = useTokenColor()
   const [selected, setSelected] = useState<string | null>(null)
   const markers = useMemo(() => pins(rows, outlet, commodityId), [rows, outlet, commodityId])
   const selectedRows = rows.filter((row) => row.placeCode === selected && row.outlet === outlet && (commodityId == null || row.commodityId === commodityId))
@@ -38,10 +37,10 @@ export function LaporanMap({ rows, outlet, commodityId, onProvince }: LaporanMap
           <GeoJSON
             data={provinceFeatures() as never}
             style={() => ({
-              color: ink,
+              color: color.ink,
               weight: provinceOutline.weight,
               fillOpacity: provinceOutline.fillOpacity,
-              fillColor: ink,
+              fillColor: color.ink,
             })}
           />
           {markers.map((marker) => {
@@ -51,6 +50,8 @@ export function LaporanMap({ rows, outlet, commodityId, onProvince }: LaporanMap
             return (
               <Marker
                 key={marker.placeCode}
+                title={at.name}
+                alt={at.name}
                 position={[at.latitude, at.longitude]}
                 icon={divIcon({
                   className: "laporan-pin-wrap",
@@ -67,11 +68,11 @@ export function LaporanMap({ rows, outlet, commodityId, onProvince }: LaporanMap
       {selected != null && place != null ? (
         <Card padding="md" className="flex flex-col gap-2">
           <h3 className="font-bold">{place.name}</h3>
-          <button type="button" className="text-left text-sm text-slate" onClick={() => onProvince(place.provinceCode)}>
+          <Button type="button" className="self-start" onClick={() => onProvince(place.provinceCode)}>
             Lihat provinsi
-          </button>
+          </Button>
           {selectedRows.length > 0 ? <p className="text-sm text-slate">{DITINJAU_COPY}</p> : null}
-          {commodityId != null && selectedRows.length === 0 ? <p>{PIN_COMMODITY_EMPTY}</p> : null}
+          {commodityId != null && selectedRows.length === 0 ? <StatusMessage tone="empty" title={PIN_COMMODITY_EMPTY} bare className="px-0 py-0" /> : null}
           {median != null && commodityId != null ? (
             <p>
               <span className="tabular-nums font-bold">
@@ -89,16 +90,4 @@ export function LaporanMap({ rows, outlet, commodityId, onProvince }: LaporanMap
       ) : null}
     </div>
   )
-}
-
-function useTokenColor(): string {
-  const [color, setColor] = useState("currentColor")
-  useEffect(() => {
-    const probe = document.createElement("span")
-    probe.className = "text-ink"
-    document.body.append(probe)
-    setColor(getComputedStyle(probe).color)
-    probe.remove()
-  }, [])
-  return color
 }

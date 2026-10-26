@@ -1,5 +1,5 @@
-import { Badge, StatusMessage, cardClass } from "@monitor-pangan/ui"
-import { formatDateShort, formatPrice } from "#/lib/format.ts"
+import { Badge, Delta, SectionHeader, StatusMessage, cardClass } from "@monitor-pangan/ui"
+import { formatDateShort, formatPct, formatPrice, trendDirection } from "#/lib/format.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 
 type ProvincePanelProps = {
@@ -30,12 +30,12 @@ export function ProvincePanel({
 
   if (provinceName == null) {
     return (
-      <aside className={cardClass("lg", "flex flex-col justify-center")}>
+      <aside className={cardClass("lg", "flex flex-col")}>
         <p className="text-sm text-slate">
           {commodityName} · rata-rata nasional
         </p>
         {average == null ? (
-          <StatusMessage tone="empty" title="Tidak ada data" bare>
+          <StatusMessage tone="empty" title="Tidak ada data" bare className="mt-3 px-0 py-0">
             Harga nasional belum tersedia untuk tanggal dan komoditas ini.
           </StatusMessage>
         ) : (
@@ -54,12 +54,12 @@ export function ProvincePanel({
 
   if (price == null) {
     return (
-      <aside className={cardClass("lg", "flex flex-col justify-center")}>
+      <aside className={cardClass("lg", "flex flex-col")}>
         <p className="text-sm text-slate">
           {commodityName} · {formatDateShort(date)}
         </p>
-        <h2 className="text-balance text-xl font-bold">{provinceName}</h2>
-        <StatusMessage tone="empty" title="Tidak ada data" bare>
+        <SectionHeader title={provinceName} />
+        <StatusMessage tone="empty" title="Tidak ada data" bare className="mt-3 px-0 py-0">
           Provinsi ini tidak disurvei PIHPS pada tanggal ini, atau sumbernya kosong.
         </StatusMessage>
       </aside>
@@ -74,14 +74,13 @@ export function ProvincePanel({
       <p className="text-sm text-slate">
         {commodityName} · {formatDateShort(date)}
       </p>
-      <h2 className="text-balance text-xl font-bold">{provinceName}</h2>
+      <SectionHeader title={provinceName} />
       <p className="tabular-nums mt-2 text-3xl font-bold">
         {formatPrice(price, unit)}
       </p>
       {diff != null && average != null && <p className="mt-2 flex flex-wrap items-center gap-2">
-        <Badge tone={above ? "ember" : "neutral"} className={above ? undefined : "text-leaf-deep"}>
-          {above ? "+" : ""}
-          {diff.toFixed(1)}% vs nasional
+        <Badge tone={above ? "ember" : "neutral"}>
+          <Delta direction={trendDirection(diff)}>{formatPct(diff)} dibanding nasional</Delta>
         </Badge>
         <span className="tabular-nums text-sm text-slate">
           {formatPrice(average, unit)}

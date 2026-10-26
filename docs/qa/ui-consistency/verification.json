@@ -1,0 +1,888 @@
+{
+  "viewports": [
+    {
+      "url": "http://127.0.0.1:8791/",
+      "width": 390,
+      "pageWidth": 390,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "BerasRp 16.350/kg",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Tanggal data",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Pilih tanggal perdagangan",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Cari provinsi",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Urutkan",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [],
+      "statuses": [],
+      "markerNames": [],
+      "prices": [
+        {
+          "text": "Rp 19.950/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 19.550/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 19.250/kg",
+          "wrap": "nowrap"
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:8791/tren",
+      "width": 390,
+      "pageWidth": 390,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "BerasRp 16.350/kg · +44,7%",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Provinsi",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [
+        {
+          "text": "16.770",
+          "pixels": 11
+        },
+        {
+          "text": "14.740",
+          "pixels": 11
+        },
+        {
+          "text": "12.710",
+          "pixels": 11
+        },
+        {
+          "text": "10.680",
+          "pixels": 11
+        },
+        {
+          "text": "Apr 2017",
+          "pixels": 11
+        },
+        {
+          "text": "Jan 2022",
+          "pixels": 11
+        },
+        {
+          "text": "Sep 2026",
+          "pixels": 11
+        }
+      ],
+      "statuses": [],
+      "markerNames": [],
+      "prices": [
+        {
+          "text": "Rp 11.300/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 11.150/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 11.100/kg",
+          "wrap": "nowrap"
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:8791/daya-beli",
+      "width": 390,
+      "pageWidth": 390,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "Beras338 kg",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Cari provinsi",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [],
+      "statuses": [],
+      "markerNames": [],
+      "prices": [
+        {
+          "text": "Rp 16.950/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 14.400/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 15.750/kg",
+          "wrap": "nowrap"
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:8791/lapor",
+      "width": 390,
+      "pageWidth": 390,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "Beras",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Jenis tempat",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Harga",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Pilih tempat",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Nama panggilan",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [],
+      "statuses": [],
+      "markerNames": [],
+      "prices": [],
+      "formDisabled": true
+    },
+    {
+      "url": "http://127.0.0.1:8791/laporan?komoditas=beras&provinsi=31",
+      "width": 390,
+      "pageWidth": 390,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "Beras",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Provinsi",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [],
+      "statuses": [],
+      "markerNames": [
+        "Kota Administrasi Jakarta Pusat",
+        "Kota Administrasi Jakarta Utara ",
+        "Kota Administrasi Jakarta Barat"
+      ],
+      "prices": []
+    },
+    {
+      "url": "http://127.0.0.1:8791/admin/",
+      "width": 390,
+      "pageWidth": 390,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "Kunci tinjauan",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [],
+      "statuses": [],
+      "markerNames": [],
+      "prices": [],
+      "formDisabled": false
+    },
+    {
+      "url": "http://127.0.0.1:8791/",
+      "width": 1280,
+      "pageWidth": 1280,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "BerasRp 16.350/kg",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Tanggal data",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Pilih tanggal perdagangan",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Cari provinsi",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Urutkan",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [],
+      "statuses": [],
+      "markerNames": [],
+      "prices": [
+        {
+          "text": "Rp 19.950/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 19.550/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 19.250/kg",
+          "wrap": "nowrap"
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:8791/tren",
+      "width": 1280,
+      "pageWidth": 1280,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "BerasRp 16.350/kg · +44,7%",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Provinsi",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [
+        {
+          "text": "16.770",
+          "pixels": 11
+        },
+        {
+          "text": "14.740",
+          "pixels": 11
+        },
+        {
+          "text": "12.710",
+          "pixels": 11
+        },
+        {
+          "text": "10.680",
+          "pixels": 11
+        },
+        {
+          "text": "Apr 2017",
+          "pixels": 11
+        },
+        {
+          "text": "Agu 2019",
+          "pixels": 11
+        },
+        {
+          "text": "Jan 2022",
+          "pixels": 11
+        },
+        {
+          "text": "Mei 2024",
+          "pixels": 11
+        },
+        {
+          "text": "Sep 2026",
+          "pixels": 11
+        }
+      ],
+      "statuses": [],
+      "markerNames": [],
+      "prices": [
+        {
+          "text": "Rp 11.300/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 11.150/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 11.100/kg",
+          "wrap": "nowrap"
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:8791/daya-beli",
+      "width": 1280,
+      "pageWidth": 1280,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "Beras338 kg",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Cari provinsi",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [],
+      "statuses": [],
+      "markerNames": [],
+      "prices": [
+        {
+          "text": "Rp 16.950/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 14.400/kg",
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Rp 15.750/kg",
+          "wrap": "nowrap"
+        }
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:8791/lapor",
+      "width": 1280,
+      "pageWidth": 1280,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "Beras",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Jenis tempat",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Harga",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Pilih tempat",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Nama panggilan",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [],
+      "statuses": [],
+      "markerNames": [],
+      "prices": [],
+      "formDisabled": true
+    },
+    {
+      "url": "http://127.0.0.1:8791/laporan?komoditas=beras&provinsi=31",
+      "width": 1280,
+      "pageWidth": 1280,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "Beras",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        },
+        {
+          "name": "Provinsi",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [],
+      "statuses": [],
+      "markerNames": [
+        "Kota Administrasi Jakarta Pusat",
+        "Kota Administrasi Jakarta Utara ",
+        "Kota Administrasi Jakarta Barat"
+      ],
+      "prices": []
+    },
+    {
+      "url": "http://127.0.0.1:8791/admin/",
+      "width": 1280,
+      "pageWidth": 1280,
+      "nav": [
+        {
+          "text": "Peta",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Grafik",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Daya Beli",
+          "height": 44,
+          "wrap": "nowrap"
+        },
+        {
+          "text": "Laporan Warga",
+          "height": 44,
+          "wrap": "nowrap"
+        }
+      ],
+      "fields": [
+        {
+          "name": "Kunci tinjauan",
+          "height": 44,
+          "radius": "10px",
+          "border": "rgb(228, 230, 223)"
+        }
+      ],
+      "escaping": [],
+      "chartText": [],
+      "statuses": [],
+      "markerNames": [],
+      "prices": [],
+      "formDisabled": false
+    }
+  ],
+  "interactionChecks": [
+    {
+      "scenario": "admin-reviewed-loading",
+      "status": [
+        "Memuat tinjauan…"
+      ],
+      "errors": [],
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "scenario": "admin-reviewed-data",
+      "status": [],
+      "errors": [],
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "scenario": "admin-reviewed-error",
+      "status": [],
+      "errors": [
+        "Daftar tinjauan tidak bisa dimuat.Coba lagi"
+      ],
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "scenario": "admin-reviewed-retry",
+      "status": [],
+      "errors": [],
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "scenario": "citizen-place-card",
+      "status": [],
+      "errors": [],
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "scenario": "citizen-loading",
+      "status": [
+        "Memuat laporan…"
+      ],
+      "errors": [],
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "scenario": "citizen-ritel-data",
+      "status": [],
+      "errors": [],
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "scenario": "citizen-error",
+      "status": [],
+      "errors": [
+        "Daftar laporan tidak bisa dimuat.Periksa koneksi lalu coba lagi.Coba lagi"
+      ],
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "scenario": "citizen-retry",
+      "status": [],
+      "errors": [],
+      "width": 390,
+      "scroll": 390
+    },
+    {
+      "scenario": "citizen-confirmed-empty",
+      "status": [
+        "Belum ada laporan warga yang ditinjau dalam 30 hari terakhir.Tempat tanpa pin tidak punya laporan.",
+        "Belum ada kota.",
+        "Belum ada kota.",
+        "Belum ada laporan warga yang ditinjau dalam 30 hari terakhir."
+      ],
+      "errors": [],
+      "width": 390,
+      "scroll": 390
+    }
+  ],
+  "finalFocus": {
+    "nav": {
+      "outlineStyle": "solid",
+      "outlineWidthPx": 2,
+      "outlineOffsetPx": 2,
+      "scrollLeftPx": 25,
+      "lastLinkRightPx": 386.0859375,
+      "viewportPx": 390
+    },
+    "priceInput": {
+      "outlineStyle": "solid",
+      "outlineWidthPx": 2
+    },
+    "fileInputLabel": {
+      "outlineStyle": "solid",
+      "outlineWidthPx": 2,
+      "buttonHeightPx": 44
+    }
+  },
+  "expandedTrendTable": {
+    "viewportPx": 390,
+    "pageWidthPx": 390,
+    "tableWidthPx": 358,
+    "columns": [
+      "Tanggal",
+      "Nasional",
+      "Provinsi"
+    ],
+    "overflowX": "auto",
+    "minChartFontPx": 11
+  }
+}

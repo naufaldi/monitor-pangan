@@ -1,0 +1,33 @@
+[
+  {
+    "path": "/api/laporan",
+    "outlet": "pasar",
+    "status": 200,
+    "reviewedRows": 3,
+    "pendingExcluded": true
+  },
+  {
+    "path": "/api/laporan",
+    "outlet": "ritel",
+    "status": 200,
+    "reviewedRows": 3,
+    "pendingExcluded": true
+  },
+  {
+    "path": "/api/admin/queue",
+    "authorization": "absent",
+    "status": 401
+  },
+  {
+    "path": "/api/admin/queue",
+    "authorization": "isolated-local-test-key",
+    "status": 200,
+    "rows": 1
+  },
+  {
+    "path": "/api/admin/reviewed",
+    "authorization": "isolated-local-test-key",
+    "status": 200,
+    "rows": 6
+  }
+]

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
 import { Effect, Schema } from "effect"
-import { Button, Card, FieldSelect, Input } from "@monitor-pangan/ui"
+import { Button, Card, FieldSelect, FileInput, Input, StatusMessage } from "@monitor-pangan/ui"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { PlaceSelect } from "#/components/PlaceSelect.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
@@ -137,7 +137,7 @@ export function LaporForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <form onSubmit={onSubmit} className="flex w-full max-w-xl flex-col gap-4">
       <CommoditySelect commodities={COMMODITIES} value={commodityId} onChange={setCommodityId} />
       <FieldSelect
         label="Jenis tempat"
@@ -166,25 +166,15 @@ export function LaporForm() {
       <PlaceSelect value={placeCode} onChange={setPlaceCode} />
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-slate">Nama panggilan, boleh kosong</span>
-        <Input value={alias} maxLength={40} onChange={(event) => setAlias(event.target.value)} aria-label="Nama panggilan" className="min-h-11" />
+        <Input value={alias} maxLength={40} onChange={(event) => setAlias(event.target.value)} aria-label="Nama panggilan" />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-slate">Foto, boleh kosong</span>
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-          aria-label="Foto"
-        />
-      </label>
+      <FileInput label="Foto, boleh kosong" accept="image/*" onFile={setFile} />
       <div ref={widgetRef} />
       {siteKey == null ? <p className="text-sm text-slate">Pemeriksaan kiriman belum siap.</p> : null}
       {error != null ? (
-        <p role="alert" className="text-sm text-ember">
-          {error}
-        </p>
+        <StatusMessage tone="error" title={error} />
       ) : null}
-      <Button type="submit" disabled={pending || token.length === 0}>
+      <Button type="submit" variant="primary" disabled={pending || token.length === 0}>
         Kirim laporan
       </Button>
     </form>

@@ -2,7 +2,7 @@ import { Effect, TestClock } from "effect"
 import { assert, it } from "@effect/vitest"
 import { applyFreshPrices, clearFreshPrices } from "#/data/fresh-prices.ts"
 import { SNAPSHOT_META } from "#/data/snapshot.gen.ts"
-import { dataBadge, latestLiveDate, pageSourceNote } from "#/data/provider.ts"
+import { dataBadge, dataBadgeTone, latestLiveDate, pageSourceNote } from "#/data/provider.ts"
 import { todayInJakarta } from "#/lib/jakarta-today.ts"
 import { homeSelectedDate } from "#/lib/commodity-search.ts"
 import { createElement } from "react"
@@ -10,6 +10,12 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { ProvincePanel } from "#/components/ProvincePanel.tsx"
 
 const JAKARTA_28_SEP = 1790579700000
+
+it.effect("header badge warns only for sample data", () => Effect.sync(() => {
+  assert.strictEqual(dataBadgeTone("Data contoh"), "ember")
+  assert.strictEqual(dataBadgeTone(dataBadge(latestLiveDate())), "neutral")
+  assert.strictEqual(dataBadgeTone("Memuat data…"), "neutral")
+}))
 
 it.effect("live PIHPS page notes never claim sample data", () =>
   Effect.sync(() => {

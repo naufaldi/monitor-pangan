@@ -2,7 +2,7 @@ import { useRef } from "react"
 import { GeoJSON, MapContainer, TileLayer } from "react-leaflet"
 import type { Layer, Path } from "leaflet"
 import "leaflet/dist/leaflet.css"
-import { cardClass } from "@monitor-pangan/ui"
+import { cardClass, color } from "@monitor-pangan/ui"
 import { provinceFeatures } from "#/data/geo.ts"
 import type { PriceRow } from "#/data/provider.ts"
 import { PRICE_BANDS, provinceFill } from "#/lib/province-fill.ts"
@@ -51,7 +51,7 @@ export function MapView({
             return {
               fillColor: fill.fillColor,
               fillOpacity: fill.fillOpacity,
-              color: missing || !selected ? "#ffffff" : "#1a1c16",
+              color: missing || !selected ? color.paper : color.ink,
               weight: selected ? 2.5 : 1,
             }
           }}
@@ -63,13 +63,13 @@ export function MapView({
             const missing = byCode.get(code) == null
             layer.on("click", () => onSelect(code))
             layer.on("mouseover", () => {
-              path.setStyle({ weight: 2.5, color: missing ? "#ffffff" : "#1a1c16" })
+              path.setStyle({ weight: 2.5, color: missing ? color.paper : color.ink })
             })
             layer.on("mouseout", () => {
               const selected = selectedRef.current === code
               path.setStyle({
                 weight: selected ? 2.5 : 1,
-                color: missing || !selected ? "#ffffff" : "#1a1c16",
+                color: missing || !selected ? color.paper : color.ink,
               })
             })
             const price = byCode.get(code)

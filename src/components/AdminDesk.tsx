@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Effect } from "effect"
-import { Button, Card, Input, Select } from "@monitor-pangan/ui"
+import { Button, Card, FieldSelect, Input, SectionHeader, SegmentedControl, StatusMessage } from "@monitor-pangan/ui"
 import { COMMODITIES } from "#/data/catalog.ts"
 import {
   fetchAdminPhotoUrl,
@@ -23,6 +23,8 @@ import { formatDateShort, formatPrice } from "#/lib/format.ts"
 
 const SECRET_KEY = "mp.admin"
 
+type RequestStatus = "loading" | "ready" | "error"
+
 type AdminDeskProps = {
   secret: string
   onReject: () => void
@@ -36,19 +38,26 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
   const [items, setItems] = useState<readonly AdminPendingItem[] | null>(null)
   const [reviewed, setReviewed] = useState<readonly AdminReviewedItem[]>([])
   const [reviewedCursor, setReviewedCursor] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [pendingStatus, setPendingStatus] = useState<RequestStatus>("loading")
+  const [reviewedRequest, setReviewedRequest] = useState<{ status: RequestStatus; cursor: string | null }>({ status: "loading", cursor: null })
+  const pendingGen = useRef(0)
+  const reviewedGen = useRef(0)
 
   const reload = () => {
+    const generation = ++pendingGen.current
+    setPendingStatus("loading")
     void Effect.runPromise(
       fetchQueue(secret).pipe(
         Effect.match({
           onFailure: (failure) => {
+            if (pendingGen.current !== generation) return
             if (failure instanceof LaporanClientError && failure.status === 401) onReject()
-            else setError("Antrean tidak bisa dimuat.")
+            else setPendingStatus("error")
           },
           onSuccess: (queue) => {
+            if (pendingGen.current !== generation) return
             setItems(queue.items)
-            setError(null)
+            setPendingStatus("ready")
           },
         }),
       ),
@@ -57,24 +66,32 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
 
   useEffect(() => {
     reload()
+    return () => {
+      pendingGen.current += 1
+      reviewedGen.current += 1
+    }
   }, [secret])
 
   const loadReviewed = (cursor: string | null) => {
+    const generation = ++reviewedGen.current
+    setReviewedRequest({ status: "loading", cursor })
     void Effect.runPromise(
       fetchReviewed(secret, cursor).pipe(
         Effect.match({
           onFailure: (failure) => {
+            if (reviewedGen.current !== generation) return
             if (failure instanceof LaporanClientError && failure.status === 401) onReject()
-            else setError("Daftar tinjauan tidak bisa dimuat.")
+            else setReviewedRequest({ status: "error", cursor })
           },
           onSuccess: (page) => {
+            if (reviewedGen.current !== generation) return
             setReviewed((current) =>
               cursor == null
                 ? page.rows
                 : [...current, ...page.rows.filter((row) => !current.some((item) => item.id === row.id))],
             )
             setReviewedCursor(page.nextCursor)
-            setError(null)
+            setReviewedRequest({ status: "ready", cursor })
           },
         }),
       ),
@@ -83,35 +100,42 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
 
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex gap-2">
-        <Button type="button" active={view === "pending"} onClick={() => setView("pending")}>
-          Menunggu
-        </Button>
-        <Button
-          type="button"
-          active={view === "reviewed"}
-          onClick={() => {
-            setView("reviewed")
-            loadReviewed(null)
-          }}
-        >
-          Ditinjau
-        </Button>
-      </div>
+      <SegmentedControl
+        label="Tampilan"
+        options={[
+          { value: "pending", label: "Menunggu" },
+          { value: "reviewed", label: "Ditinjau" },
+        ] as const}
+        value={view}
+        onChange={(next) => {
+          setView(next)
+          if (next === "reviewed") loadReviewed(null)
+        }}
+      />
       {view === "reviewed" ? (
-        <ReviewedList
-          rows={reviewed}
-          secret={secret}
-          onReject={onReject}
-          onDone={() => loadReviewed(null)}
-          canLoadOlder={reviewedCursor != null}
-          onLoadOlder={() => loadReviewed(reviewedCursor)}
-        />
+        <>
+          <ReviewedList
+            rows={reviewed}
+            secret={secret}
+            onReject={onReject}
+            onDone={() => loadReviewed(null)}
+            showEmpty={reviewedRequest.status === "ready"}
+            canLoadOlder={reviewedCursor != null && reviewedRequest.status === "ready"}
+            onLoadOlder={() => loadReviewed(reviewedCursor)}
+          />
+          {reviewedRequest.status === "loading" ? <StatusMessage tone="loading" title="Memuat tinjauan…" /> : null}
+          {reviewedRequest.status === "error" ? (
+            <StatusMessage tone="error" title="Daftar tinjauan tidak bisa dimuat." action={<Button onClick={() => loadReviewed(reviewedRequest.cursor)}>Coba lagi</Button>} />
+          ) : null}
+        </>
       ) : null}
-      {view === "pending" ? <h2 className="text-lg font-bold">Menunggu</h2> : null}
-      {error != null ? <p className="text-sm text-ember">{error}</p> : null}
-      {view === "pending" && items != null && items.length === 0 ? <p>{ADMIN_EMPTY_COPY}</p> : null}
-      {view === "pending" ? (
+      {view === "pending" ? <SectionHeader title="Menunggu" /> : null}
+      {view === "pending" && pendingStatus === "loading" ? <StatusMessage tone="loading" title="Memuat antrean…" /> : null}
+      {view === "pending" && pendingStatus === "error" ? (
+        <StatusMessage tone="error" title="Antrean tidak bisa dimuat." action={<Button onClick={reload}>Coba lagi</Button>} />
+      ) : null}
+      {view === "pending" && pendingStatus === "ready" && items != null && items.length === 0 ? <StatusMessage tone="empty" title={ADMIN_EMPTY_COPY} /> : null}
+      {view === "pending" && pendingStatus === "ready" ? (
         <ul className="flex flex-col gap-3">
           {(items ?? []).map((item) => (
             <li key={item.id}>
@@ -129,6 +153,7 @@ function ReviewedList({
   secret,
   onDone,
   onReject,
+  showEmpty,
   canLoadOlder,
   onLoadOlder,
 }: {
@@ -136,6 +161,7 @@ function ReviewedList({
   secret: string
   onDone: () => void
   onReject: () => void
+  showEmpty: boolean
   canLoadOlder: boolean
   onLoadOlder: () => void
 }) {
@@ -143,8 +169,8 @@ function ReviewedList({
   const [active, setActive] = useState<string | null>(null)
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-bold">Ditinjau</h2>
-      {rows.length === 0 ? <p className="text-sm text-slate">Belum ada laporan yang ditinjau.</p> : null}
+      <SectionHeader title="Ditinjau" />
+      {showEmpty && rows.length === 0 ? <StatusMessage tone="empty" title="Belum ada laporan yang ditinjau." /> : null}
       <ul className="flex flex-col gap-3">
         {rows.map((row) => (
           <li key={row.id}>
@@ -293,16 +319,13 @@ function PendingItem({
           : `Pembanding PIHPS ${formatPrice(item.pihpsPrice, commodity?.unit ?? "kg")}`}
       </p>
       {photoUrl != null ? <img src={photoUrl} alt="" className="max-h-80 w-full rounded-md object-contain" /> : null}
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-slate">Bukti</span>
-        <Select value={evidence} onChange={(event) => setEvidence(evidenceOf(event.target.value))} aria-label="Bukti">
+      <FieldSelect label="Bukti" value={evidence} onChange={(event) => setEvidence(evidenceOf(event.target.value))}>
           <option value="receipt">Struk</option>
           <option value="board">Papan harga</option>
           <option value="none">Tanpa bukti</option>
-        </Select>
-      </label>
+      </FieldSelect>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={() => decide({ id: item.id, action: "approve", evidence })}>
+        <Button type="button" variant="primary" onClick={() => decide({ id: item.id, action: "approve", evidence })}>
           Terima
         </Button>
       </div>

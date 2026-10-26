@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
-import { Button, Card, Input } from "@monitor-pangan/ui"
+import { Button, Card, Input, PageHeader, PageShell } from "@monitor-pangan/ui"
 import { AdminDesk, clearAdminSecret, readAdminSecret, writeAdminSecret } from "#/components/AdminDesk.tsx"
 
 export const Route = createFileRoute("/admin")({
@@ -19,7 +19,7 @@ function AdminPage() {
   const [draft, setDraft] = useState("")
   if (secret.length === 0) {
     return (
-      <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-10">
+      <PageShell className="max-w-md">
         <Card padding="lg" className="flex flex-col gap-3">
           <h2 className="text-lg font-bold">Tinjauan laporan</h2>
           <form
@@ -37,14 +37,15 @@ function AdminPage() {
               aria-label="Kunci tinjauan"
               autoComplete="current-password"
             />
-            <Button type="submit">Masuk</Button>
+            <Button type="submit" variant="primary">Masuk</Button>
           </form>
         </Card>
-      </main>
+      </PageShell>
     )
   }
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6">
+    <PageShell>
+      <PageHeader title="Tinjauan laporan" />
       <AdminDesk
         secret={secret}
         onReject={() => {
@@ -52,6 +53,6 @@ function AdminPage() {
           setSecret("")
         }}
       />
-    </main>
+    </PageShell>
   )
 }
