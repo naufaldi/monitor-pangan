@@ -1,4 +1,4 @@
-import { Context, Data, Effect, Layer, Schema } from "effect"
+import { Context, Data, Duration, Effect, Layer, Schema } from "effect"
 import { FreshPayloadSchema } from "../data/fresh-payload.ts"
 import { CivilDateSchema } from "../data/price-schema.ts"
 import { STATIC_LIVE_THROUGH } from "../data/fresh-prices.ts"
@@ -69,10 +69,13 @@ const freshJson = Effect.fn("Worker.freshJson")(function* (after: string) {
   )
 })
 
-/** Serve the freshness API, and stamp HTML shells with the same payload. */
+/** Longest an HTML shell waits for the optional fresh payload; the client refetches it. */
+export const HTML_FRESH_BUDGET = Duration.seconds(1)
+
 const stampAdminRobots = (html: string): string =>
   html.replace('name="robots" content="index, follow"', 'name="robots" content="noindex, nofollow"')
 
+/** Serve the freshness API, and stamp HTML shells with the same payload. */
 export const handleRequest = Effect.fn("Worker.handleRequest")(function* (request: Request) {
   const url = new URL(request.url)
   if (url.pathname === "/api/pihps/health") {
@@ -108,6 +111,7 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
   const store = yield* PriceStore
   const payload = yield* store.freshSince(STATIC_LIVE_THROUGH).pipe(
     Effect.flatMap(Schema.decodeUnknown(FreshPayloadSchema)),
+    Effect.timeout(HTML_FRESH_BUDGET),
     Effect.catchAll(() => Effect.logError({ event: "pihps_freshness_unavailable", surface: "html" }).pipe(Effect.as(null))),
   )
   const headers = new Headers(asset.headers)

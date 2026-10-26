@@ -1,6 +1,6 @@
 import { assert, it } from "@effect/vitest"
-import { Effect, Layer, TestClock } from "effect"
-import worker, { handleScheduled, type WorkerEnv } from "./index.ts"
+import { Effect, Fiber, Layer, Option, TestClock } from "effect"
+import worker, { handleRequest, handleScheduled, HTML_FRESH_BUDGET, workerLayer, type WorkerEnv } from "./index.ts"
 import { PihpsFetchError, PihpsSource, PriceStore } from "./ingest.ts"
 import { sqliteFixture } from "./sqlite-test.ts"
 
@@ -63,6 +63,31 @@ it.effect("exposes freshness read failure without replacing it with a confirmed 
   assert.ok((yield* text(html)).includes("<body>app</body>"))
   assert.ok(!(yield* text(yield* fetch("/"))).includes('id="mp-pihps-fresh"'))
   assert.strictEqual((yield* fetch("/api/pihps/fresh?after=2026-02-30")).status, 400)
+}))
+
+it.effect("serves the report page shell when the freshness lookup never settles", () => Effect.gen(function* () {
+  const db = yield* sqliteFixture
+  const stalled = Layer.succeed(PriceStore, {
+    coverageSince: () => Effect.succeed([]),
+    upsertDay: () => Effect.succeed(0),
+    recordJob: () => Effect.void,
+    freshSince: () => Effect.never,
+  })
+  const fiber = yield* handleRequest(new Request("https://example.test/lapor")).pipe(
+    Effect.provide(stalled),
+    Effect.provide(workerLayer(environment(db.db))),
+    Effect.fork,
+  )
+  yield* Effect.promise(() => new Promise((resolve) => setTimeout(resolve, 0)))
+  yield* TestClock.adjust(HTML_FRESH_BUDGET)
+  const settled = yield* Fiber.poll(fiber)
+  assert.ok(Option.isSome(settled), "HTML must not wait on an unbounded freshness lookup")
+  const html = yield* Fiber.join(fiber)
+  assert.strictEqual(html.status, 200)
+  assert.strictEqual(html.headers.get("cache-control"), "no-store")
+  const body = yield* text(html)
+  assert.ok(body.includes("<body>app</body>"))
+  assert.ok(!body.includes('id="mp-pihps-fresh"'))
 }))
 
 it.effect("scheduled execution stays failed after recording an upstream failure", () => Effect.gen(function* () {
