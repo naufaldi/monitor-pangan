@@ -82,7 +82,7 @@ function DayaBeliPage() {
   const priceNote = usePageSourceNote(priceDate)
   const snapshot = useMemo(
     () => provider.snapshot(priceDate, commodity.id),
-    [priceDate, commodity.id],
+    [priceDate, commodity.id, rev],
   )
   const rows = useMemo(() => {
     const prices = new Map(snapshot.rows.map((row) => [row.regionCode, row.price]))

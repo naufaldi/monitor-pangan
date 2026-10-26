@@ -25,7 +25,7 @@ export function PriceFreshness() {
     <StatusMessage
       tone={loading ? "loading" : needsRetry ? "error" : "empty"}
       title={healthStatusCopy(freshness)}
-      action={needsRetry ? <Button onClick={retry} disabled={loading}>Coba lagi</Button> : undefined}
+      action={!loading || needsRetry ? <Button onClick={retry} disabled={loading}>{needsRetry ? "Coba lagi" : "Periksa lagi"}</Button> : undefined}
     >
       {freshness.refreshFailed ? <p>Harga yang sudah tersedia tetap ditampilkan. Pembaruan harga gagal; data belum dapat dipastikan mutakhir.</p> : null}
       {health != null ? <>
