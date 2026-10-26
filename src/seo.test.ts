@@ -12,6 +12,8 @@ import {
   THEME_COLOR,
   absoluteUrl,
   jsonLd,
+  routeShellHtml,
+  seoHeadTags,
   seoLinks,
   seoMeta,
   stampRouteHtml,
@@ -129,5 +131,35 @@ it.effect("stamp rewrites head tags and leaves the body title alone", () =>
       ) as { "@graph": Array<{ "@type": string; url: string }> }
     )["@graph"].find((node) => node["@type"] === "WebPage")
     assert.strictEqual(page?.url, "https://monitor.naufaldi.com/tren")
+  }),
+)
+
+it.effect("route shell keeps its own body and drops the root home canonical and JSON-LD", () =>
+  Effect.sync(() => {
+    const route = ROUTE_SEO.laporan
+    const tags = `<meta name="description" content="${route.description}"/>
+<link rel="canonical" href="${absoluteUrl(route.path)}"/>
+<script type="application/ld+json">${jsonLd("laporan")}</script>`
+    const html = `<!doctype html><html lang="id"><head><title>${route.title}</title>
+<link rel="canonical" href="${absoluteUrl("/")}"/>
+<script type="application/ld+json">${jsonLd("home")}</script>
+${tags}</head><body><a href="/laporan" aria-current="page">Laporan Warga</a></body></html>`
+    const shell = routeShellHtml(html, "laporan")
+    const head = shell.match(/<head>[\s\S]*?<\/head>/)?.[0] ?? ""
+    assert.strictEqual(head.match(/rel="canonical"/g)?.length, 1)
+    assert.strictEqual(head.includes(ROUTE_SEO.home.title), false)
+    assert.ok(shell.includes('<body><a href="/laporan" aria-current="page">Laporan Warga</a></body>'))
+    assert.deepStrictEqual(
+      seoHeadTags(shell),
+      seoHeadTags(`<head><title>${route.title}</title>${tags.replaceAll("/>", ">")}</head>`),
+    )
+  }),
+)
+
+it.effect("route shell refuses a head without the route canonical", () =>
+  Effect.sync(() => {
+    const html = `<html><head><title>${ROUTE_SEO.lapor.title}</title><link rel="canonical" href="${absoluteUrl("/")}"/>
+<script type="application/ld+json">${jsonLd("lapor")}</script></head><body></body></html>`
+    assert.throws(() => routeShellHtml(html, "lapor"))
   }),
 )

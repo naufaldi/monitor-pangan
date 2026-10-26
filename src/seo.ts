@@ -215,3 +215,33 @@ export function stampRouteHtml(html: string, id: Exclude<SeoRouteId, "home">): s
   if (head.includes(home.title)) throw new Error("stamp: home title still in head")
   return html.replace(/<head>[\s\S]*?<\/head>/, `<head>${head}</head>`)
 }
+
+/** SEO tags inside `<head>`, normalized so self-closing and plain tags compare equal. */
+export function seoHeadTags(html: string): string[] {
+  const head = /<head>([\s\S]*?)<\/head>/.exec(html)?.[1]
+  if (head == null) throw new Error("stamp: missing <head>")
+  const tags = head.match(
+    /<title>[^<]*<\/title>|<meta\b[^>]*\b(?:name|property)="[^"]*"[^>]*>|<link\b[^>]*rel="canonical"[^>]*>|<script type="application\/ld\+json">[^<]*<\/script>/g,
+  ) ?? []
+  return tags.map((tag) => tag.replace(/\s*\/>$/, ">")).sort()
+}
+
+/**
+ * Keep a public route's own prerendered shell, minus the root route's home
+ * canonical and JSON-LD. TanStack dedupes `meta` and `title` but not these.
+ */
+export function routeShellHtml(html: string, id: Exclude<SeoRouteId, "home">): string {
+  const headMatch = /<head>([\s\S]*?)<\/head>/.exec(html)
+  if (headMatch?.[1] == null) throw new Error("stamp: missing <head>")
+  const head = headMatch[1]
+    .replace(/<link\b[^>]*rel="canonical"[^>]*>/g, (tag) =>
+      tag.includes(`href="${absoluteUrl("/")}"`) ? "" : tag)
+    .replace(`<script type="application/ld+json">${jsonLd("home")}</script>`, "")
+  if (head.match(/rel="canonical"/g)?.length !== 1) throw new Error(`stamp: ${id} needs one canonical`)
+  if (head.match(/application\/ld\+json/g)?.length !== 1) throw new Error(`stamp: ${id} needs one JSON-LD`)
+  if (!head.includes(`<link rel="canonical" href="${absoluteUrl(ROUTE_SEO[id].path)}"`)) {
+    throw new Error(`stamp: ${id} canonical is not the route URL`)
+  }
+  if (head.includes(ROUTE_SEO.home.title)) throw new Error(`stamp: ${id} head still has the home title`)
+  return html.replace(/<head>[\s\S]*?<\/head>/, `<head>${head}</head>`)
+}

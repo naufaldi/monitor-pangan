@@ -33,7 +33,12 @@ const config = defineConfig({
     tailwindcss(),
     tanstackStart({
       spa: { enabled: true },
-      prerender: { enabled: true, crawlLinks: true },
+      prerender: {
+        enabled: true,
+        crawlLinks: true,
+        // Query variants write the same `<route>/index.html` and race the plain route shell.
+        filter: (page) => !page.path.includes("?"),
+      },
     }),
     viteReact(),
   ],

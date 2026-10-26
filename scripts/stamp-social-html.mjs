@@ -1,6 +1,6 @@
 import { copyFileSync, existsSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
 
-import { ROUTE_SEO, SITE_ORIGIN, stampRouteHtml } from "../src/seo.ts"
+import { ROUTE_SEO, SITE_ORIGIN, routeShellHtml, seoHeadTags, stampRouteHtml } from "../src/seo.ts"
 
 const shellPath = "dist/client/_shell.html"
 const indexPath = "dist/client/index.html"
@@ -21,11 +21,19 @@ const pages = [
   ["lapor", "dist/client/lapor.html"],
 ]
 
+// Serve each route's own prerendered shell so the nav and badge match the page before hydration.
 for (const [id, dest] of pages) {
-  const html = stampRouteHtml(index, id)
-  writeFileSync(dest, html)
   const dir = `dist/client/${id}`
-  if (existsSync(dir)) rmSync(dir, { recursive: true })
+  const ownPath = `${dir}/index.html`
+  if (!existsSync(ownPath)) throw new Error(`stamp: missing ${ownPath}`)
+  const html = routeShellHtml(readFileSync(ownPath, "utf8"), id)
+  const expected = seoHeadTags(stampRouteHtml(index, id))
+  const actual = seoHeadTags(html)
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(`${dest} SEO tags differ from the stamped home head`)
+  }
+  writeFileSync(dest, html)
+  rmSync(dir, { recursive: true })
   const head = html.match(/<head>[\s\S]*?<\/head>/)?.[0] ?? ""
   if (!head.includes(ROUTE_SEO[id].title)) throw new Error(`${dest} missing route title`)
   if (head.includes(ROUTE_SEO.home.title)) throw new Error(`${dest} still has the home title`)
