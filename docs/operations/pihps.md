@@ -77,6 +77,11 @@ comes from actual official retail observations, including history. Neither is
 substituted for the other. `oldestUnresolvedDate` checks every eligible weekday,
 so a newer maximum cannot conceal an old gap. The last attempt and last success
 come from independent bounded job reads. Legacy `failed` becomes public `error`.
+`waiting` does not prove that today's source was queried or that BI has not
+published. For example, Monday before 14:15 WIB can still show Friday's prices
+with no Monday attempt. The UI uses neutral wording and explains the configured
+weekday schedule. Its retry button only reloads prices and health; it never
+starts ingestion. `checkedAt` is the health-request time, not a source-fetch time.
 No successful job evidence, or a latest error attempt, yields `degraded` even
 when prices remain readable. A database/decode failure yields `unavailable` with
 nullable observations and a sanitized log. Notes, SQL and exceptions are private.

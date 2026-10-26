@@ -38,6 +38,24 @@ it.effect("waits for today's pending survey before 17:45 WIB and degrades at the
   assert.strictEqual((yield* json(late)).status, "degraded")
 }))
 
+it.effect("retains Friday prices on Monday before ingestion without claiming publication was checked", () => Effect.gen(function* () {
+  const db = yield* fixture
+  for (const date of tradingDaysFromThrough("2026-10-19", "2026-10-23")) yield* db.coverage(date, "live")
+  yield* db.price("2026-10-23", "31", 16000)
+  yield* db.job("2026-10-25T10:15:36.607Z", "complete")
+  yield* TestClock.setTime("2026-10-26T07:04:00Z")
+  const response = yield* request(db.db)
+  assert.strictEqual(response.status, 200)
+  const body = yield* json(response)
+  assert.strictEqual(body.status, "waiting")
+  assert.strictEqual(body.latestPricedDate, "2026-10-23")
+  assert.strictEqual(body.latestCheckedDate, "2026-10-23")
+  assert.strictEqual(body.oldestUnresolvedDate, "2026-10-26")
+  assert.strictEqual(body.lastAttemptAt, "2026-10-25T10:15:36.607Z")
+  yield* TestClock.setTime("2026-10-26T10:45:00Z")
+  assert.strictEqual((yield* json(yield* request(db.db))).status, "degraded")
+}))
+
 it.effect("does not let today's prices or newest completion conceal an older unresolved weekday", () => Effect.gen(function* () {
   const db = yield* fixture
   yield* db.coverage("2026-10-16", "error")
