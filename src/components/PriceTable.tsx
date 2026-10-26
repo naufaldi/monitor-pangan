@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Delta, FieldSelect, Panel, SearchInput, StatusMessage, cn, focusRing, selectedRowClass, tableClass, tdClass, thClass } from "@monitor-pangan/ui"
+import { Delta, Panel, SearchInput, SegmentedControl, StatusMessage, cn, focusRing, selectedRowClass, tableClass, tdClass, thClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPct, formatPrice, trendDirection } from "#/lib/format.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 
@@ -63,17 +63,17 @@ export function PriceTable({
             placeholder="Cari provinsi…"
             className="sm:w-56"
           />
-          <FieldSelect
+          <SegmentedControl
             label="Urutkan"
-            hideLabel
+            options={[
+              { value: "price-desc", label: "Termahal" },
+              { value: "price-asc", label: "Termurah" },
+              { value: "name", label: "Nama A–Z" },
+            ] as const}
             value={sort}
-            onChange={(event) => setSort(event.target.value as SortKey)}
-            wrapperClassName="w-full sm:w-44"
-          >
-            <option value="price-desc">Termahal dulu</option>
-            <option value="price-asc">Termurah dulu</option>
-            <option value="name">Nama A–Z</option>
-          </FieldSelect>
+            onChange={setSort}
+            className="grid w-full grid-cols-3 sm:flex sm:w-auto"
+          />
         </>
       }
     >

@@ -65,8 +65,8 @@ viewport and retains its horizontal-scroll wrapper.
   PR CI runs the full suite.
 - Browser layouts were inspected at 390×844 and 1280×844. Scrollable table
   contents and clipped Leaflet tiles were excluded from page-overflow failures.
-- Citizen submission stays disabled when Turnstile is absent. A live Turnstile
-  submission and photo upload were not exercised.
+- Citizen submission stays disabled when Turnstile is absent. The live attempt
+  and controlled local photo submission are described below.
 - Existing large-bundle and nonfatal circular-dependency warnings remain.
 
 Performance is assessed as not materially affected by the UI adoption: serving
@@ -74,3 +74,60 @@ queries and successful fetch flows are unchanged, and most changes reuse markup
 and styles. The chart adds one measured-width observer with cleanup; its keyboard
 detail interaction still updates the selected date and price. This is a code-based
 assessment, not a latency benchmark or a production-performance improvement claim.
+
+## Submission follow-up — 26 October 2026
+
+Production was inspected through Chrome only, after the user confirmed company
+policy permission for browser-only testing. No deployment or remote D1/R2 CLI
+request was made. The form was filled with rice at Rp15.000, Kota Bandung, alias
+`DATA UJI Codex - bukan laporan nyata`, and a generated photo visibly marked as
+synthetic test data. `GET /api/laporan/meta` returned
+`{"turnstileSiteKey":null}`. The form showed `Pemeriksaan kiriman belum siap.`
+and kept submit disabled. No production report or photo was submitted.
+
+The production configuration is a separate blocked result. Set the production
+Turnstile site key and secret, confirm hostname configuration and R2 upload/CORS
+configuration, then repeat the real submission during the user's deployment.
+Production photo upload is still unverified. Do not deploy dummy test keys.
+
+For the local photo journey, an ignored disposable wrapper served the production
+client build and the unchanged application Worker against isolated D1/R2 storage.
+Cloudflare's real visible test widget returned client error `300030`; the invisible
+test widget did not enable submit during the observed attempt. A local widget
+fixture then supplied Cloudflare's documented dummy token. Server-side Siteverify
+still called Cloudflare using its documented test secret. The wrapper replaced
+the presigned upload destination with a same-origin endpoint writing the local
+R2 binding. It did not test production R2 credentials, CORS, or signature acceptance.
+The fixture files under ignored `data/repairs/submission/` are never deployment inputs.
+
+Through the actual form controls, Codex selected the generated PNG and clicked
+submit. Report `7cdcef41-3f48-463d-93e2-09134bc9765c` was saved as pending.
+The authenticated admin photo endpoint returned a decoded JPEG, 1254×1254,
+280,551 bytes, with no EXIF. The input PNG was 2,374,660 bytes. The public list
+returned no rows; the public photo returned 404; the admin photo without a key
+returned 401. The downloaded photo was opened and visually inspected.
+
+Result: controlled local photo flow passes; production Turnstile/photo flow is
+blocked by missing site-key configuration. These are distinct results.
+The UI adoption does not change conversion, upload, validation, or storage logic,
+so performance remains not materially affected by code inspection. File sizes
+above describe this fixture, not a speed or production capacity claim.
+
+- [Live disabled form](./live-submission-blocked.png), [live metadata](./live-metadata.png)
+- [Local submit confirmation](./local-photo-submitted.png), [persisted JPEG](./local-stored-photo.jpg)
+- [Generated test input](./submission-test-image.png), [structured checks](./submission-verification.json)
+
+Peta sorting was also aligned with Daya Beli through `SegmentedControl` to finish
+#24. The static browser theme color is checked against the canvas token in
+`src/seo.test.ts`; its Node stamping constraint is documented in the UI spec.
+The final sort controls measure 44px high at 390px and 1280px, with page scroll
+width equal to viewport width. Termurah starts with Nusa Tenggara Barat
+(Rp13.900), Nama A–Z with Aceh, and Termahal with Kalimantan Tengah (Rp19.950).
+[Mobile](./final-sort-390.png), [desktop](./final-sort-1280.png), and
+[measurements](./final-sort-verification.json) were inspected after the final build.
+Final local checks cover typecheck, 15 explicit test files with 67 distinct tests,
+and the production build. The later PR CI result must be checked on its exact head.
+
+Both production and the local prerendered build logged React hydration error #418
+before the form became interactive. This pre-existing observation was not changed
+or claimed fixed by the UI audit.

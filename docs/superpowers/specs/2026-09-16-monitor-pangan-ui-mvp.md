@@ -67,6 +67,11 @@ Page titles are visible on report and admin pages. Map, trends and purchasing
 power retain a screen-reader heading without moving their toolbar down.
 Sticky toolbars use the shared z-index token.
 
+Peta and Daya Beli both use `SegmentedControl` for table sorting. The static
+`THEME_COLOR` in `src/seo.ts` is the sole source hex exception: the Node HTML
+stamping script reads this module without a JSX loader, so it cannot import
+the UI entrypoint. `src/seo.test.ts` checks it against `color.canvas`.
+
 Verify layouts at 1280px and 390px. Prices stay on one line inside scrollable
 tables. Chart axis labels remain at least 11 CSS pixels on the narrow viewport.
 Audit citizen reports and admin against a local Worker with seeded data;
