@@ -107,11 +107,15 @@ export function formatAxisPrice(value: number): string {
   return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(Math.round(value))
 }
 
-/** Format a percent delta as "+1.2%", "-0.8%", or "0.0%". */
+const PCT = new Intl.NumberFormat("id-ID", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+})
+
+/** Format a percent delta as "+1,2%", "-0,8%", or "0,0%", without signed rounded zeros. */
 export function formatPct(value: number): string {
-  if (Number(value.toFixed(1)) === 0) return "0.0%"
-  const sign = value > 0 ? "+" : ""
-  return `${sign}${value.toFixed(1)}%`
+  return `${PCT.format(value)}%`
 }
 
 /** Classify a percent change as up, down, or flat. */

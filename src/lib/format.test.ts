@@ -1,6 +1,27 @@
 import { Effect } from "effect"
 import { assert, it } from "@effect/vitest"
-import { formatDateLong, formatDateShort, formatMonthYear, formatRupiahAmount, formatSeriesDate, parseRupiahInput } from "./format.ts"
+import { formatDateLong, formatDateShort, formatMonthYear, formatPct, formatRupiahAmount, formatSeriesDate, parseRupiahInput } from "./format.ts"
+
+it.effect("formats positive and negative percent deltas with Indonesian grouping and rounding", () =>
+  Effect.sync(() => {
+    assert.strictEqual(formatPct(44.7), "+44,7%")
+    assert.strictEqual(formatPct(-4.43), "-4,4%")
+    assert.strictEqual(formatPct(108.25), "+108,3%")
+    assert.strictEqual(formatPct(-108.25), "-108,3%")
+    assert.strictEqual(formatPct(1234.5), "+1.234,5%")
+  }),
+)
+
+it.effect("normalizes rounded zero percent deltas without a positive or negative sign", () =>
+  Effect.sync(() => {
+    assert.strictEqual(formatPct(0), "0,0%")
+    assert.strictEqual(formatPct(-0), "0,0%")
+    assert.strictEqual(formatPct(0.04), "0,0%")
+    assert.strictEqual(formatPct(-0.04), "0,0%")
+    assert.strictEqual(formatPct(0.05), "+0,1%")
+    assert.strictEqual(formatPct(-0.05), "-0,1%")
+  }),
+)
 
 it.effect("formats a month bucket as Indonesian Mon YYYY for long-range axes", () =>
   Effect.sync(() => {

@@ -27,3 +27,47 @@ Scope for this phase is UI-first: the two user stories below, nothing else.
 Auth, `/api/*`, cron, CSV export, cost calculator, alerts, E2E tests.
 No ADRs: scaffold shape, Leaflet, and mock-provider are all easily
 reversible, so none clear the ADR bar.
+
+## UI consistency rules
+
+The original MVP scope above records the September scaffold. The later
+[UI audit, #31](https://github.com/naufaldi/monitor-pangan/issues/31), covers
+the current map, trends, purchasing power, citizen reports and admin views.
+
+Build these views from `@monitor-pangan/ui`. Keep data fetching, route search,
+report moderation and other application behavior in `src/`.
+
+| Need | Shared component or helper |
+| --- | --- |
+| Native select and file upload | `FieldSelect`, `FileInput` |
+| Mutually exclusive toggle | `SegmentedControl` |
+| Searchable picker | `ListboxSearch`, `Listbox`, `ListboxGroup`, `ListboxOption`, `ListboxEmpty` |
+| Search, panel and figures | `SearchInput`, `Panel`, `StatList`, `Stat` |
+| Page structure | `PageShell`, `StickyToolbar`, `PageHeader`, `SectionHeader` |
+| Table cells | `tableClass`, `thClass`, `tdClass` |
+| Navigation and selection | `navPillClass`, `selectedRowClass` |
+| Empty, loading and error feedback | `StatusMessage` |
+| Price changes and direction | `Delta`, `directionGlyph` |
+| SVG and Leaflet colors | `color` |
+
+Fields use a 44px height floor, a 10px radius, the hairline border token and
+the shared keyboard focus ring. Cards retain their larger radius. Navigation
+links own their visible pill and scroll horizontally on narrow screens.
+
+Selection uses the neutral selected token. Active toggles use ink. Primary
+actions use the leaf-deep primary variant. Ember warns about sample data and
+represents upward price changes; official PIHPS date badges are neutral.
+Leaf, gold and heat retain their data meanings.
+
+Percentages use Indonesian formatting, such as `+44,7%`. Direction glyphs are
+`▲` for up, `▼` for down and `•` for flat. Loading must not appear as a
+confirmed empty result.
+
+Page titles are visible on report and admin pages. Map, trends and purchasing
+power retain a screen-reader heading without moving their toolbar down.
+Sticky toolbars use the shared z-index token.
+
+Verify layouts at 1280px and 390px. Prices stay on one line inside scrollable
+tables. Chart axis labels remain at least 11 CSS pixels on the narrow viewport.
+Audit citizen reports and admin against a local Worker with seeded data;
+Vite alone does not serve those APIs.

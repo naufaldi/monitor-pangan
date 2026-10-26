@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react"
-import { Button, ChevronBadge, Input, fieldMenuClass, fieldTriggerClass } from "@monitor-pangan/ui"
-import { PLACES, nearestPlace, type Place } from "#/data/places.ts"
+import { Button, ChevronBadge, Listbox, ListboxEmpty, ListboxOption, ListboxSearch, StatusMessage, fieldMenuClass, fieldTriggerClass } from "@monitor-pangan/ui"
+import { PLACES, nearestPlace } from "#/data/places.ts"
 import { cn } from "#/lib/utils.ts"
 
 type PlaceSelectProps = {
@@ -101,32 +101,29 @@ export function PlaceSelect({ value, onChange }: PlaceSelectProps) {
         </button>
         {open ? (
           <div className={fieldMenuClass()}>
-            <div className="border-b border-hairline p-2">
-              <Input
-                ref={searchRef}
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Cari kota atau kabupaten…"
-                aria-label="Cari kota atau kabupaten"
-                className="h-11 w-full py-0"
-              />
-            </div>
-            <ul id={listId} role="listbox" aria-label="Kota atau kabupaten" className="max-h-72 overflow-auto py-1">
-              {matches.length === 0 ? <li className="px-3 py-3 text-sm text-slate">Tidak ada tempat yang cocok.</li> : null}
+            <ListboxSearch
+              ref={searchRef}
+              label="Cari kota atau kabupaten"
+              value={query}
+              onValueChange={setQuery}
+              placeholder="Cari kota atau kabupaten…"
+            />
+            <Listbox id={listId} label="Kota atau kabupaten">
+              {matches.length === 0 ? <ListboxEmpty>Tidak ada tempat yang cocok.</ListboxEmpty> : null}
               {matches.map((place) => (
-                <PlaceOption
+                <ListboxOption
                   key={place.code}
-                  place={place}
                   selected={place.code === value}
-                  onPick={() => {
+                  onSelect={() => {
                     onChange(place.code)
                     setOpen(false)
                     setQuery("")
                   }}
-                />
+                >
+                  {place.name}
+                </ListboxOption>
               ))}
-            </ul>
+            </Listbox>
           </div>
         ) : null}
       </div>
@@ -135,34 +132,13 @@ export function PlaceSelect({ value, onChange }: PlaceSelectProps) {
         variant="rect"
         disabled={locating}
         onClick={useCurrentLocation}
-        className="self-start disabled:cursor-not-allowed disabled:opacity-40"
+        className="self-start"
       >
         {locating ? "Mencari lokasi…" : "Gunakan lokasi saat ini"}
       </Button>
       {locationNote != null ? (
-        <p role="status" className="text-sm text-slate">
-          {locationNote}
-        </p>
+        <StatusMessage tone="empty" title={locationNote} bare className="px-0 py-0" />
       ) : null}
     </div>
-  )
-}
-
-function PlaceOption({ place, selected, onPick }: { place: Place; selected: boolean; onPick: () => void }) {
-  return (
-    <li>
-      <button
-        type="button"
-        role="option"
-        aria-selected={selected}
-        onClick={onPick}
-        className={cn(
-          "flex h-11 w-full items-center px-3 text-left text-sm",
-          selected ? "bg-ember-soft" : "hover:bg-muted",
-        )}
-      >
-        {place.name}
-      </button>
-    </li>
   )
 }

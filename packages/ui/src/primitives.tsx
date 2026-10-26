@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]): string {
 
 /** Keyboard focus ring shared by every interactive primitive. */
 export const focusRing =
-  "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+  "outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
 
 export type ButtonVariant = "pill" | "rect" | "primary"
 

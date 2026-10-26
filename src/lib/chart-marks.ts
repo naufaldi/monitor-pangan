@@ -1,3 +1,4 @@
+import { color } from "@monitor-pangan/ui"
 import { trendDirection } from "#/lib/format.ts"
 
 export type MarkKind = "up" | "down" | "flat" | "gap"
@@ -34,13 +35,13 @@ export function seriesMarks(
 export function markPaint(kind: MarkKind): { fill: string; stroke: string } {
   switch (kind) {
     case "up":
-      return { fill: "#dc2626", stroke: "#dc2626" }
+      return { fill: color.ember, stroke: color.ember }
     case "down":
-      return { fill: "#00714c", stroke: "#00714c" }
+      return { fill: color.leafDeep, stroke: color.leafDeep }
     case "flat":
-      return { fill: "#ffffff", stroke: "#1a1c16" }
+      return { fill: color.paper, stroke: color.ink }
     case "gap":
-      return { fill: "#1a1c16", stroke: "#1a1c16" }
+      return { fill: color.ink, stroke: color.ink }
     default: {
       const _exhaustive: never = kind
       return _exhaustive

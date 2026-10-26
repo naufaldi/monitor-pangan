@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { createFileRoute, useRouterState } from "@tanstack/react-router"
-import { Button, StatusMessage } from "@monitor-pangan/ui"
+import { Button, PageHeader, PageShell, StickyToolbar, StatusMessage } from "@monitor-pangan/ui"
 
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { DatePicker } from "#/components/DatePicker.tsx"
@@ -69,45 +69,44 @@ function HomePage() {
   }, [date, rev, request, commodityId])
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4">
-        <div className="sticky top-0 z-10 -mx-4 border-b border-hairline bg-canvas/90 px-4 py-2 backdrop-blur">
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-52 flex-1">
-              <CommoditySelect
-                commodities={COMMODITIES}
-                value={commodityId}
-                onChange={setCommodityId}
-                hintFor={(c) => hints.get(c.id)}
-              />
-            </div>
-            <DatePicker
-              dates={dates}
-              value={date}
-              onChange={(next) => {
-                void navigate({ search: (previous) => ({ ...previous, tanggal: next === latestLiveDate() ? undefined : next }) })
-              }}
-            />
-          </div>
+    <PageShell>
+      <PageHeader title="Peta harga pangan" visuallyHidden />
+      <StickyToolbar>
+        <div className="min-w-52 flex-1">
+          <CommoditySelect
+            commodities={COMMODITIES}
+            value={commodityId}
+            onChange={setCommodityId}
+            hintFor={(c) => hints.get(c.id)}
+          />
         </div>
+        <DatePicker
+          dates={dates}
+          value={date}
+          onChange={(next) => {
+            void navigate({ search: (previous) => ({ ...previous, tanggal: next === latestLiveDate() ? undefined : next }) })
+          }}
+        />
+      </StickyToolbar>
 
-        {request.status === "loading" ? (
-          <StatusMessage tone="loading" title="Memuat harga…">Mengambil harga PIHPS untuk {formatDateLong(date)}.</StatusMessage>
-        ) : request.status === "error" ? (
-          <StatusMessage tone="error" title={request.kind === "coverage" ? "Riwayat harga belum tersedia" : "Harga gagal dimuat"}
-            action={<Button onClick={retry}>Coba lagi</Button>}>
-            {request.kind === "coverage" ? "Cakupan survei untuk pilihan ini belum dapat dipastikan." : "Periksa koneksi lalu coba lagi."}
-          </StatusMessage>
-        ) : request.data.pricedCount === 0 ? (
-          <StatusMessage tone="empty" title="Tidak ada data">Survei PIHPS tidak memuat harga untuk tanggal dan komoditas ini.</StatusMessage>
-        ) : (
-          <HomeSnapshot snapshotKey={request.key} snapshot={request.data} provinces={provinces} selectedCode={selectedCode} onSelect={setSelectedCode} />
-        )}
+      {request.status === "loading" ? (
+        <StatusMessage tone="loading" title="Memuat harga…">Mengambil harga PIHPS untuk {formatDateLong(date)}.</StatusMessage>
+      ) : request.status === "error" ? (
+        <StatusMessage tone="error" title={request.kind === "coverage" ? "Riwayat harga belum tersedia" : "Harga gagal dimuat"}
+          action={<Button onClick={retry}>Coba lagi</Button>}>
+          {request.kind === "coverage" ? "Cakupan survei untuk pilihan ini belum dapat dipastikan." : "Periksa koneksi lalu coba lagi."}
+        </StatusMessage>
+      ) : request.data.pricedCount === 0 ? (
+        <StatusMessage tone="empty" title="Tidak ada data">Survei PIHPS tidak memuat harga untuk tanggal dan komoditas ini.</StatusMessage>
+      ) : (
+        <HomeSnapshot snapshotKey={request.key} snapshot={request.data} provinces={provinces} selectedCode={selectedCode} onSelect={setSelectedCode} />
+      )}
 
-        <footer className="pb-6 text-xs text-slate">
-          Peta: GeoJSON indonesia-geodata (MIT). {request.status === "ready" ? sourceNote : `Tanggal dipilih: ${formatDateLong(date)}. Harga belum dimuat.`} Sumber resmi: Panel Harga
-          Badan Pangan Nasional dan PIHPS Bank Indonesia.
-        </footer>
-    </main>
+      <footer className="pb-6 text-xs text-slate">
+        Peta: GeoJSON indonesia-geodata (MIT). {request.status === "ready" ? sourceNote : `Tanggal dipilih: ${formatDateLong(date)}. Harga belum dimuat.`} Sumber resmi: Panel Harga
+        Badan Pangan Nasional dan PIHPS Bank Indonesia.
+      </footer>
+    </PageShell>
   )
 }
 

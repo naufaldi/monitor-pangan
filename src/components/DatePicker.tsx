@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { Button, ChevronBadge, Select, cardClass } from "@monitor-pangan/ui"
+import { Button, FieldSelect, Input } from "@monitor-pangan/ui"
 import { formatDateShort } from "#/lib/format.ts"
 import { cn } from "#/lib/utils.ts"
 
@@ -94,70 +94,65 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
       <div
         role="group"
         aria-label="Tanggal data"
-        className={cardClass("none", "flex shrink-0 items-center gap-1 p-1")}
+        className="flex shrink-0 items-center gap-2"
       >
         <Button
           variant="rect"
           aria-label="Tanggal sebelumnya"
           disabled={prev == null}
           onClick={() => prev != null && onChange(prev)}
-          className="flex min-w-11 items-center justify-center px-2 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex min-w-11 items-center justify-center px-2"
         >
           <Chevron />
         </Button>
-        <label className="flex min-h-11 shrink-0 cursor-pointer items-center rounded-lg bg-paper px-1">
-          <input
-            type="date"
-            aria-label="Tanggal data"
-            value={dates[safeIndex] ?? value}
-            min={dates[0]}
-            max={latest}
-            onChange={(e) => {
-              const picked = e.target.value
-              if (picked) onChange(nearestDate(dates, picked))
-            }}
-            onClick={(e) => openDatePicker(e.currentTarget)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault()
-                openDatePicker(e.currentTarget)
-              }
-            }}
-            className="tabular-nums min-h-11 w-[9.25rem] shrink-0 cursor-pointer rounded-lg bg-transparent px-1 text-sm font-semibold text-ink"
-          />
-        </label>
+        <Input
+          type="date"
+          aria-label="Tanggal data"
+          value={dates[safeIndex] ?? value}
+          min={dates[0]}
+          max={latest}
+          onChange={(e) => {
+            const picked = e.target.value
+            if (picked) onChange(nearestDate(dates, picked))
+          }}
+          onClick={(e) => openDatePicker(e.currentTarget)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault()
+              openDatePicker(e.currentTarget)
+            }
+          }}
+          className="tabular-nums h-11 w-[9.25rem] shrink-0 cursor-pointer px-2 py-0"
+        />
         <Button
           variant="rect"
           aria-label="Tanggal berikutnya"
           disabled={next == null}
           onClick={() => next != null && onChange(next)}
-          className="flex min-w-11 items-center justify-center px-2 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex min-w-11 items-center justify-center px-2"
         >
           <Chevron flipped />
         </Button>
       </div>
 
-      <div className="relative flex shrink-0 items-center">
-        <Select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          aria-label="Pilih tanggal perdagangan"
-          className="tabular-nums w-40 shrink-0 appearance-none pr-11 pl-2 text-ink"
-        >
-          {groups.map((g) => (
-            <optgroup key={g.label} label={g.label}>
-              {g.dates.map((d) => (
-                <option key={d} value={d}>
-                  {formatDateShort(d)}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </Select>
-        <span className="pointer-events-none absolute top-1/2 right-1 -translate-y-1/2">
-          <ChevronBadge />
-        </span>
-      </div>
+      <FieldSelect
+        label="Pilih tanggal perdagangan"
+        hideLabel
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        wrapperClassName="w-40 shrink-0"
+        className="tabular-nums"
+      >
+        {groups.map((g) => (
+          <optgroup key={g.label} label={g.label}>
+            {g.dates.map((d) => (
+              <option key={d} value={d}>
+                {formatDateShort(d)}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </FieldSelect>
 
       <span className="flex min-h-11 shrink-0 items-center" aria-hidden={isLatest}>
         <Button

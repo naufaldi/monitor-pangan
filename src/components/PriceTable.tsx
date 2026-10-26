@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react"
-import { ChevronBadge, Input, Select, cardClass } from "@monitor-pangan/ui"
-import { formatDateShort, formatPrice } from "#/lib/format.ts"
-import { cn } from "#/lib/utils.ts"
+import { Delta, FieldSelect, Panel, SearchInput, StatusMessage, cn, focusRing, selectedRowClass, tableClass, tdClass, thClass } from "@monitor-pangan/ui"
+import { formatDateShort, formatPct, formatPrice, trendDirection } from "#/lib/format.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 
 export type TableRow = {
@@ -48,46 +47,43 @@ export function PriceTable({
   }, [rows, query, sort])
 
   return (
-    <section className={cardClass("none", "overflow-hidden")}>
-      <div className="flex flex-wrap items-center gap-2 border-b border-hairline px-4 py-3">
-        <h2 className="text-base font-bold">
-          Harga {commodityName} per provinsi
-        </h2>
-        <span className="tabular-nums text-sm text-slate">
+    <Panel
+      title={`Harga ${commodityName} per provinsi`}
+      description={
+        <span className="tabular-nums">
           {formatDateShort(date)} · {visible.length} dari {rows.length}
         </span>
-        <div className="ml-auto flex gap-2">
-          <Input
-            type="search"
+      }
+      toolbar={
+        <>
+          <SearchInput
+            label="Cari provinsi"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onValueChange={setQuery}
             placeholder="Cari provinsi…"
-            aria-label="Cari provinsi"
+            className="sm:w-56"
           />
-          <div className="relative flex items-center">
-            <Select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
-              aria-label="Urutkan"
-              className="appearance-none pr-11 pl-2"
-            >
-              <option value="price-desc">Termahal dulu</option>
-              <option value="price-asc">Termurah dulu</option>
-              <option value="name">Nama A–Z</option>
-            </Select>
-            <span className="absolute top-1/2 right-1 -translate-y-1/2">
-              <ChevronBadge />
-            </span>
-          </div>
-        </div>
-      </div>
+          <FieldSelect
+            label="Urutkan"
+            hideLabel
+            value={sort}
+            onChange={(event) => setSort(event.target.value as SortKey)}
+            wrapperClassName="w-full sm:w-44"
+          >
+            <option value="price-desc">Termahal dulu</option>
+            <option value="price-asc">Termurah dulu</option>
+            <option value="name">Nama A–Z</option>
+          </FieldSelect>
+        </>
+      }
+    >
       <div className="max-h-[480px] overflow-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="sticky top-0 bg-muted text-xs uppercase text-slate">
+        <table className={tableClass}>
+          <thead className="sticky top-0">
             <tr>
-              <th className="px-4 py-2 font-semibold">Provinsi</th>
-              <th className="px-4 py-2 text-right font-semibold">Harga</th>
-              <th className="px-4 py-2 text-right font-semibold">vs Rata-rata</th>
+              <th className={thClass("start")}>Provinsi</th>
+              <th className={thClass("end")}>Harga</th>
+              <th className={thClass("end")}>Dibanding rata-rata</th>
             </tr>
           </thead>
           <tbody>
@@ -95,7 +91,6 @@ export function PriceTable({
               const price = r.price
               const missing = price == null
               const diff = missing || average == null || average <= 0 ? null : ((price - average) / average) * 100
-              const above = diff != null && diff >= 0
               return (
                 <tr
                   key={r.regionCode}
@@ -109,21 +104,22 @@ export function PriceTable({
                     }
                   }}
                   className={cn(
-                    "cursor-pointer border-t border-hairline transition-[background-color] duration-150 ease-out hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink",
-                    r.regionCode === selectedCode && "bg-ember-soft hover:bg-ember-soft",
+                    "cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-muted",
+                    focusRing,
+                    "focus-visible:outline-offset-[-2px]",
+                    r.regionCode === selectedCode && selectedRowClass,
                   )}
                 >
-                  <td className="px-4 py-2 font-medium">{r.name}</td>
-                  <td className="tabular-nums px-4 py-2 text-right font-semibold">
+                  <td className={tdClass("start", "font-medium")}>{r.name}</td>
+                  <td className={tdClass("end", "font-semibold")}>
                     {missing ? "Tidak ada data" : formatPrice(price, unit)}
                   </td>
-                  <td
-                    className={cn(
-                      "tabular-nums px-4 py-2 text-right",
-                      diff == null ? "text-slate" : above ? "text-ember" : "text-leaf-deep",
+                  <td className={tdClass("end")}>
+                    {diff == null ? (
+                      <span className="text-slate">—</span>
+                    ) : (
+                      <Delta direction={trendDirection(diff)}>{formatPct(diff)}</Delta>
                     )}
-                  >
-                    {diff == null ? "—" : `${above ? "+" : ""}${diff.toFixed(1)}%`}
                   </td>
                 </tr>
               )
@@ -131,6 +127,9 @@ export function PriceTable({
           </tbody>
         </table>
       </div>
-    </section>
+      {visible.length === 0 ? (
+        <StatusMessage tone="empty" title="Tidak ada provinsi yang cocok dengan pencarian." bare />
+      ) : null}
+    </Panel>
   )
 }

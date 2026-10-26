@@ -1,4 +1,4 @@
-import { Badge, cardClass, cn } from "@monitor-pangan/ui"
+import { Badge, Stat, StatList, StatusMessage, cardClass, cn } from "@monitor-pangan/ui"
 
 import { tierChipClass, tierLabel } from "#/components/daya-beli-tier.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
@@ -57,11 +57,10 @@ export function DayaBeliSummary({
           <p className="text-sm text-slate">
             {commodityName} · {formatDateShort(priceDate)}
           </p>
-          <p className="text-2xl font-bold text-ink">Data tidak tersedia</p>
-          <p className="text-sm text-slate">
+          <StatusMessage tone="empty" title="Data tidak tersedia" bare className="px-0 py-0">
             Belum ada harga rata-rata provinsi untuk komoditas ini, jadi daya
             beli pekerja formal tidak dihitung.
-          </p>
+          </StatusMessage>
         </div>
       ) : (
         <>
@@ -89,34 +88,25 @@ export function DayaBeliSummary({
               Hijau = daya beli lebih kuat, merah = lebih lemah.
             </p>
           </div>
-          <dl className="grid grid-cols-2 gap-3 px-5 py-4 sm:grid-cols-3">
+          <StatList columns={3} className="px-5 py-4">
             {showLow ? (
-              <div className="relative pl-3">
-                <span aria-hidden="true" className="absolute inset-y-0 left-0 w-0.5 bg-ember" />
-                <dt className="text-xs font-semibold text-slate">Terendah</dt>
-                <dd className="tabular-nums text-sm font-bold text-ink">
-                  {lowest.amount} {unit}
-                </dd>
-                <dd className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate">
-                  <span>{lowest.name}</span>
-                  <Badge tone="neutral" className={tierChipClass(lowTier)} title={tierLabel(lowTier)}>
-                    <span className="sr-only">{tierLabel(lowTier)} </span>#{lowest.rank}
-                  </Badge>
-                </dd>
-              </div>
+              <Stat
+                label="Terendah"
+                accent="ember"
+                value={<>{lowest.amount} {unit}</>}
+                hint={
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span>{lowest.name}</span>
+                    <Badge tone="neutral" className={tierChipClass(lowTier)} title={tierLabel(lowTier)}>
+                      <span className="sr-only">{tierLabel(lowTier)} </span>#{lowest.rank}
+                    </Badge>
+                  </span>
+                }
+              />
             ) : null}
-            <div>
-              <dt className="text-xs font-semibold text-slate">Provinsi berdata</dt>
-              <dd className="tabular-nums text-sm font-bold text-ink">
-                {ranked} dari {total}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold text-slate">Acuan upah</dt>
-              <dd className="text-sm font-bold text-ink">UMP {wageYear}</dd>
-              <dd className="text-xs text-slate">pekerja formal</dd>
-            </div>
-          </dl>
+            <Stat label="Provinsi berdata" value={<>{ranked} dari {total}</>} />
+            <Stat label="Acuan upah" value={`UMP ${wageYear}`} hint="pekerja formal" />
+          </StatList>
         </>
       )}
     </section>

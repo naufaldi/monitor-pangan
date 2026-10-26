@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router"
-import { Badge, Button, Card, buttonClass } from "@monitor-pangan/ui"
+import { Badge, Button, Card, SectionHeader, StatusMessage, buttonClass } from "@monitor-pangan/ui"
 import { COMMODITIES } from "#/data/catalog.ts"
 import {
   DITINJAU_COPY,
@@ -28,21 +28,15 @@ export function LaporanList({ rows, windowEmpty, canLoadOlder, onLoadOlder }: La
   return (
     <section className="flex flex-col gap-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold">Laporan yang ditinjau</h2>
-          <p id="ditinjau-arti" className="text-sm text-slate">
-            {DITINJAU_COPY}
-          </p>
-        </div>
-        <Link to="/lapor" className={buttonClass("pill")}>
+        <SectionHeader
+          title="Laporan yang ditinjau"
+          description={<span id="ditinjau-arti">{DITINJAU_COPY}</span>}
+        />
+        <Link to="/lapor" className={buttonClass("primary", false, "inline-flex items-center")}>
           Lapor harga
         </Link>
       </div>
-      {windowEmpty ? (
-        <Card padding="md">
-          <p>{EMPTY_WINDOW_COPY}</p>
-        </Card>
-      ) : null}
+      {windowEmpty ? <StatusMessage tone="empty" title={EMPTY_WINDOW_COPY} /> : null}
       <ul className="flex flex-col gap-3">
         {rows.map((row) => (
           <li key={row.id}>

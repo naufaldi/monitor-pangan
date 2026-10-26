@@ -22,7 +22,7 @@ import { DEFAULT_TIMEFRAME, TIMEFRAMES, type TimeframeId, timeframeById, windowR
 import { parseCommoditySearch } from "#/lib/commodity-search.ts"
 import { formatDateShort, formatPct, formatPrice, formatSeriesDate } from "#/lib/format.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
-import { Button, ChevronBadge, Select, StatusMessage } from "@monitor-pangan/ui"
+import { Button, FieldSelect, PageHeader, PageShell, SegmentedControl, StickyToolbar, StatusMessage, tableClass, tdClass, thClass } from "@monitor-pangan/ui"
 
 export const Route = createFileRoute("/tren")({
   ssr: false,
@@ -111,61 +111,45 @@ function TrenPage() {
   }, [series])
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4">
-      <div className="sticky top-0 z-10 -mx-4 border-b border-hairline bg-canvas/90 px-4 py-2 backdrop-blur">
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="min-w-52 flex-1">
-            <CommoditySelect
-              commodities={COMMODITIES}
-              value={commodityId}
-              onChange={setCommodityId}
-              hintFor={(c) => {
-                const m = moverById.get(c.id)
-                return m == null ? undefined : `${formatPrice(m.lastPrice, m.unit)} · ${formatPct(m.changePct)}`
-              }}
-            />
-          </div>
-          <div className="relative flex items-center">
-            <Select
-              value={regionCode ?? ""}
-              onChange={(e) => setRegionCode(e.target.value === "" ? null : e.target.value)}
-              aria-label="Provinsi"
-              className="appearance-none pr-11 pl-3"
-            >
-              <option value="">Nasional</option>
-              {provinces.map((p) => (
-                <option key={p.code} value={p.code}>
-                  {p.name}
-                </option>
-              ))}
-            </Select>
-            <span className="absolute top-1/2 right-1 -translate-y-1/2">
-              <ChevronBadge />
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Rentang waktu">
-            {TIMEFRAMES.map((t) => {
-              const active = t.id === timeframe
-              return (
-                <Button
-                  key={t.id}
-                  variant="rect"
-                  active={active}
-                  onClick={() => setTimeframe(t.id)}
-                  aria-pressed={active}
-                >
-                  {t.label}
-                </Button>
-              )
-            })}
-            {dataSpan !== "" ? (
-              <span className="tabular-nums text-xs text-slate" aria-label="Rentang data tersedia">
-                Data: {dataSpan}
-              </span>
-            ) : null}
-          </div>
+    <PageShell>
+      <PageHeader title="Grafik tren harga" visuallyHidden />
+      <StickyToolbar>
+        <div className="min-w-52 flex-1">
+          <CommoditySelect
+            commodities={COMMODITIES}
+            value={commodityId}
+            onChange={setCommodityId}
+            hintFor={(c) => {
+              const m = moverById.get(c.id)
+              return m == null ? undefined : `${formatPrice(m.lastPrice, m.unit)} · ${formatPct(m.changePct)}`
+            }}
+          />
         </div>
-      </div>
+        <FieldSelect
+          label="Provinsi"
+          value={regionCode ?? ""}
+          onChange={(e) => setRegionCode(e.target.value === "" ? null : e.target.value)}
+          wrapperClassName="min-w-48"
+        >
+          <option value="">Nasional</option>
+          {provinces.map((p) => (
+            <option key={p.code} value={p.code}>{p.name}</option>
+          ))}
+        </FieldSelect>
+        <div className="flex flex-wrap items-center gap-2">
+          <SegmentedControl
+            label="Rentang waktu"
+            options={TIMEFRAMES.map((t) => ({ value: t.id, label: t.label }))}
+            value={timeframe}
+            onChange={setTimeframe}
+          />
+          {dataSpan !== "" ? (
+            <span className="tabular-nums text-xs text-slate" aria-label="Rentang data tersedia">
+              Data: {dataSpan}
+            </span>
+          ) : null}
+        </div>
+      </StickyToolbar>
 
       {request.status === "loading" ? (
         <StatusMessage tone="loading" title="Memuat tren…">Mengambil seluruh harga PIHPS untuk rentang ini.</StatusMessage>
@@ -190,32 +174,34 @@ function TrenPage() {
       {series != null && tableRows.length > 0 ? (
         <details className="text-sm">
           <summary className="cursor-pointer text-sm font-semibold text-slate">Lihat semua</summary>
-          <table className="mt-2 w-full text-left text-sm">
-            <thead>
-              <tr className="text-xs uppercase text-slate">
-                <th className="py-1 pr-2 font-semibold">Tanggal</th>
-                <th className="py-1 pr-2 text-right font-semibold">Nasional</th>
-                {series.selected != null ? (
-                  <th className="py-1 text-right font-semibold">Provinsi</th>
-                ) : null}
-              </tr>
-            </thead>
-            <tbody>
-              {tableRows.map((row) => (
-                <tr key={row.date} className="border-t border-hairline">
-                  <td className="py-1 pr-2">{formatSeriesDate(row.date, series.range.resolution)}</td>
-                  <td className="tabular-nums py-1 pr-2 text-right font-semibold">
-                    {formatPrice(row.national, series.unit)}
-                  </td>
+          <div className="mt-2 overflow-x-auto">
+            <table className={tableClass}>
+              <thead>
+                <tr>
+                  <th className={thClass("start")}>Tanggal</th>
+                  <th className={thClass("end")}>Nasional</th>
                   {series.selected != null ? (
-                    <td className="tabular-nums py-1 text-right">
-                      {row.selected == null ? "–" : formatPrice(row.selected, series.unit)}
-                    </td>
+                    <th className={thClass("end")}>Provinsi</th>
                   ) : null}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {tableRows.map((row) => (
+                  <tr key={row.date} className="border-t border-hairline">
+                    <td className={tdClass("start")}>{formatSeriesDate(row.date, series.range.resolution)}</td>
+                    <td className={tdClass("end", "font-semibold")}>
+                      {formatPrice(row.national, series.unit)}
+                    </td>
+                    {series.selected != null ? (
+                      <td className={tdClass("end")}>
+                        {row.selected == null ? "–" : formatPrice(row.selected, series.unit)}
+                      </td>
+                    ) : null}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </details>
       ) : null}
 
@@ -224,6 +210,6 @@ function TrenPage() {
       <footer className="pb-6 text-xs text-slate">
         Tren dihitung dari rata-rata nasional per tanggal survei. {sourceNote}
       </footer>
-    </main>
+    </PageShell>
   )
 }

@@ -1,4 +1,4 @@
-import type { AffordabilitySort, AffordabilityTier } from "#/lib/daya-beli.ts"
+import type { AffordabilityTier } from "#/lib/daya-beli.ts"
 
 /** Rank chip: dark text on a pale tint, except the strongest tier which is solid. */
 export function tierChipClass(tier: AffordabilityTier): string {
@@ -60,20 +60,6 @@ export function tierLabel(tier: AffordabilityTier): string {
       return "Data tidak tersedia"
     default: {
       const _exhaustive: never = tier
-      return _exhaustive
-    }
-  }
-}
-
-/** Active sort uses the same good/poor hues as the rank scale. */
-export function sortActiveClass(sort: Extract<AffordabilitySort, "amount-desc" | "amount-asc">): string {
-  switch (sort) {
-    case "amount-desc":
-      return "border-leaf-deep bg-leaf-deep text-paper"
-    case "amount-asc":
-      return "border-ember bg-ember text-paper"
-    default: {
-      const _exhaustive: never = sort
       return _exhaustive
     }
   }

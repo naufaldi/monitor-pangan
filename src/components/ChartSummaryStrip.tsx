@@ -1,6 +1,5 @@
-import { cardClass } from "@monitor-pangan/ui"
+import { Delta, Stat, StatList, StatusMessage, cardClass } from "@monitor-pangan/ui"
 import type { PriceUnit } from "#/data/catalog.ts"
-import type { TrendDirection } from "#/data/provider.ts"
 import type { ChartStrip } from "#/lib/chart-summary.ts"
 import type { TrendResolution } from "#/data/provider.ts"
 import { formatPct, formatPrice, formatRupiah, formatSeriesDate } from "#/lib/format.ts"
@@ -12,42 +11,12 @@ type ChartSummaryStripProps = {
   limitedCopy?: string | null
 }
 
-function directionClass(direction: TrendDirection): string {
-  switch (direction) {
-    case "up":
-      return "text-ember"
-    case "down":
-      return "text-leaf-deep"
-    case "flat":
-      return "text-slate"
-    default: {
-      const _exhaustive: never = direction
-      return _exhaustive
-    }
-  }
-}
-
-function directionMark(direction: TrendDirection): string {
-  switch (direction) {
-    case "up":
-      return "↑"
-    case "down":
-      return "↓"
-    case "flat":
-      return "→"
-    default: {
-      const _exhaustive: never = direction
-      return _exhaustive
-    }
-  }
-}
-
-/** Four-callout strip above the chart: Terakhir, Δ range, Termurah, Termahal. */
+/** Four-callout strip above the chart: Terakhir, Perubahan, Termurah, Termahal. */
 export function ChartSummaryStrip({ strip, unit, resolution, limitedCopy }: ChartSummaryStripProps) {
   if (strip.kind === "empty") {
     return (
-      <section aria-label="Ringkasan grafik" className={cardClass("md")}>
-        <p className="text-sm text-slate">{limitedCopy ?? "Belum ada data tren untuk rentang ini."}</p>
+      <section aria-label="Ringkasan grafik">
+        <StatusMessage tone="empty" title={limitedCopy ?? "Belum ada data tren untuk rentang ini."} />
       </section>
     )
   }
@@ -55,36 +24,37 @@ export function ChartSummaryStrip({ strip, unit, resolution, limitedCopy }: Char
   return (
     <section aria-label="Ringkasan grafik" className={cardClass("md")}>
       {limitedCopy != null ? <p className="mb-3 text-sm text-slate">{limitedCopy}</p> : null}
-      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div>
-          <dt className="text-xs font-semibold text-slate">Terakhir</dt>
-          <dd className="tabular-nums text-sm font-bold">{formatPrice(strip.sekarang!.price, unit)}</dd>
-          <dd className="tabular-nums text-xs text-slate">{formatSeriesDate(strip.sekarang!.date, resolution)}</dd>
-        </div>
+      <StatList columns={4}>
+        <Stat
+          label="Terakhir"
+          value={formatPrice(strip.sekarang!.price, unit)}
+          hint={formatSeriesDate(strip.sekarang!.date, resolution)}
+        />
         {strip.delta != null ? (
-          <div>
-            <dt className="text-xs font-semibold text-slate">Δ range</dt>
-            <dd className={`tabular-nums text-sm font-bold ${directionClass(strip.delta.direction)}`}>
-              <span aria-hidden="true">{directionMark(strip.delta.direction)} </span>
-              {formatPct(strip.delta.pct)} · {formatRupiah(strip.delta.rp, true)}
-            </dd>
-          </div>
+          <Stat
+            label="Perubahan"
+            value={
+              <Delta direction={strip.delta.direction} className="font-bold">
+                {formatPct(strip.delta.pct)} · {formatRupiah(strip.delta.rp, true)}
+              </Delta>
+            }
+          />
         ) : null}
         {strip.termurah != null ? (
-          <div>
-            <dt className="text-xs font-semibold text-slate">Termurah</dt>
-            <dd className="tabular-nums text-sm font-bold">{formatPrice(strip.termurah.price, unit)}</dd>
-            <dd className="tabular-nums text-xs text-slate">{formatSeriesDate(strip.termurah.date, resolution)}</dd>
-          </div>
+          <Stat
+            label="Termurah"
+            value={formatPrice(strip.termurah.price, unit)}
+            hint={formatSeriesDate(strip.termurah.date, resolution)}
+          />
         ) : null}
         {strip.termahal != null ? (
-          <div>
-            <dt className="text-xs font-semibold text-slate">Termahal</dt>
-            <dd className="tabular-nums text-sm font-bold">{formatPrice(strip.termahal.price, unit)}</dd>
-            <dd className="tabular-nums text-xs text-slate">{formatSeriesDate(strip.termahal.date, resolution)}</dd>
-          </div>
+          <Stat
+            label="Termahal"
+            value={formatPrice(strip.termahal.price, unit)}
+            hint={formatSeriesDate(strip.termahal.date, resolution)}
+          />
         ) : null}
-      </dl>
+      </StatList>
     </section>
   )
 }

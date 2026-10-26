@@ -1,6 +1,5 @@
-import { cardClass } from "@monitor-pangan/ui"
+import { Delta, Panel, StatusMessage, cn, eyebrowClass, focusRing, selectedRowClass } from "@monitor-pangan/ui"
 import { formatPct, formatPrice } from "#/lib/format.ts"
-import { cn } from "#/lib/utils.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 import type { TrendDirection } from "#/data/provider.ts"
 
@@ -20,17 +19,15 @@ type MoversListProps = {
   rangeLabel: string
 }
 
+const DESCRIPTION = "Nasional, urut dari perubahan terbesar"
+
 /** National movers over a labeled range, grouped by direction and sorted by changePct. */
 export function MoversList({ items, activeId, onSelect, rangeLabel }: MoversListProps) {
   if (items.length === 0) {
     return (
-      <section className={cardClass()}>
-        <div className="border-b border-hairline px-4 py-3">
-          <h2 className="text-base font-bold">Pergerakan {rangeLabel}</h2>
-          <p className="text-sm text-slate">Nasional, sorted by changePct</p>
-        </div>
-        <p className="px-4 py-3 text-sm text-slate">Belum ada data.</p>
-      </section>
+      <Panel title={`Pergerakan ${rangeLabel}`} description={DESCRIPTION}>
+        <StatusMessage tone="empty" title="Belum ada data." bare />
+      </Panel>
     )
   }
 
@@ -49,15 +46,11 @@ export function MoversList({ items, activeId, onSelect, rangeLabel }: MoversList
   if (flat.length > 0) groups.push({ title: "Stabil", rows: flat })
 
   return (
-    <section className={cardClass()}>
-      <div className="border-b border-hairline px-4 py-3">
-        <h2 className="text-base font-bold">Pergerakan {rangeLabel}</h2>
-        <p className="text-sm text-slate">Nasional, sorted by changePct</p>
-      </div>
+    <Panel title={`Pergerakan ${rangeLabel}`} description={DESCRIPTION}>
       {groups.map((group) =>
         group.rows.length === 0 ? null : (
           <div key={group.title} className="border-b border-hairline last:border-b-0">
-            <h3 className="px-4 pt-3 text-xs font-semibold uppercase text-slate">
+            <h3 className={cn(eyebrowClass, "px-4 pt-3")}>
               {group.title}
             </h3>
             <ul>
@@ -70,8 +63,10 @@ export function MoversList({ items, activeId, onSelect, rangeLabel }: MoversList
                       onClick={() => onSelect(item.commodityId)}
                       aria-pressed={active}
                       className={cn(
-                        "flex min-h-[44px] w-full items-center justify-between gap-2 px-4 py-2 text-left tabular-nums",
-                        active && "bg-ember-soft",
+                        "flex min-h-11 w-full items-center justify-between gap-2 px-4 py-2 text-left tabular-nums hover:bg-muted",
+                        focusRing,
+                        "focus-visible:outline-offset-[-2px]",
+                        active && selectedRowClass,
                       )}
                     >
                       <span className="flex flex-col leading-tight">
@@ -80,19 +75,9 @@ export function MoversList({ items, activeId, onSelect, rangeLabel }: MoversList
                           {formatPrice(item.lastPrice, item.unit)}
                         </span>
                       </span>
-                      <span
-                        className={cn(
-                          "text-sm font-semibold",
-                          item.direction === "up" && "text-ember",
-                          item.direction === "down" && "text-leaf-deep",
-                          item.direction === "flat" && "text-slate",
-                        )}
-                      >
-                        {item.direction === "up" ? "▲ " : null}
-                        {item.direction === "down" ? "▼ " : null}
-                        {item.direction === "flat" ? "• " : null}
+                      <Delta direction={item.direction} className="shrink-0 whitespace-nowrap text-sm">
                         {formatPct(item.changePct)}
-                      </span>
+                      </Delta>
                     </button>
                   </li>
                 )
@@ -101,6 +86,6 @@ export function MoversList({ items, activeId, onSelect, rangeLabel }: MoversList
           </div>
         ),
       )}
-    </section>
+    </Panel>
   )
 }

@@ -1,6 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react"
-import { ChevronBadge, Input, fieldMenuClass, fieldTriggerClass } from "@monitor-pangan/ui"
-import { cn } from "#/lib/utils.ts"
+import { ChevronBadge, Listbox, ListboxEmpty, ListboxGroup, ListboxOption, ListboxSearch, fieldMenuClass, fieldTriggerClass } from "@monitor-pangan/ui"
 import type { Commodity } from "#/data/catalog.ts"
 
 type CommoditySelectProps = {
@@ -65,6 +64,12 @@ export function CommoditySelect({
 
   const valueLabel = active?.name ?? (allowEmpty ? "Semua komoditas" : "Pilih")
 
+  const pick = (id: string) => {
+    onChange(id)
+    setOpen(false)
+    setQuery("")
+  }
+
   return (
     <div ref={rootRef} className="relative flex w-full flex-col gap-1">
       <span id={labelId} className="text-sm text-slate">
@@ -90,99 +95,30 @@ export function CommoditySelect({
 
       {open ? (
         <div className={fieldMenuClass()}>
-          <div className="border-b border-hairline p-2">
-            <Input
-              ref={searchRef}
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari komoditas…"
-              aria-label="Cari komoditas"
-              className="h-11 w-full py-0"
-            />
-          </div>
-          <ul
-            id={listId}
-            role="listbox"
-            aria-label="Komoditas"
-            className="max-h-72 overflow-auto py-1"
-          >
+          <ListboxSearch
+            ref={searchRef}
+            label="Cari komoditas"
+            value={query}
+            onValueChange={setQuery}
+            placeholder="Cari komoditas…"
+          />
+          <Listbox id={listId} label="Komoditas">
             {allowEmpty ? (
-              <li>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={value === ""}
-                  onClick={() => {
-                    onChange("")
-                    setOpen(false)
-                    setQuery("")
-                  }}
-                  className="flex h-11 w-full items-center px-3 text-left text-sm font-medium"
-                >
-                  Semua komoditas
-                </button>
-              </li>
+              <ListboxOption selected={value === ""} onSelect={() => pick("")}>
+                Semua komoditas
+              </ListboxOption>
             ) : null}
-            {matchCount === 0 ? (
-              <li className="px-4 py-3 text-sm text-slate">
-                Tidak ada komoditas yang cocok.
-              </li>
-            ) : null}
+            {matchCount === 0 ? <ListboxEmpty>Tidak ada komoditas yang cocok.</ListboxEmpty> : null}
             {groups.map(([group, items]) => (
-              <li key={group}>
-                <p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase text-slate">
-                  {group}
-                </p>
-                {items.map((c) => {
-                  const selected = c.id === value
-                  const hint = hintFor?.(c)
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      role="option"
-                      aria-selected={selected}
-                      onClick={() => {
-                        onChange(c.id)
-                        setOpen(false)
-                        setQuery("")
-                      }}
-                      className={cn(
-                        "flex h-11 w-full items-center gap-2 px-3 text-left",
-                        "transition-[background-color] duration-150 ease-out",
-                        selected ? "bg-ember-soft" : "hover:bg-muted",
-                      )}
-                    >
-                      <svg
-                        aria-hidden="true"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={cn(
-                          "h-4 w-4 shrink-0",
-                          selected ? "text-ember opacity-100" : "opacity-0",
-                        )}
-                      >
-                        <path d="m3 8.5 3.5 3.5L13 4.5" />
-                      </svg>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {c.name}
-                      </span>
-                      {hint != null ? (
-                        <span className="tabular-nums shrink-0 text-sm text-slate">
-                          {hint}
-                        </span>
-                      ) : null}
-                    </button>
-                  )
-                })}
-              </li>
+              <ListboxGroup key={group} label={group}>
+                {items.map((c) => (
+                  <ListboxOption key={c.id} selected={c.id === value} onSelect={() => pick(c.id)} trailing={hintFor?.(c)}>
+                    {c.name}
+                  </ListboxOption>
+                ))}
+              </ListboxGroup>
             ))}
-          </ul>
+          </Listbox>
         </div>
       ) : null}
     </div>

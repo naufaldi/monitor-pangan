@@ -1,5 +1,5 @@
-import { useRef, useState } from "react"
-import { cardClass } from "@monitor-pangan/ui"
+import { useEffect, useRef, useState } from "react"
+import { StatusMessage, cardClass } from "@monitor-pangan/ui"
 import { formatAxisPrice, formatDateShort, formatMonthYear, formatPrice, formatSeriesDate } from "#/lib/format.ts"
 import { axisInset, decimatedIndices } from "#/lib/chart-marks.ts"
 import { realPoints } from "#/lib/chart-summary.ts"
@@ -98,9 +98,25 @@ const CHART_HEIGHT = 280
 export function TrendChart({ series, height = 260 }: TrendChartProps) {
   const svgRef = useRef<SVGSVGElement | null>(null)
   const [active, setActive] = useState<ActiveMark | null>(null)
+  const [renderedWidth, setRenderedWidth] = useState(CHART_WIDTH)
   const national = realPoints(series.national)
   const selected = series.selected == null ? null : realPoints(series.selected)
   const dates = axisDates(series.national, series.selected)
+  const hasData = dates.length > 0
+
+  useEffect(() => {
+    const svg = svgRef.current
+    if (svg == null) return
+    const measure = (width: number) => {
+      if (width > 0) setRenderedWidth(width)
+    }
+    measure(svg.getBoundingClientRect().width)
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry != null) measure(entry.contentRect.width)
+    })
+    observer.observe(svg)
+    return () => observer.disconnect()
+  }, [hasData])
 
   if (dates.length === 0) {
     return (
@@ -109,7 +125,7 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
         aria-label={`Belum ada data tren ${series.commodity.name} untuk rentang ini.`}
         className={cardClass("lg")}
       >
-        <p className="text-sm text-slate">Belum ada data tren untuk rentang ini.</p>
+        <StatusMessage tone="empty" title="Belum ada data tren untuk rentang ini." bare className="px-0 py-0" />
         <p className="tabular-nums mt-1 text-sm text-slate">
           {formatDateShort(series.range.from)} – {formatDateShort(series.range.to)}
         </p>
@@ -117,7 +133,8 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
     )
   }
 
-  const width = CHART_WIDTH
+  // One viewBox unit per CSS pixel keeps all axis and tooltip labels readable.
+  const width = renderedWidth
   const viewHeight = CHART_HEIGHT
   const padR = 12
   const padT = 12
@@ -215,7 +232,10 @@ export function TrendChart({ series, height = 260 }: TrendChartProps) {
   const tooltipY = tooltipBelow ? activeY + 14 : activeY - tooltipH - 14
 
   const compactAxis = dates.length > 62
-  const tickFractions = dates.length <= 5 ? dates.map((_, i) => i / Math.max(dates.length - 1, 1)) : [0, 0.25, 0.5, 0.75, 1]
+  const maxDateLabels = width < 500 ? 3 : 5
+  const tickFractions = dates.length <= maxDateLabels
+    ? dates.map((_, i) => i / Math.max(dates.length - 1, 1))
+    : Array.from({ length: maxDateLabels }, (_, i) => i / (maxDateLabels - 1))
   const labelIndices = [...new Set(tickFractions.map((f) => Math.round(f * (dates.length - 1))))].sort((a, b) => a - b)
 
   const summary = dual

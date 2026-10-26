@@ -2,7 +2,7 @@ import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from "@
 import { Badge } from "@monitor-pangan/ui"
 import { Navbar } from "../components/Navbar.tsx"
 import { useDataBadge, useVintage, VintageProvider } from "../data/vintage.tsx"
-import { latestLiveDate, provider } from "../data/provider.ts"
+import { dataBadgeTone, latestLiveDate, provider } from "../data/provider.ts"
 import { homeSelectedDate, parseHomeSearch } from "../lib/commodity-search.ts"
 import { seoLinks, seoMeta, seoScripts, THEME_COLOR } from "../seo.ts"
 import appCss from "../styles.css?url"
@@ -38,7 +38,7 @@ function Shell() {
   const dates = provider.dates()
   const homeDate = pathname === "/" ? homeSelectedDate(parseHomeSearch(search, dates), dates, latestLiveDate()) : undefined
   const badge = useDataBadge(homeDate)
-  const pihpsBadge = pathname !== "/laporan" && pathname !== "/lapor" && pathname !== "/admin"
+  const pihpsBadge = !/^\/(laporan|lapor|admin)\/?$/.test(pathname)
   return (
     <div className="min-h-svh bg-canvas text-ink">
       <header className="border-b border-hairline bg-paper">
@@ -50,7 +50,7 @@ function Shell() {
             </p>
           </div>
           {pihpsBadge ? (
-            <Badge tone="ember" className="ml-auto">
+            <Badge tone={dataBadgeTone(badge)} className="ml-auto">
               {badge}
             </Badge>
           ) : null}
