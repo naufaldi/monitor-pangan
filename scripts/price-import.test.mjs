@@ -259,3 +259,47 @@ it.effect('seed CLI distinguishes numeric option paths from the positional snaps
   }),
   (directory) => Effect.promise(() => rm(directory, { recursive: true, force: true })),
 ), 15000)
+it.effect('a supported import, including an older date, is visible on the next fresh read after a warmed cache; a repeat import keeps the cache', () => Effect.gen(function* () {
+  const { sqliteFixture } = yield* Effect.promise(() => import('../src/worker/sqlite-test.ts'))
+  const { d1PriceStoreLayer, FRESH_REVISION_SQL } = yield* Effect.promise(() => import('../src/worker/d1-store.ts'))
+  const { PriceStore } = yield* Effect.promise(() => import('../src/worker/ingest.ts'))
+  const { STATIC_LIVE_THROUGH } = yield* Effect.promise(() => import('../src/data/fresh-prices.ts'))
+  const fixture = yield* sqliteFixture
+  let heavy = 0
+  const db = { ...fixture.db, prepare: (sql) => {
+    if (sql.startsWith('SELECT date, commodity_id, region_code, price FROM prices_daily')) heavy++
+    return fixture.db.prepare(sql)
+  } }
+  const revision = () => JSON.stringify(fixture.sqlite.prepare(FRESH_REVISION_SQL).get())
+  const imported = { ...row, date: '2026-10-19', price: 15500, raw_ref: 'data/raw/pihps-2026-10-19.json' }
+  const runImport = () => {
+    const plan = planImport({ from: imported.date, to: imported.date, observations: [imported], existing: fixture.sqlite.prepare('SELECT * FROM prices_daily').all() })
+    fixture.sqlite.exec(plan.sql)
+    return plan.report
+  }
+  yield* Effect.gen(function* () {
+    const store = yield* PriceStore
+    yield* store.upsertDay('2026-10-20', 'live', [{ date: '2026-10-20', commodityId: 'beras', regionCode: '31', price: 16000 }], '2026-10-20T10:15:00Z')
+    const warm = yield* store.freshSince(STATIC_LIVE_THROUGH)
+    assert.deepStrictEqual(yield* store.freshSince(STATIC_LIVE_THROUGH), warm)
+    assert.strictEqual(heavy, 1)
+    const events = fixture.sqlite.prepare('SELECT COUNT(*) AS n FROM pihps_archive_events').get().n
+    const jobs = fixture.sqlite.prepare('SELECT COUNT(*) AS n FROM job_runs').get().n
+    assert.strictEqual(runImport().inserts, 1)
+    const afterImport = yield* store.freshSince(STATIC_LIVE_THROUGH)
+    assert.strictEqual(afterImport.prices['2026-10-19:beras:31'], 15500)
+    assert.deepStrictEqual(afterImport.dates, ['2026-10-19', '2026-10-20'])
+    assert.strictEqual(afterImport.latestDate, '2026-10-20')
+    assert.strictEqual(heavy, 2)
+    // Invalidation writes nothing: no archive event, no job row, no epoch change.
+    assert.strictEqual(fixture.sqlite.prepare('SELECT COUNT(*) AS n FROM pihps_archive_events').get().n, events)
+    assert.strictEqual(fixture.sqlite.prepare('SELECT COUNT(*) AS n FROM job_runs').get().n, jobs)
+    const settled = revision()
+    const repeat = runImport()
+    assert.strictEqual(repeat.inserts, 0)
+    assert.strictEqual(repeat.unchanged, 1)
+    assert.strictEqual(revision(), settled)
+    assert.deepStrictEqual(yield* store.freshSince(STATIC_LIVE_THROUGH), afterImport)
+    assert.strictEqual(heavy, 2)
+  }).pipe(Effect.provide(d1PriceStoreLayer(db)))
+}))

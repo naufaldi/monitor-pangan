@@ -1,9 +1,10 @@
-import { Effect } from "effect"
+import { Effect, Fiber, TestClock } from "effect"
 import { assert, it } from "@effect/vitest"
 import { sqliteFixture } from "./sqlite-test.ts"
 import { PriceStore } from "./ingest.ts"
 import { COMMODITY_ROWS, REGION_ROWS } from "../data/pihps-catalog.ts"
-import { migrationStatements, ensureMigrated, d1PriceStoreLayer, type D1Database, type D1Prepared } from "./d1-store.ts"
+import { STATIC_LIVE_THROUGH } from "../data/fresh-prices.ts"
+import { migrationStatements, ensureMigrated, d1PriceStoreLayer, FRESH_CACHE_MAX_AGE_MS, FRESH_EDGE_BUDGET, FRESH_REVISION_SQL, type D1Database, type D1Prepared, type FreshEdgeCache } from "./d1-store.ts"
 
 it.effect("splits the D1 schema into complete statements", () =>
   Effect.sync(() => {
@@ -108,4 +109,165 @@ it.effect("freshness includes only official retail rows and rejects malformed ob
     yield* db.price("2026-10-40", "31", 15000)
     assert.strictEqual((yield* Effect.flip(store.freshSince("2026-10-18")))._tag, "StoreError")
   }).pipe(Effect.provide(d1PriceStoreLayer(db.db)))
+}))
+
+const FRESH_SQL = "SELECT date, commodity_id, region_code, price FROM prices_daily"
+/** Counts the heavy fresh-price read and the revision probe against the real SQLite schema. */
+const counting = (db: D1Database, faults = { revision: false, fresh: false }) => {
+  const counts = { fresh: 0, revision: 0 }
+  const wrap = (sql: string, statement: D1Prepared): D1Prepared => ({
+    bind: (...values) => wrap(sql, statement.bind(...values)),
+    all: <T>() => {
+      if (sql.startsWith(FRESH_SQL)) {
+        counts.fresh++
+        if (faults.fresh) return Promise.reject<{ results: T[] }>(new Error("injected fresh failure"))
+      }
+      if (sql === FRESH_REVISION_SQL) {
+        counts.revision++
+        if (faults.revision) return Promise.reject<{ results: T[] }>(new Error("injected revision failure"))
+      }
+      return statement.all<T>()
+    },
+    run: () => statement.run(),
+  })
+  return { counts, db: { ...db, prepare: (sql: string) => wrap(sql, db.prepare(sql)) } satisfies D1Database }
+}
+const day = (date: string, price: number) => REGION_ROWS.slice(0, 2).map(([regionCode]) => ({ date, regionCode, commodityId: "beras", price }))
+
+it.effect("the public fresh payload is read once per published revision, including older-day corrections", () => Effect.gen(function* () {
+  const fixture = yield* sqliteFixture
+  const { counts, db } = counting(fixture.db)
+  yield* Effect.gen(function* () {
+    const store = yield* PriceStore
+    yield* store.upsertDay("2026-10-19", "live", day("2026-10-19", 15000), "2026-10-19T10:15:00Z")
+    const first = yield* store.freshSince(STATIC_LIVE_THROUGH)
+    for (let i = 0; i < 4; i++) assert.deepStrictEqual(yield* store.freshSince(STATIC_LIVE_THROUGH), first)
+    assert.deepStrictEqual(counts, { fresh: 1, revision: 5 })
+
+    // A completed ingest of a new day publishes an outbox event.
+    yield* store.upsertDay("2026-10-20", "live", day("2026-10-20", 15100), "2026-10-20T10:15:00Z")
+    assert.strictEqual((yield* store.freshSince(STATIC_LIVE_THROUGH)).latestDate, "2026-10-20")
+    // A correction of an older day changes no latest date but still invalidates.
+    yield* store.upsertDay("2026-10-19", "live", day("2026-10-19", 14000), "2026-10-20T11:15:00Z")
+    const corrected = yield* store.freshSince(STATIC_LIVE_THROUGH)
+    assert.strictEqual(corrected.prices["2026-10-19:beras:11"], 14000)
+    assert.strictEqual(counts.fresh, 3)
+    // A failed run may have committed new cells before failing; its job record invalidates too.
+    yield* fixture.price("2026-10-21", "11", 15200)
+    yield* store.recordJob({ startedAt: "2026-10-21T10:15:00Z", status: "error", rowsUpserted: 1, note: "partial" })
+    assert.strictEqual((yield* store.freshSince(STATIC_LIVE_THROUGH)).prices["2026-10-21:beras:11"], 15200)
+    // Other `after` values bypass the cache and stay exact.
+    assert.deepStrictEqual((yield* store.freshSince("2026-10-20")).dates, ["2026-10-21"])
+    assert.strictEqual(counts.fresh, 5)
+  }).pipe(Effect.provide(d1PriceStoreLayer(db)))
+}))
+
+it.effect("an operator UPDATE is bounded by the cache age, an inserted cell is not, and a revision failure reads the store", () => Effect.gen(function* () {
+  const fixture = yield* sqliteFixture
+  const faults = { revision: false, fresh: false }
+  const { counts, db } = counting(fixture.db, faults)
+  const update = (price: number) => Effect.sync(() => fixture.sqlite.prepare("UPDATE prices_daily SET price = ? WHERE date = '2026-10-19' AND region_code = '11'").run(price))
+  yield* Effect.gen(function* () {
+    const store = yield* PriceStore
+    yield* fixture.price("2026-10-19", "11", 15000)
+    assert.strictEqual((yield* store.freshSince(STATIC_LIVE_THROUGH)).prices["2026-10-19:beras:11"], 15000)
+    yield* update(14000)
+    assert.strictEqual((yield* store.freshSince(STATIC_LIVE_THROUGH)).prices["2026-10-19:beras:11"], 15000)
+    yield* TestClock.adjust(FRESH_CACHE_MAX_AGE_MS)
+    assert.strictEqual((yield* store.freshSince(STATIC_LIVE_THROUGH)).prices["2026-10-19:beras:11"], 14000)
+    // INSERT OR REPLACE (the fresh SQL export) takes a new rowid, so it is visible at once.
+    yield* fixture.price("2026-10-19", "11", 13500)
+    assert.strictEqual((yield* store.freshSince(STATIC_LIVE_THROUGH)).prices["2026-10-19:beras:11"], 13500)
+    faults.revision = true
+    yield* update(13000)
+    assert.strictEqual((yield* store.freshSince(STATIC_LIVE_THROUGH)).prices["2026-10-19:beras:11"], 13000)
+    assert.strictEqual(counts.fresh, 4)
+    // A store failure is not cached; recovery is visible on the next request.
+    faults.revision = false
+    yield* store.recordJob({ startedAt: "2026-10-19T10:15:00Z", status: "complete", rowsUpserted: 0, note: "revision" })
+    faults.fresh = true
+    assert.strictEqual((yield* Effect.flip(store.freshSince(STATIC_LIVE_THROUGH)))._tag, "StoreError")
+    faults.fresh = false
+    assert.strictEqual((yield* store.freshSince(STATIC_LIVE_THROUGH)).prices["2026-10-19:beras:11"], 13000)
+  }).pipe(Effect.provide(d1PriceStoreLayer(db)))
+}))
+
+/** An in-memory Cache API that keeps headers but, like a real colo cache, may also hang or fail. */
+const fakeEdge = () => {
+  const entries = new Map<string, { body: string; headers: Headers }>()
+  const mode = { broken: false, stalled: false }
+  const edge: FreshEdgeCache = {
+    match: (key) => mode.stalled ? new Promise(() => undefined) : mode.broken ? Promise.reject(new Error("edge down"))
+      : Promise.resolve(entries.has(key) ? new Response(entries.get(key)!.body, { headers: entries.get(key)!.headers }) : undefined),
+    put: (key, response) => mode.stalled ? new Promise(() => undefined) : mode.broken ? Promise.reject(new Error("edge down"))
+      : response.text().then((body) => { entries.set(key, { body, headers: response.headers }) }),
+  }
+  return { entries, edge, mode }
+}
+
+it.effect("databases never share a cached payload, and the edge cache serves another isolate", () => Effect.gen(function* () {
+  const first = yield* sqliteFixture
+  const second = yield* sqliteFixture
+  yield* first.price("2026-10-19", "11", 15000)
+  yield* second.price("2026-10-19", "11", 99000)
+  const { entries, edge, mode } = fakeEdge()
+  const read = (db: D1Database) => Effect.flatMap(PriceStore, (store) => store.freshSince(STATIC_LIVE_THROUGH)).pipe(Effect.provide(d1PriceStoreLayer(db, edge)))
+  assert.strictEqual((yield* read(first.db)).prices["2026-10-19:beras:11"], 15000)
+  assert.strictEqual((yield* read(second.db)).prices["2026-10-19:beras:11"], 99000)
+  assert.strictEqual(entries.size, 2)
+  // A new isolate has an empty module memo (a new binding object) but the same database epoch.
+  const isolate = counting(first.db)
+  assert.strictEqual((yield* read(isolate.db)).prices["2026-10-19:beras:11"], 15000)
+  assert.strictEqual(isolate.counts.fresh, 0)
+  // Corrupt or unavailable edge entries only cost a store read.
+  for (const [key, entry] of entries) entries.set(key, { ...entry, body: "{\"latestDate\":1}" })
+  const corrupt = counting(first.db)
+  assert.strictEqual((yield* read(corrupt.db)).prices["2026-10-19:beras:11"], 15000)
+  assert.strictEqual(corrupt.counts.fresh, 1)
+  mode.broken = true
+  const offline = counting(second.db)
+  assert.strictEqual((yield* read(offline.db)).prices["2026-10-19:beras:11"], 99000)
+  assert.strictEqual(offline.counts.fresh, 1)
+}))
+
+it.effect("the revision probe reads rowid maxima, not price history", () => Effect.gen(function* () {
+  const fixture = yield* sqliteFixture
+  const plan = yield* Effect.sync(() => fixture.sqlite.prepare(`EXPLAIN QUERY PLAN ${FRESH_REVISION_SQL}`).all().map((row) => String(row.detail)))
+  // MAX(rowid) is SQLite's min/max optimization: one seek to the last table entry, never an index or scan.
+  assert.ok(plan.length > 0 && plan.every((detail) => !detail.startsWith("SCAN") && !detail.includes("INDEX")), plan.join("\n"))
+  assert.ok(plan.includes("SEARCH prices_daily"), plan.join("\n"))
+}))
+
+it.effect("an edge hit keeps its original age, so one write stays hidden for at most one cache age", () => Effect.gen(function* () {
+  const fixture = yield* sqliteFixture
+  yield* fixture.price("2026-10-19", "11", 15000)
+  const { edge, entries } = fakeEdge()
+  const read = (db: D1Database) => Effect.flatMap(PriceStore, (store) => store.freshSince(STATIC_LIVE_THROUGH)).pipe(Effect.provide(d1PriceStoreLayer(db, edge)))
+  assert.strictEqual((yield* read(fixture.db)).prices["2026-10-19:beras:11"], 15000)
+  yield* Effect.sync(() => fixture.sqlite.prepare("UPDATE prices_daily SET price = 14000").run())
+  yield* TestClock.adjust(FRESH_CACHE_MAX_AGE_MS - 1000)
+  // A second isolate is served from the edge, but inherits the entry's age, not a new one.
+  const isolate = counting(fixture.db)
+  assert.strictEqual((yield* read(isolate.db)).prices["2026-10-19:beras:11"], 15000)
+  assert.strictEqual(isolate.counts.fresh, 0)
+  yield* TestClock.adjust(1000)
+  assert.strictEqual((yield* read(isolate.db)).prices["2026-10-19:beras:11"], 14000)
+  assert.strictEqual(isolate.counts.fresh, 1)
+  // An entry without a valid store time (an older deployment's format) is a miss.
+  for (const [key, entry] of entries) entries.set(key, { ...entry, headers: new Headers() })
+  const legacy = counting(fixture.db)
+  assert.strictEqual((yield* read(legacy.db)).prices["2026-10-19:beras:11"], 14000)
+  assert.strictEqual(legacy.counts.fresh, 1)
+}))
+
+it.effect("a stalled edge cache costs at most its budget on each side of the store read", () => Effect.gen(function* () {
+  const fixture = yield* sqliteFixture
+  yield* fixture.price("2026-10-19", "11", 15000)
+  const { edge, mode } = fakeEdge()
+  mode.stalled = true
+  const fiber = yield* Effect.flatMap(PriceStore, (store) => store.freshSince(STATIC_LIVE_THROUGH)).pipe(Effect.provide(d1PriceStoreLayer(fixture.db, edge)), Effect.fork)
+  yield* TestClock.adjust(FRESH_EDGE_BUDGET)
+  yield* TestClock.adjust(FRESH_EDGE_BUDGET)
+  const payload = yield* Fiber.join(fiber)
+  assert.strictEqual(payload.prices["2026-10-19:beras:11"], 15000)
 }))

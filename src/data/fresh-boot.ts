@@ -6,13 +6,30 @@ class FreshFetchError extends Data.TaggedError("FreshFetchError")<{
   readonly message: string
 }> {}
 
+let embeddedPending = false
+
+/** Apply an embedded payload. True only when it was present and valid, including a valid empty one. */
+export function bootFreshPricesFromText(text: string | null | undefined): boolean {
+  const decoded = text == null || text.trim() === "" ? null : Schema.decodeUnknownEither(Schema.parseJson(FreshPayloadSchema))(text)
+  if (decoded?._tag === "Right") applyFreshPrices(decoded.right)
+  embeddedPending = decoded?._tag === "Right"
+  return embeddedPending
+}
+
 /** Read the payload the worker embedded in the HTML shell. */
 export function bootFreshPricesFromDocument(): void {
   if (typeof document === "undefined") return
-  const text = document.getElementById("mp-pihps-fresh")?.textContent ?? ""
-  if (text.trim() === "") return
-  const decoded = Schema.decodeUnknownEither(Schema.parseJson(FreshPayloadSchema))(text)
-  if (decoded._tag === "Right") applyFreshPrices(decoded.right)
+  bootFreshPricesFromText(document.getElementById("mp-pihps-fresh")?.textContent)
+}
+
+/**
+ * The worker embeds the same payload `/api/pihps/fresh` returns, so the first automatic refresh
+ * after a valid embed would repeat that read. True once per page load; later and manual refreshes fetch.
+ */
+export function takeEmbeddedFreshPayload(): boolean {
+  const pending = embeddedPending
+  embeddedPending = false
+  return pending
 }
 
 /** Ask the worker for PIHPS rows newer than the baked snapshot. */

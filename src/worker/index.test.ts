@@ -65,7 +65,7 @@ it.effect("exposes freshness read failure without replacing it with a confirmed 
   assert.strictEqual((yield* fetch("/api/pihps/fresh?after=2026-02-30")).status, 400)
 }))
 
-it.effect("serves the report page shell when the freshness lookup never settles", () => Effect.gen(function* () {
+it.effect("serves a price page shell when the freshness lookup never settles", () => Effect.gen(function* () {
   const db = yield* sqliteFixture
   const stalled = Layer.succeed(PriceStore, {
     coverageSince: () => Effect.succeed([]),
@@ -73,7 +73,7 @@ it.effect("serves the report page shell when the freshness lookup never settles"
     recordJob: () => Effect.void,
     freshSince: () => Effect.never,
   })
-  const fiber = yield* handleRequest(new Request("https://example.test/lapor")).pipe(
+  const fiber = yield* handleRequest(new Request("https://example.test/")).pipe(
     Effect.provide(stalled),
     Effect.provide(workerLayer(environment(db.db))),
     Effect.fork,
@@ -137,4 +137,39 @@ it.effect("the actual scheduled handler rejects waitUntil when coverage storage 
   const failure = yield* Effect.flip(Effect.tryPromise({ try: () => pending!, catch: () => "scheduled rejected" as const }))
   assert.strictEqual(failure, "scheduled rejected")
   assert.strictEqual(fixture.sqlite.prepare("SELECT COUNT(*) AS count FROM job_runs WHERE status = 'error'").get()?.count, 1)
+}))
+
+it.effect("only official price shells read prices, and shells plus the API share one read per revision", () => Effect.gen(function* () {
+  const fixture = yield* sqliteFixture
+  yield* fixture.price("2026-09-17", "31", 16950)
+  let heavyReads = 0
+  const db: WorkerEnv["DB"] = { ...fixture.db, prepare: (sql: string) => {
+    if (sql.startsWith("SELECT date, commodity_id, region_code, price FROM prices_daily")) heavyReads++
+    return fixture.db.prepare(sql)
+  } }
+  const env = environment(db)
+  const fetch = (path: string, init?: RequestInit) => Effect.promise(() => worker.fetch(new Request(`https://example.test${path}`, init), env))
+  for (const path of ["/lapor", "/laporan", "/admin", "/missing", "/wp-login.php", "/laporan-status"]) {
+    const response = yield* fetch(path)
+    assert.strictEqual(response.headers.get("cache-control"), "no-store")
+    assert.ok(!(yield* text(response)).includes('id="mp-pihps-fresh"'), path)
+  }
+  assert.strictEqual(heavyReads, 0)
+  for (const path of ["/", "/tren", "/provinsi/31", "/keranjang", "/daya-beli"]) {
+    const body = yield* text(yield* fetch(path))
+    assert.ok(body.includes('"2026-09-17:beras:31":16950'), path)
+  }
+  assert.strictEqual((yield* json(yield* fetch("/api/pihps/fresh"))).latestDate, "2026-09-17")
+  assert.strictEqual(heavyReads, 1)
+  // The next completed ingest is visible on the very next request.
+  yield* Effect.gen(function* () {
+    const store = yield* PriceStore
+    yield* store.upsertDay("2026-09-18", "live", [{ date: "2026-09-18", commodityId: "beras", regionCode: "31", price: 17000 }], "2026-09-18T10:15:00Z")
+  }).pipe(Effect.provide(workerLayer(env)))
+  assert.ok((yield* text(yield* fetch("/"))).includes('"2026-09-18:beras:31":17000'))
+  assert.strictEqual((yield* json(yield* fetch("/api/pihps/fresh?after=2026-09-16"))).latestDate, "2026-09-18")
+  assert.strictEqual(heavyReads, 2)
+  const post = yield* fetch("/api/pihps/fresh", { method: "POST" })
+  assert.strictEqual(post.status, 405)
+  assert.strictEqual(heavyReads, 2)
 }))
