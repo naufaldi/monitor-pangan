@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Effect } from "effect"
 import { todayInJakarta } from "#/lib/jakarta-today.ts"
 import { dataBadge, latestLiveDate, pageSourceNote } from "./provider.ts"
-import { refreshFreshPrices } from "./fresh-boot.ts"
+import { refreshFreshPrices, takeEmbeddedFreshPayload } from "./fresh-boot.ts"
 import { fetchPihpsHealth } from "./health-client.ts"
 import type { PihpsHealth } from "./health-schema.ts"
 
@@ -37,13 +37,13 @@ export function VintageProvider({ children, enabled = true }: { children: ReactN
   const [freshness, setFreshness] = useState<FreshnessState>({ status: "idle", refreshFailed: false, healthFailed: false, health: null })
   const attempted = useRef(false)
   const busy = useRef(false)
-  const retry = useCallback(() => {
+  const load = useCallback((prices: boolean) => {
     if (!enabled || busy.current) return
     busy.current = true
     attempted.current = true
     setFreshness((previous) => ({ ...previous, status: "loading" }))
     void Effect.runPromise(Effect.all({
-      prices: Effect.either(refreshFreshPrices()),
+      prices: Effect.either(prices ? Effect.asVoid(refreshFreshPrices()) : Effect.void),
       health: Effect.either(fetchPihpsHealth()),
     }, { concurrency: 2 }).pipe(Effect.tap(({ prices, health }) => Effect.sync(() => {
       setBadge(dataBadge(latestLiveDate()))
@@ -54,6 +54,7 @@ export function VintageProvider({ children, enabled = true }: { children: ReactN
       }))
     })), Effect.ensuring(Effect.sync(() => { busy.current = false }))))
   }, [enabled])
+  const retry = useCallback(() => load(true), [load])
   useEffect(() => {
     setBadge(dataBadge(latestLiveDate()))
     void Effect.runPromise(
@@ -63,8 +64,9 @@ export function VintageProvider({ children, enabled = true }: { children: ReactN
     )
   }, [])
   useEffect(() => {
-    if (enabled && !attempted.current) retry()
-  }, [enabled, retry])
+    // Health still loads; prices skip only the first refresh after a valid embedded payload.
+    if (enabled && !attempted.current && !busy.current) load(!takeEmbeddedFreshPayload())
+  }, [enabled, load])
   const value = useMemo(() => ({ rev, badge, today, freshness, retry }), [rev, badge, today, freshness, retry])
   return <VintageContext.Provider value={value}>{children}</VintageContext.Provider>
 }

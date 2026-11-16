@@ -1,7 +1,8 @@
-import { Effect, Layer, Schema } from "effect"
+import { Clock, Duration, Effect, Layer, Option, Schema } from "effect"
 import { COMMODITY_ROWS, REGION_ROWS } from "../data/pihps-catalog.ts"
 import { FreshPayloadSchema, type FreshPayload } from "../data/fresh-payload.ts"
 import { CivilDateSchema, CommodityIdSchema, RegionCodeSchema } from "../data/price-schema.ts"
+import { STATIC_LIVE_THROUGH } from "../data/fresh-prices.ts"
 import type { PihpsPriceCell } from "../data/pihps-grid.ts"
 import { PriceStore, StoreError, type JobRecord } from "./ingest.ts"
 import { CoverageDaySchema, type CoverageDay } from "./ingest-plan.ts"
@@ -10,7 +11,7 @@ import { ARCHIVE_OUTBOX_SQL, capturePublishedDay } from "./archive-outbox.ts"
 
 export interface D1Prepared {
   bind(...values: unknown[]): D1Prepared
-  all<T>(): Promise<{ results: T[] }>
+  all<T>(): Promise<{ results: T[]; meta?: unknown }>
   run(): Promise<unknown>
 }
 
@@ -112,8 +113,49 @@ export const ensureMigrated = (db: D1Database) =>
     catch: storeError,
   })
 
+/** Cloudflare's per-colo Cache API, when the runtime provides one. */
+export interface FreshEdgeCache {
+  match(key: string): Promise<Response | undefined>
+  put(key: string, response: Response): Promise<void>
+}
+
+/** `caches.default` exists in Workers; Node tests and other runtimes have none. */
+export const defaultFreshEdgeCache = (): FreshEdgeCache | undefined =>
+  (globalThis as { caches?: { default?: FreshEdgeCache } }).caches?.default
+
+/**
+ * Age limit of a cached payload, counted from its store read across both tiers (an edge hit keeps
+ * its original age in the isolate). Only a write that changes no revision component, such as an
+ * operator UPDATE or DELETE, can stay hidden, and for at most this long.
+ */
+export const FRESH_CACHE_MAX_AGE_MS = 5 * 60 * 1000
+/** The edge tier is an optimization; a slow one must not spend the HTML freshness budget. */
+export const FRESH_EDGE_BUDGET = Duration.millis(250)
+
+/**
+ * The archive epoch identifies the database. Every published price change appends an outbox event
+ * (new days and older-day corrections or reconciliation), and every ingestion run, including a
+ * failed one that committed some new cells, appends a job row. Supported SQL imports only insert
+ * cells (existing official values win), and every insert, including INSERT OR REPLACE, takes a new
+ * highest price rowid; a repeated import inserts nothing and keeps the revision. All four values
+ * are single rowid seeks, not scans.
+ */
+export const FRESH_REVISION_SQL = `SELECT epoch, (SELECT COALESCE(MAX(seq), 0) FROM pihps_archive_events) AS seq,
+  (SELECT COALESCE(MAX(id), 0) FROM job_runs) AS job, (SELECT COALESCE(MAX(rowid), 0) FROM prices_daily) AS cell
+  FROM pihps_archive_epoch WHERE id = 1`
+const Count = Schema.Number.pipe(Schema.int(), Schema.nonNegative())
+const FreshRevisionRows = Schema.Struct({ results: Schema.Tuple(Schema.Struct({
+  epoch: Schema.String.pipe(Schema.pattern(/^[a-f0-9]{32}$/)), seq: Count, job: Count, cell: Count,
+})) })
+const RowsReadMeta = Schema.Struct({ rows_read: Schema.Number })
+
+const STORED_AT_HEADER = "x-fresh-stored-at"
+type FreshMemo = { readonly revision: string; readonly storedAt: number; readonly payload: FreshPayload }
+/** One public payload per D1 binding; other `after` values are never memoized. */
+const freshMemo = new WeakMap<D1Database, FreshMemo>()
+
 /** D1 binding for the monitor-pangan database. */
-export const d1PriceStoreLayer = (db: D1Database) => {
+export const d1PriceStoreLayer = (db: D1Database, edgeCache: FreshEdgeCache | undefined = undefined) => {
   const ensure = Effect.tryPromise({
     try: () => migrate(db),
     catch: storeError,
@@ -186,7 +228,7 @@ export const d1PriceStoreLayer = (db: D1Database) => {
       Effect.asVoid,
     )
 
-  const freshSince = (after: string) =>
+  const readFresh = (after: string) =>
     ensure.pipe(
       Effect.andThen(() =>
         Effect.tryPromise({
@@ -200,6 +242,10 @@ export const d1PriceStoreLayer = (db: D1Database) => {
           catch: storeError,
         }),
       ),
+      Effect.tap((out) => Option.match(Schema.decodeUnknownOption(RowsReadMeta)(out.meta), {
+        onNone: () => Effect.void,
+        onSome: (meta) => Effect.logInfo({ event: "pihps_fresh_read", rowsRead: meta.rows_read }),
+      })),
       Effect.flatMap(Schema.decodeUnknown(Schema.Struct({ results: Schema.Array(Schema.Struct({
         date: CivilDateSchema, commodity_id: CommodityIdSchema, region_code: RegionCodeSchema,
         price: Schema.Number.pipe(Schema.finite(), Schema.positive()),
@@ -217,6 +263,57 @@ export const d1PriceStoreLayer = (db: D1Database) => {
       Effect.flatMap(Schema.decodeUnknown(FreshPayloadSchema)),
       Effect.mapError(storeError),
     )
+
+  const freshRevision = ensure.pipe(
+    Effect.andThen(() => Effect.tryPromise({ try: () => db.prepare(FRESH_REVISION_SQL).all<unknown>(), catch: storeError })),
+    Effect.flatMap(Schema.decodeUnknown(FreshRevisionRows)),
+    Effect.map(({ results: [row] }) => `${row.epoch}/${row.seq}/${row.job}/${row.cell}`),
+    Effect.mapError(storeError),
+  )
+
+  // Cache failures and slow cache calls only cost a store read; they never fail or alter the response.
+  const edgeKey = (revision: string) => `https://pihps-fresh.monitor-pangan.internal/v2/${revision}?after=${STATIC_LIVE_THROUGH}`
+  const StoredAt = Schema.NumberFromString.pipe(Schema.int(), Schema.nonNegative())
+  const edgeGet = (revision: string): Effect.Effect<Option.Option<Omit<FreshMemo, "revision">>> => edgeCache === undefined ? Effect.succeedNone : Effect.tryPromise(() =>
+    edgeCache.match(edgeKey(revision)).then((response) => response === undefined ? undefined
+      : response.text().then((text) => ({ text, storedAt: response.headers.get(STORED_AT_HEADER) })))).pipe(
+    Effect.timeout(FRESH_EDGE_BUDGET),
+    Effect.flatMap((hit) => hit === undefined ? Effect.succeedNone : Effect.all({
+      storedAt: Schema.decodeUnknown(StoredAt)(hit.storedAt),
+      payload: Schema.decodeUnknown(Schema.parseJson(FreshPayloadSchema))(hit.text),
+    }).pipe(Effect.map(Option.some))),
+    Effect.orElseSucceed(() => Option.none()),
+  )
+  const edgePut = (revision: string, memo: FreshMemo) => edgeCache === undefined ? Effect.void : Effect.tryPromise(() =>
+    edgeCache.put(edgeKey(revision), new Response(JSON.stringify(memo.payload), { headers: {
+      "content-type": "application/json", "cache-control": `public, max-age=${FRESH_CACHE_MAX_AGE_MS / 1000}`,
+      [STORED_AT_HEADER]: String(memo.storedAt),
+    } }))).pipe(Effect.timeout(FRESH_EDGE_BUDGET), Effect.ignore)
+
+  /**
+   * The public payload is shared by every HTML shell and the client API. The revision and the clock
+   * are both read before the rows, so a payload is never stored under a newer revision or a later
+   * time than the data it saw.
+   */
+  const cachedFresh = Effect.gen(function* () {
+    const revision = yield* Effect.option(freshRevision)
+    if (Option.isNone(revision)) return yield* readFresh(STATIC_LIVE_THROUGH)
+    const now = yield* Clock.currentTimeMillis
+    const fresh = (memo: { readonly storedAt: number } | undefined) => memo !== undefined && now - memo.storedAt < FRESH_CACHE_MAX_AGE_MS
+    const memo = freshMemo.get(db)
+    if (memo?.revision === revision.value && fresh(memo)) return memo.payload
+    const edge = yield* edgeGet(revision.value)
+    if (Option.isSome(edge) && fresh(edge.value)) {
+      freshMemo.set(db, { revision: revision.value, storedAt: Math.min(edge.value.storedAt, now), payload: edge.value.payload })
+      return edge.value.payload
+    }
+    const read: FreshMemo = { revision: revision.value, storedAt: now, payload: yield* readFresh(STATIC_LIVE_THROUGH) }
+    freshMemo.set(db, read)
+    yield* edgePut(revision.value, read)
+    return read.payload
+  })
+
+  const freshSince = (after: string) => after === STATIC_LIVE_THROUGH ? cachedFresh : readFresh(after)
 
   return Layer.succeed(PriceStore, {
     coverageSince,

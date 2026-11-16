@@ -2,7 +2,8 @@ import { Context, Data, Duration, Effect, Layer, Schema } from "effect"
 import { FreshPayloadSchema } from "../data/fresh-payload.ts"
 import { CivilDateSchema } from "../data/price-schema.ts"
 import { STATIC_LIVE_THROUGH } from "../data/fresh-prices.ts"
-import { d1PriceStoreLayer, type D1Database } from "./d1-store.ts"
+import { isOfficialPricePath } from "../data/health-client.ts"
+import { d1PriceStoreLayer, defaultFreshEdgeCache, type D1Database } from "./d1-store.ts"
 import { injectFreshScript } from "./html.ts"
 import { ingestRecent, PihpsHttpLive, PriceStore } from "./ingest.ts"
 import { handleLaporan, laporanEdgeFromEnv, laporanHttpError } from "./laporan-http.ts"
@@ -50,7 +51,7 @@ const assetsLayer = (assets: AssetFetcher) =>
 
 export const workerLayer = (env: WorkerEnv) =>
   Layer.mergeAll(
-    d1PriceStoreLayer(env.DB),
+    d1PriceStoreLayer(env.DB, defaultFreshEdgeCache()),
     priceReadStoreLayer(env.DB),
     PihpsHttpLive,
     assetsLayer(env.ASSETS),
@@ -93,6 +94,7 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
   const prices = yield* handlePriceRequest(request)
   if (prices != null) return prices
   if (url.pathname === "/api/pihps/fresh") {
+    if (request.method !== "GET") return Response.json({ error: "method_not_allowed" }, { status: 405, headers: { allow: "GET", "cache-control": "no-store" } })
     const after = url.searchParams.get("after") ?? STATIC_LIVE_THROUGH
     if (!Schema.is(CivilDateSchema)(after)) {
       return Response.json({ error: "after must be YYYY-MM-DD" }, { status: 400 })
@@ -110,7 +112,8 @@ export const handleRequest = Effect.fn("Worker.handleRequest")(function* (reques
   })
   const receiptPage = /^\/laporan-status\/?$/.test(url.pathname)
   const store = yield* PriceStore
-  const payload = receiptPage ? null : yield* store.freshSince(STATIC_LIVE_THROUGH).pipe(
+  // Only official price pages render the overlay; reports, admin and unknown URLs read no prices.
+  const payload = !isOfficialPricePath(url.pathname) ? null : yield* store.freshSince(STATIC_LIVE_THROUGH).pipe(
     Effect.flatMap(Schema.decodeUnknown(FreshPayloadSchema)),
     Effect.timeout(HTML_FRESH_BUDGET),
     Effect.catchAll(() => Effect.logError({ event: "pihps_freshness_unavailable", surface: "html" }).pipe(Effect.as(null))),
