@@ -146,3 +146,12 @@ PR will be a draft rather than a complete UI-readiness claim.
 ## Evaluation clarification: original Qwen output restored
 
 The user clarified that this exercise measures Qwen's original result, without parent repair. The previously documented parent wording correction has therefore been reverted. Product and test source now match Qwen head `0a174e3660a65301ff564218eb820e59bd2c3ea1` exactly. The original F1 recovery-copy defect remains unresolved and the initial review verdict remains **changes requested**. Earlier notes describe delivery history, not the current candidate. No second independent review was run; the PR remains draft.
+
+
+## Sol repair phase after evaluation
+
+The user subsequently authorized Sol to fix the candidates to project standards and merge when ready. This supersedes the evaluation-only freeze for delivery, while preserving the original Qwen head and original review above as historical evidence.
+
+Parent GPT-6.1 Sol high corrected F1: the capacity hint now suggests selecting a commodity or trying another commodity with fewer reports. Both outlet windows still load; outlet switching is no longer advertised as recovery. This is one static UI string only. Loader, data ownership, request counts, and schema are unchanged. The parent inspected the route inputs and exact diff. Existing typecheck/build and focused-test evidence remain applicable to unchanged behavior; no new test suite or independent review was run for the wording correction. CI will validate the pushed head.
+
+Runtime gaps recorded in the original review remain open until supported UI proof is obtained; the copy correction alone is not complete interaction acceptance. No merge is claimed by this note. Sol authored this repair; Qwen's initial review remains changes requested at its original immutable head.
