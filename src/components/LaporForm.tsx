@@ -4,10 +4,13 @@ import { Data, Effect, Schema } from "effect"
 import { Button, Card, FieldInput, FieldSelect, FileInput, StatusMessage, buttonClass } from "@monitor-pangan/ui"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { PlaceSelect } from "#/components/PlaceSelect.tsx"
+import { ReportRecoveryCard } from "#/components/ReportRecoveryCard.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { fetchTurnstileSiteKey, postReport, putPhoto, LaporanClientError } from "#/data/laporan-client.ts"
 import { SAVED_COPY, SubmitBodySchema, reportFieldErrors, type Outlet, type ReportField, type ReportFieldErrors } from "#/data/laporan.ts"
-import { formatRupiahAmount, parseRupiahInput } from "#/lib/format.ts"
+import { isDefiniteReject, retryBody, type ReportAttempt } from "#/data/laporan-retry.ts"
+import { placeByCode } from "#/data/places.ts"
+import { formatPrice, formatRupiahAmount, parseRupiahInput } from "#/lib/format.ts"
 import { downscaleToJpeg } from "#/lib/photo.ts"
 import { receiptLink } from "#/data/receipt.ts"
 import { browserTurnstileLoader, mountTurnstile, type TurnstileState, type TurnstileWidget } from "#/lib/turnstile.ts"
@@ -16,6 +19,8 @@ import { browserTurnstileLoader, mountTurnstile, type TurnstileState, type Turns
 class CheckNotReady extends Data.TaggedError("CheckNotReady")<{}> {}
 
 const DraftSchema = SubmitBodySchema.omit("turnstileToken")
+/** The exact payload sent for one UUID. A retry resends this, never the current editable fields. */
+type LockedAttempt = { draft: ReportAttempt; file: File | null; jpeg: Blob | null }
 const KEEPS_INPUT = "Isian Anda tetap tersimpan."
 const FIELD_ORDER: readonly ReportField[] = ["price", "place", "alias"]
 
@@ -78,6 +83,7 @@ export function LaporForm() {
   const [error, setError] = useState<string | null>(null)
   const [savedId, setSavedId] = useState<string | null>(null)
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null)
+  const [locked, setLocked] = useState<LockedAttempt | null>(null)
   const [photoFailed, setPhotoFailed] = useState(false)
   const [pending, setPending] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<ReportFieldErrors>({})
@@ -127,6 +133,53 @@ export function LaporForm() {
     else widget.current?.retry()
   }
 
+  // Sends one captured attempt. A retry (isRetry) resends the original payload and stays locked on
+  // failure; a first submit locks only on an uncertain failure, where the row may already exist.
+  const sendAttempt = (attempt: LockedAttempt, isRetry: boolean) =>
+    Effect.gen(function* () {
+      // Taken only after local checks: Siteverify spends it on any request that reaches the server.
+      const turnstileToken = widget.current?.take() ?? null
+      if (turnstileToken == null) {
+        widget.current?.release()
+        busy.current = false
+        setPending(false)
+        setError(submitError(new CheckNotReady(), attempt.file != null))
+        return
+      }
+      const result = yield* Effect.either(postReport(retryBody(attempt.draft, turnstileToken)))
+      if (result._tag === "Left") {
+        widget.current?.release()
+        busy.current = false
+        setPending(false)
+        if (!isRetry && !isDefiniteReject(result.left.status)) {
+          // The original may be stored. Freeze it and offer an explicit retry or a new report.
+          setError(null)
+          setLocked(attempt)
+          setWidgetKey((key) => key + 1)
+        } else {
+          setError(submitError(result.left, attempt.file != null))
+        }
+        return
+      }
+      const saved = result.right
+      if (attempt.jpeg != null && saved.uploadUrl != null) {
+        yield* putPhoto(saved.uploadUrl, attempt.jpeg).pipe(
+          Effect.match({
+            onFailure: () => setPhotoFailed(true),
+            onSuccess: () => setPhotoFailed(false),
+          }),
+        )
+      } else if (attempt.jpeg != null) {
+        setPhotoFailed(true)
+      }
+      widget.current?.dispose()
+      busy.current = false
+      setSavedId(saved.id)
+      setReceiptUrl(saved.receiptToken == null ? null : receiptLink(saved.id, saved.receiptToken))
+      setLocked(null)
+      setPending(false)
+    })
+
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
     if (busy.current) return
@@ -160,41 +213,41 @@ export function LaporForm() {
           Effect.mapError(() => new LaporanClientError({ status: 400 })),
         )
         const jpeg = file == null ? null : yield* downscaleToJpeg(file).pipe(Effect.mapError(() => new LaporanClientError({ status: 400 })))
-        // Taken only after local checks: Siteverify spends it on any request that reaches the server.
-        const turnstileToken = widget.current?.take() ?? null
-        if (turnstileToken == null) return yield* Effect.fail(new CheckNotReady())
-        const body = yield* Schema.decodeUnknown(SubmitBodySchema)({ ...draft, turnstileToken }).pipe(
-          Effect.mapError(() => new LaporanClientError({ status: 400 })),
-        )
-        const saved = yield* postReport(body)
-        if (jpeg != null && saved.uploadUrl != null) {
-          yield* putPhoto(saved.uploadUrl, jpeg).pipe(
-            Effect.match({
-              onFailure: () => setPhotoFailed(true),
-              onSuccess: () => setPhotoFailed(false),
-            }),
-          )
-        } else if (jpeg != null) {
-          setPhotoFailed(true)
-        }
-        return saved
+        yield* sendAttempt({ draft, file, jpeg }, false)
       }).pipe(
-        Effect.match({
-          onFailure: (failure) => {
+        // Only the local decode/downscale can fail here; sendAttempt settles its own failures.
+        Effect.catchAll((failure: LaporanClientError) =>
+          Effect.sync(() => {
             widget.current?.release()
             busy.current = false
+            setPending(false)
             setError(submitError(failure, file != null))
-            setPending(false)
-          },
-          onSuccess: (saved) => {
-            widget.current?.dispose()
-            setSavedId(saved.id)
-            setReceiptUrl(saved.receiptToken == null ? null : receiptLink(saved.id, saved.receiptToken))
-            setPending(false)
-          },
-        }),
+          }),
+        ),
       ),
     )
+  }
+
+  const retryOriginal = () => {
+    if (busy.current || locked == null) return
+    busy.current = true
+    setPending(true)
+    setError(null)
+    void Effect.runPromise(sendAttempt(locked, true))
+  }
+
+  // Explicit new report: a fresh UUID on the next send. The visitor's edits stay in the field state,
+  // so nothing they typed is lost; the previous attempt may already be stored under its own UUID.
+  const startNewReport = () => {
+    if (busy.current) return
+    submissionId.current = null
+    busy.current = false
+    setLocked(null)
+    setError(null)
+    setPhotoFailed(false)
+    setFieldErrors({})
+    setCheck({ _tag: "Loading" })
+    setWidgetKey((key) => key + 1)
   }
 
   const clearFieldError = (field: ReportField) => setFieldErrors((current) => (current[field] == null ? current : { ...current, [field]: undefined }))
@@ -211,6 +264,8 @@ export function LaporForm() {
     setCheck({ _tag: "Loading" })
     setWidgetKey((key) => key + 1)
   }
+
+  const notice = checkNotice(check)
 
   if (savedId != null) {
     return (
@@ -230,7 +285,35 @@ export function LaporForm() {
     )
   }
 
-  const notice = checkNotice(check)
+  if (locked != null) {
+    const commodity = COMMODITIES.find((item) => item.id === locked.draft.commodityId)
+    const lockedUnit = commodity?.unit ?? "kg"
+    const placeName = placeByCode(locked.draft.placeCode)?.name ?? locked.draft.placeCode
+    return (
+      <ReportRecoveryCard
+        commodityName={commodity?.name ?? locked.draft.commodityId}
+        priceLabel={formatPrice(locked.draft.price, lockedUnit)}
+        placeName={placeName}
+        hasPhoto={locked.draft.photo}
+        pending={pending}
+        error={error}
+        onRetry={retryOriginal}
+        onNewReport={startNewReport}
+      >
+        <div ref={widgetRef} />
+        {notice != null ? (
+          <StatusMessage
+            tone={notice.tone}
+            title={notice.title}
+            action={notice.retry ? <Button onClick={retryCheck} disabled={pending}>Coba lagi</Button> : null}
+          >
+            {notice.detail}
+          </StatusMessage>
+        ) : null}
+      </ReportRecoveryCard>
+    )
+  }
+
   const unit = COMMODITIES.find((commodity) => commodity.id === commodityId)?.unit ?? "kg"
 
   return (
@@ -306,5 +389,9 @@ function submitError(failure: LaporanClientError | CheckNotReady, withPhoto: boo
   if (failure.status === 503 && withPhoto) {
     return "Unggahan foto belum tersedia, jadi laporan belum terkirim. Isian dan foto tetap tersimpan; coba lagi nanti."
   }
-  return "Belum dapat memastikan laporan tersimpan. Periksa isian dan coba lagi."
+  // 400 is rejected before any insert, so nothing was stored. Local checks already catch field
+  // mistakes before sending, so a server 400 is usually the check; ask for a retry, not new entries.
+  if (failure.status === 400) return "Laporan belum terkirim. Coba lagi."
+  // Uncertain: the row may exist. Editing cannot change it; the recovery card offers the next step.
+  return "Belum dapat memastikan laporan tersimpan. Coba lagi."
 }
