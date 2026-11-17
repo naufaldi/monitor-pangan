@@ -210,10 +210,12 @@ it.effect("province outlines have no fill", () =>
   }),
 )
 
-it.effect("a removed photo keeps a receipt label and a missing photo does not", () =>
+it.effect("an absent photo is unavailable without a deletion claim and an available photo stays an image", () =>
   Effect.sync(() => {
     assert.strictEqual(photoPresentation({ hasPhoto: true, evidence: "receipt" }), "image")
-    assert.strictEqual(photoPresentation({ hasPhoto: false, evidence: "receipt" }), "removed")
+    assert.strictEqual(photoPresentation({ hasPhoto: true, evidence: "board" }), "image")
+    assert.strictEqual(photoPresentation({ hasPhoto: false, evidence: "receipt" }), "unavailable")
+    assert.strictEqual(photoPresentation({ hasPhoto: false, evidence: "board" }), "unavailable")
     assert.strictEqual(photoPresentation({ hasPhoto: false, evidence: "none" }), "label")
   }),
 )

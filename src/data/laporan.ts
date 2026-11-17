@@ -66,7 +66,7 @@ export const NO_PIN_COPY = "Tempat tanpa pin tidak punya laporan."
 
 export const PIN_COMMODITY_EMPTY = "Tidak ada laporan untuk komoditas ini di sini."
 
-export const PHOTO_REMOVED_COPY = "Foto dihapus setelah 30 hari."
+export const PHOTO_UNAVAILABLE_COPY = "Foto tidak tersedia."
 
 export const MEDIAN_CAPTION =
   "Median dari median tiap kota. Bukan rata-rata provinsi PIHPS."
