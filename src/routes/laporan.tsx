@@ -7,8 +7,8 @@ import { LaporanList } from "#/components/LaporanList.tsx"
 import { LaporanMap } from "#/components/LaporanMap.tsx"
 import { LaporanProvince } from "#/components/LaporanProvince.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
-import { fetchReports } from "#/data/laporan-client.ts"
-import { EMPTY_WINDOW_COPY, NO_PIN_COPY, otherOutlet, outletLabel, type Outlet, type PublicReport, type ReportsPayload } from "#/data/laporan.ts"
+import { fetchReports, loadWindow, WindowCapacityError } from "#/data/laporan-client.ts"
+import { EMPTY_WINDOW_COPY, NO_PIN_COPY, WINDOW_CAPACITY_COPY, WINDOW_CAPACITY_HINT, otherOutlet, outletLabel, type Outlet, type PublicReport } from "#/data/laporan.ts"
 import { parseLaporanSearch } from "#/lib/laporan-search.ts"
 import { loadProvinces } from "#/data/geo.ts"
 import { LIST_PAGE_SIZE, mapAndProvinceRows } from "#/lib/laporan.ts"
@@ -16,28 +16,7 @@ import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 
 const provinces = new Set(loadProvinces().map((province) => province.code))
 
-type RequestStatus = "loading" | "ready" | "error"
-
-const loadWindow = (outlet: Outlet, commodityId: string | null) =>
-  Effect.gen(function* () {
-    const pages: PublicReport[][] = []
-    let cursor: string | null = null
-    let guard = 0
-    while (guard < 20) {
-      const page: ReportsPayload = yield* fetchReports({
-        outlet,
-        commodityId,
-        cursor,
-        windowOnly: true,
-        limit: 100,
-      })
-      pages.push([...page.rows])
-      cursor = page.nextCursor
-      guard += 1
-      if (cursor == null) break
-    }
-    return pages.flat()
-  })
+type RequestStatus = "loading" | "ready" | "error" | "capacity"
 
 export const Route = createFileRoute("/laporan")({
   ssr: false,
@@ -92,14 +71,14 @@ function LaporanPage() {
         return { split: mapAndProvinceRows(selected, other), listed }
       }).pipe(
         Effect.match({
-          onFailure: () => {
+          onFailure: (error) => {
             if (requestGen.current !== generation) return
             setMapRows([])
             setProvinceRows([])
             setListRows([])
             setWindowEmpty(false)
             setMore(null)
-            setRequest({ key: requestKey, status: "error" })
+            setRequest({ key: requestKey, status: error instanceof WindowCapacityError ? "capacity" : "error" })
           },
           onSuccess: (loaded) => {
             if (requestGen.current !== generation) return
@@ -195,6 +174,10 @@ function LaporanPage() {
       />
       {status === "loading" ? (
         <StatusMessage tone="loading" title="Memuat laporan…" />
+      ) : status === "capacity" ? (
+        <StatusMessage tone="error" title={WINDOW_CAPACITY_COPY}>
+          {WINDOW_CAPACITY_HINT}
+        </StatusMessage>
       ) : status === "error" ? (
         <StatusMessage
           tone="error"
