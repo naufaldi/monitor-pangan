@@ -80,3 +80,38 @@ CREATE TABLE IF NOT EXISTS pihps_archive_events (
   observations_json TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS pihps_archive_events_date_seq ON pihps_archive_events (date, seq DESC);
+
+CREATE TABLE IF NOT EXISTS schema_version (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  version INTEGER NOT NULL
+);
+INSERT OR IGNORE INTO schema_version (id, version) VALUES (1, 0);
+
+CREATE TABLE IF NOT EXISTS pihps_fresh_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  epoch TEXT NOT NULL,
+  revision INTEGER NOT NULL,
+  payload_revision INTEGER,
+  payload TEXT
+);
+INSERT OR IGNORE INTO pihps_fresh_state (id, epoch, revision) VALUES (1, lower(hex(randomblob(16))), 0);
+
+CREATE TRIGGER IF NOT EXISTS pihps_fresh_revision_insert
+AFTER INSERT ON prices_daily
+WHEN NEW.source_id = 'pihps' AND NEW.level = 'eceran' AND NEW.price IS NOT NULL
+BEGIN
+  UPDATE pihps_fresh_state SET revision = revision + 1 WHERE id = 1;
+END;
+
+CREATE TRIGGER IF NOT EXISTS pihps_fresh_revision_delete
+AFTER DELETE ON prices_daily
+WHEN OLD.source_id = 'pihps' AND OLD.level = 'eceran' AND OLD.price IS NOT NULL
+BEGIN
+  UPDATE pihps_fresh_state SET revision = revision + 1 WHERE id = 1;
+END;
+
+CREATE TRIGGER IF NOT EXISTS pihps_fresh_revision_archive
+AFTER INSERT ON pihps_archive_events
+BEGIN
+  UPDATE pihps_fresh_state SET revision = revision + 1 WHERE id = 1;
+END;

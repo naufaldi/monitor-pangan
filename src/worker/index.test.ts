@@ -71,6 +71,7 @@ it.effect("serves a price page shell when the freshness lookup never settles", (
     coverageSince: () => Effect.succeed([]),
     upsertDay: () => Effect.succeed(0),
     recordJob: () => Effect.void,
+    publishFresh: () => Effect.void,
     freshSince: () => Effect.never,
   })
   const fiber = yield* handleRequest(new Request("https://example.test/")).pipe(
@@ -95,6 +96,7 @@ it.effect("receipt HTML is private and performs no optional price lookup", () =>
   let freshnessReads = 0
   const stalled = Layer.succeed(PriceStore, {
     coverageSince: () => Effect.succeed([]), upsertDay: () => Effect.succeed(0), recordJob: () => Effect.void,
+    publishFresh: () => Effect.void,
     freshSince: () => { freshnessReads++; return Effect.never },
   })
   const response = yield* handleRequest(new Request("https://example.test/laporan-status?id=d11db382-4e67-4e33-a972-090f987874d8")).pipe(
@@ -118,6 +120,7 @@ it.effect("scheduled execution stays failed after recording an upstream failure"
       coverageSince: () => Effect.succeed([]),
       upsertDay: () => Effect.succeed(0),
       recordJob: () => Effect.void,
+      publishFresh: () => Effect.void,
       freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
     }),
   )))

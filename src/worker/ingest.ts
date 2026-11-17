@@ -42,6 +42,8 @@ export class PriceStore extends Context.Tag("PriceStore")<
       checkedAt: string,
     ) => Effect.Effect<number, StoreError>
     readonly recordJob: (job: JobRecord) => Effect.Effect<void, StoreError>
+    /** Store the public fresh payload for the current revision. Callers must ignore failures. */
+    readonly publishFresh: () => Effect.Effect<void, StoreError>
     readonly freshSince: (after: string) => Effect.Effect<FreshPayload, StoreError>
   }
 >() {}
@@ -123,6 +125,12 @@ export const ingestRecent = Effect.fn("Pihps.ingestRecent")(function* (maxDays: 
   }))
   if (Exit.isFailure(recorded)) {
     yield* Effect.logError({ ...details, event: "pihps_job_record_failed", outcome: "error", originalCategory: category, category: "StoreError", jobRecorded: false })
+  }
+  // The snapshot is derived. A failure here leaves the request path to scan once and backfill.
+  if (target != null) {
+    yield* store.publishFresh().pipe(
+      Effect.catchAllCause((cause) => Effect.logError({ event: "pihps_fresh_precompute_failed", message: Cause.pretty(cause) })),
+    )
   }
   if (Exit.isFailure(outcome)) return yield* Effect.failCause(outcome.cause)
   if (Exit.isFailure(recorded)) return yield* Effect.failCause(recorded.cause)
