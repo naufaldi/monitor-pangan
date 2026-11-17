@@ -4,10 +4,14 @@ import {
   AdminReviewedPageSchema,
   type DecideBody,
   type LaporanQuery,
+  type Outlet,
+  type PublicReport,
+  type ReportsPayload,
   ReportsPayloadSchema,
   SubmitResponseSchema,
   type SubmitBody,
 } from "#/data/laporan.ts"
+import { MAX_PAGE_SIZE } from "#/lib/laporan.ts"
 
 export class LaporanClientError extends Data.TaggedError("LaporanClientError")<{
   readonly status: number
@@ -22,7 +26,7 @@ const readJson = (response: Response) =>
   })
 
 /** Public page of reviewed reports. */
-export const fetchReports = (query: LaporanQuery) =>
+export const fetchReports = (query: LaporanQuery, fetcher: typeof fetch = fetch) =>
   Effect.gen(function* () {
     const params = new URLSearchParams({
       outlet: query.outlet,
@@ -32,7 +36,7 @@ export const fetchReports = (query: LaporanQuery) =>
     if (query.commodityId != null) params.set("commodityId", query.commodityId)
     if (query.cursor != null) params.set("cursor", query.cursor)
     const response = yield* Effect.tryPromise({
-      try: () => fetch(`/api/laporan?${params.toString()}`),
+      try: () => fetcher(`/api/laporan?${params.toString()}`),
       catch: () => failed(0),
     })
     if (!response.ok) return yield* Effect.fail(failed(response.status))
@@ -40,6 +44,37 @@ export const fetchReports = (query: LaporanQuery) =>
     return yield* Schema.decodeUnknown(ReportsPayloadSchema)(json).pipe(
       Effect.mapError(() => failed(response.status)),
     )
+  })
+
+/** Page bound for one 30-day window. The store has no matching total cap. */
+export const WINDOW_MAX_PAGES = 20
+
+/** The window holds more reviewed reports than the page bound can fetch. */
+export class WindowCapacityError extends Data.TaggedError("WindowCapacityError") {}
+
+/** Loads one outlet's 30-day window. Succeeds only when pagination completes within the bound. */
+export const loadWindow = (outlet: Outlet, commodityId: string | null, fetcher: typeof fetch = fetch) =>
+  Effect.gen(function* () {
+    const pages: PublicReport[][] = []
+    let cursor: string | null = null
+    for (let page = 0; page < WINDOW_MAX_PAGES; page += 1) {
+      const payload: ReportsPayload = yield* fetchReports(
+        {
+          outlet,
+          commodityId,
+          cursor,
+          windowOnly: true,
+          limit: MAX_PAGE_SIZE,
+        },
+        fetcher,
+      )
+      pages.push([...payload.rows])
+      cursor = payload.nextCursor
+      if (cursor == null) return pages.flat()
+    }
+    // A live cursor after the last allowed page means more reviewed rows exist.
+    // Returning them as success would present a truncated window as complete.
+    return yield* Effect.fail(new WindowCapacityError())
   })
 
 /** Turnstile site key. Null until the Worker secret is set. */

@@ -62,6 +62,12 @@ export const DITINJAU_COPY =
 export const EMPTY_WINDOW_COPY =
   "Belum ada laporan warga yang ditinjau dalam 30 hari terakhir."
 
+export const WINDOW_CAPACITY_COPY =
+  "Laporan 30 hari terakhir terlalu banyak untuk dimuat lengkap."
+
+export const WINDOW_CAPACITY_HINT =
+  "Peta dan ringkasan provinsi disembunyikan karena datanya belum lengkap. Pilih satu komoditas atau ganti jenis tempat untuk mempersempit laporan."
+
 export const NO_PIN_COPY = "Tempat tanpa pin tidak punya laporan."
 
 export const PIN_COMMODITY_EMPTY = "Tidak ada laporan untuk komoditas ini di sini."
