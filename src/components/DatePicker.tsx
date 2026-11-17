@@ -1,27 +1,12 @@
 import { useId } from "react"
 import { Button, Input } from "@monitor-pangan/ui"
 import { cn } from "#/lib/utils.ts"
+import { resolveSurveyDate } from "#/lib/survey-date.ts"
 
 type DatePickerProps = {
   dates: string[]
   value: string
   onChange: (date: string) => void
-}
-
-function nearestDate(dates: string[], target: string): string {
-  if (dates.includes(target)) return target
-  const targetTime = Date.parse(target)
-  if (Number.isNaN(targetTime)) return dates[dates.length - 1] ?? target
-  let best = dates[0] ?? target
-  let bestDiff = Number.POSITIVE_INFINITY
-  for (const d of dates) {
-    const diff = Math.abs(Date.parse(d) - targetTime)
-    if (diff < bestDiff) {
-      best = d
-      bestDiff = diff
-    }
-  }
-  return best
 }
 
 function Chevron({ flipped }: { flipped?: boolean }) {
@@ -60,7 +45,7 @@ function openDatePicker(target: HTMLInputElement): void {
   }
 }
 
-/** One date control: step by trading day, or pick any date and snap to the nearest trading day. */
+/** One date control: step by trading day, or pick any date and snap to the last trading day at or before it. */
 export function DatePicker({ dates, value, onChange }: DatePickerProps) {
   const index = dates.indexOf(value)
   const safeIndex = index === -1 ? dates.length - 1 : index
@@ -102,7 +87,10 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
             max={latest}
             onChange={(e) => {
               const picked = e.target.value
-              if (picked) onChange(nearestDate(dates, picked))
+              if (!picked) return
+              const resolved = resolveSurveyDate(dates, picked)
+              // No survey at or before the pick: keep the current selection.
+              if (resolved != null) onChange(resolved)
             }}
             onClick={(e) => openDatePicker(e.currentTarget)}
             onKeyDown={(e) => {
