@@ -157,7 +157,7 @@ export function LaporForm() {
           setLocked(attempt)
           setWidgetKey((key) => key + 1)
         } else {
-          setError(submitError(result.left, attempt.file != null))
+          setError(submitError(result.left, attempt.file != null, isRetry))
         }
         return
       }
@@ -361,7 +361,7 @@ export function LaporForm() {
         }}
         error={fieldErrors.alias}
       />
-      <FileInput label="Foto, boleh kosong" accept="image/*" onFile={setFile} />
+      <FileInput label="Foto, boleh kosong" accept="image/*" selectedFileName={file?.name ?? null} onFile={setFile} />
       <div ref={widgetRef} />
       {notice != null ? (
         <StatusMessage
@@ -383,8 +383,17 @@ export function LaporForm() {
   )
 }
 
-function submitError(failure: LaporanClientError | CheckNotReady, withPhoto: boolean): string {
+function submitError(failure: LaporanClientError | CheckNotReady, withPhoto: boolean, isRetry = false): string {
   if (failure._tag === "CheckNotReady") return "Selesaikan pemeriksaan kiriman di atas, lalu kirim lagi."
+  // A rejected retry says nothing about whether the earlier uncertain attempt was saved.
+  if (isRetry) {
+    const reason = failure.status === 503 && withPhoto
+      ? "Unggahan foto belum tersedia. Coba kirim ulang nanti, atau mulai laporan baru."
+      : failure.status === 400
+        ? "Pengiriman ulang ditolak. Ulangi pemeriksaan kiriman, lalu kirim ulang."
+        : "Belum dapat memastikan hasil pengiriman ulang. Coba lagi."
+    return `Laporan awal mungkin sudah tersimpan. ${reason}`
+  }
   // The Worker answers 503 only when a photo is attached and photo upload is not configured.
   if (failure.status === 503 && withPhoto) {
     return "Unggahan foto belum tersedia, jadi laporan belum terkirim. Isian dan foto tetap tersimpan; coba lagi nanti."

@@ -116,3 +116,28 @@ The evaluated product/test source remains exactly Qwen head `7f041229c8a938b9783
 
 This review document is added for delivery; it does not alter the candidate. Passing gates are retained as bounded test/build evidence and do not override product findings or prove live interactions. The offline install remains a separate instruction-compliance deviation, not an approved exception. The PR is draft; no merge or deployment.
 
+
+
+---
+
+## Sol repair disposition — 2026-11-17 (separate from original review)
+
+Delivery authorization superseded the candidate freeze. Sol repaired the two P2 findings in the
+existing branch, without a new independent review. The original Qwen plan/hash, review findings,
+and original readiness verdict above remain historical evidence.
+
+- Rejected recovery retries now retain uncertainty of the original save; initial definite rejection
+  remains editable. Original attempt/UUID and fresh-check flow are preserved.
+- Shared FileInput now supports the form's parent-owned filename across remount, with remove and
+  replace actions that update the same File used for submission. Existing uncontrolled callers work.
+- Final focused regression against original product source failed six cases (expected); repaired
+  source passes 39 tests including the unchanged 17 store/privacy cases. Typecheck/build exit zero.
+- Authorized T3 interactions on the real form confirm retry copy, UUID/payload stability, synthetic
+  token renewal/widget lifecycle, busy controls, and retained/remove/replace photo submissions at
+  desktop/mobile CSS widths. Backend responses and Turnstile API were synthetic; JPEG conversion
+  was real. Screenshot attempts failed because T3 produced no frames. No visual acceptance claim.
+
+**Scoped repair result: PASS. Visual proof: BLOCKED.** Real challenge, touch, throttled network,
+CI and production remain unverified. **Performance: not materially affected**, source assessment.
+Full evidence and limits: [Sol repair record](../plans/issue-75-sol-repair.md).
+Only local handback is authorized for this executor; parent owns publication/CI/merge.
