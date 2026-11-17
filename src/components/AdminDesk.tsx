@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { Effect } from "effect"
 import { Button, Card, FieldSelect, Input, SectionHeader, SegmentedControl, StatusMessage } from "@monitor-pangan/ui"
 import { COMMODITIES } from "#/data/catalog.ts"
@@ -6,7 +6,6 @@ import {
   fetchAdminPhotoUrl,
   fetchQueue,
   fetchReviewed,
-  postDecision,
   LaporanClientError,
 } from "#/data/laporan-client.ts"
 import {
@@ -15,8 +14,14 @@ import {
   outletLabel,
   type AdminPendingItem,
   type AdminReviewedItem,
+  type DecideBody,
   type Evidence,
 } from "#/data/laporan.ts"
+import {
+  createDecisionController,
+  DECISION_FAILURE_COPY,
+  type DecisionFeedback,
+} from "./admin-decision.ts"
 import { loadProvinces } from "#/data/geo.ts"
 import { placeByCode } from "#/data/places.ts"
 import { formatDateShort, formatPrice } from "#/lib/format.ts"
@@ -42,6 +47,8 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
   const [reviewedRequest, setReviewedRequest] = useState<{ status: RequestStatus; cursor: string | null }>({ status: "loading", cursor: null })
   const pendingGen = useRef(0)
   const reviewedGen = useRef(0)
+  const controller = useMemo(() => createDecisionController(), [])
+  const { inflight, feedback } = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot)
 
   const reload = () => {
     const generation = ++pendingGen.current
@@ -69,6 +76,7 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
     return () => {
       pendingGen.current += 1
       reviewedGen.current += 1
+      controller.invalidate()
     }
   }, [secret])
 
@@ -98,6 +106,13 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
     )
   }
 
+  const decidePending = (body: DecideBody) => {
+    void Effect.runPromise(controller.decide({ secret, scope: "pending", body, onReject, reload }))
+  }
+  const decideReviewed = (body: DecideBody) => {
+    void Effect.runPromise(controller.decide({ secret, scope: "reviewed", body, onReject, reload: () => loadReviewed(null) }))
+  }
+
   return (
     <section className="flex flex-col gap-3">
       <SegmentedControl
@@ -112,13 +127,20 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
           if (next === "reviewed") loadReviewed(null)
         }}
       />
+      {feedback != null && view === feedback.scope ? (
+        <DecisionFeedbackMessage
+          feedback={feedback}
+          onReload={feedback.scope === "pending" ? reload : () => loadReviewed(null)}
+        />
+      ) : null}
       {view === "reviewed" ? (
         <>
           <ReviewedList
             rows={reviewed}
             secret={secret}
             onReject={onReject}
-            onDone={() => loadReviewed(null)}
+            onDecide={decideReviewed}
+            inflight={inflight}
             showEmpty={reviewedRequest.status === "ready"}
             canLoadOlder={reviewedCursor != null && reviewedRequest.status === "ready"}
             onLoadOlder={() => loadReviewed(reviewedCursor)}
@@ -139,7 +161,13 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
         <ul className="flex flex-col gap-3">
           {(items ?? []).map((item) => (
             <li key={item.id}>
-              <PendingItem item={item} secret={secret} onDone={reload} onReject={onReject} />
+              <PendingItem
+                item={item}
+                secret={secret}
+                onReject={onReject}
+                onDecide={decidePending}
+                busyAction={inflight[item.id] ?? null}
+              />
             </li>
           ))}
         </ul>
@@ -148,19 +176,35 @@ export function AdminDesk({ secret, onReject }: AdminDeskProps) {
   )
 }
 
+/** Durable decision failure alert. Rendered above the rows so it survives their removal on reload. */
+export function DecisionFeedbackMessage({ feedback, onReload }: { feedback: DecisionFeedback; onReload: () => void }) {
+  const copy = DECISION_FAILURE_COPY[feedback.kind]
+  return (
+    <StatusMessage
+      tone="error"
+      title={copy.title}
+      action={copy.reload ? <Button type="button" onClick={onReload}>Muat ulang</Button> : undefined}
+    >
+      {copy.body}
+    </StatusMessage>
+  )
+}
+
 function ReviewedList({
   rows,
   secret,
-  onDone,
+  onDecide,
   onReject,
+  inflight,
   showEmpty,
   canLoadOlder,
   onLoadOlder,
 }: {
   rows: readonly AdminReviewedItem[]
   secret: string
-  onDone: () => void
+  onDecide: (body: DecideBody) => void
   onReject: () => void
+  inflight: Readonly<Record<string, DecideBody["action"]>>
   showEmpty: boolean
   canLoadOlder: boolean
   onLoadOlder: () => void
@@ -172,48 +216,43 @@ function ReviewedList({
       <SectionHeader title="Ditinjau" />
       {showEmpty && rows.length === 0 ? <StatusMessage tone="empty" title="Belum ada laporan yang ditinjau." /> : null}
       <ul className="flex flex-col gap-3">
-        {rows.map((row) => (
-          <li key={row.id}>
-            <Card padding="md" className="flex flex-col gap-2">
-              <p className="font-bold">
-                {COMMODITIES.find((entry) => entry.id === row.commodityId)?.name ?? row.commodityId}{" "}
-                <span className="tabular-nums">
-                  {formatPrice(row.price, COMMODITIES.find((entry) => entry.id === row.commodityId)?.unit ?? "kg")}
-                </span>
-              </p>
-              <p className="text-sm">
-                {outletLabel(row.outlet)} · {placeByCode(row.placeCode)?.name ?? row.placeCode}
-              </p>
-              {row.hasPhoto ? <AdminThumb secret={secret} id={row.id} onReject={onReject} /> : null}
-              {active === row.id ? (
-                <Input value={note} onChange={(event) => setNote(event.target.value)} aria-label="Catatan penarikan" />
-              ) : null}
-              <Button
-                type="button"
-                disabled={active === row.id && note.trim() === ""}
-                onClick={() => {
-                  if (active !== row.id) {
-                    setActive(row.id)
-                    setNote("")
-                    return
-                  }
-                  void Effect.runPromise(
-                    postDecision(secret, { id: row.id, action: "takedown", note: note.trim() }).pipe(
-                      Effect.match({
-                        onFailure: (failure) => {
-                          if (failure instanceof LaporanClientError && failure.status === 401) onReject()
-                        },
-                        onSuccess: () => onDone(),
-                      }),
-                    ),
-                  )
-                }}
-              >
-                Tarik
-              </Button>
-            </Card>
-          </li>
-        ))}
+        {rows.map((row) => {
+          const busyAction = inflight[row.id] ?? null
+          const busy = busyAction != null
+          return (
+            <li key={row.id}>
+              <Card padding="md" className="flex flex-col gap-2">
+                <p className="font-bold">
+                  {COMMODITIES.find((entry) => entry.id === row.commodityId)?.name ?? row.commodityId}{" "}
+                  <span className="tabular-nums">
+                    {formatPrice(row.price, COMMODITIES.find((entry) => entry.id === row.commodityId)?.unit ?? "kg")}
+                  </span>
+                </p>
+                <p className="text-sm">
+                  {outletLabel(row.outlet)} · {placeByCode(row.placeCode)?.name ?? row.placeCode}
+                </p>
+                {row.hasPhoto ? <AdminThumb secret={secret} id={row.id} onReject={onReject} /> : null}
+                {active === row.id ? (
+                  <Input value={note} disabled={busy} onChange={(event) => setNote(event.target.value)} aria-label="Catatan penarikan" />
+                ) : null}
+                <Button
+                  type="button"
+                  disabled={busy || (active === row.id && note.trim() === "")}
+                  onClick={() => {
+                    if (active !== row.id) {
+                      setActive(row.id)
+                      setNote("")
+                      return
+                    }
+                    onDecide({ id: row.id, action: "takedown", note: note.trim() })
+                  }}
+                >
+                  {busyAction === "takedown" ? "Memproses…" : "Tarik"}
+                </Button>
+              </Card>
+            </li>
+          )
+        })}
       </ul>
       {canLoadOlder ? (
         <Button type="button" onClick={onLoadOlder}>
@@ -252,13 +291,15 @@ function AdminThumb({ secret, id, onReject }: { secret: string; id: string; onRe
 function PendingItem({
   item,
   secret,
-  onDone,
   onReject,
+  onDecide,
+  busyAction,
 }: {
   item: AdminPendingItem
   secret: string
-  onDone: () => void
   onReject: () => void
+  onDecide: (body: DecideBody) => void
+  busyAction: DecideBody["action"] | null
 }) {
   const [evidence, setEvidence] = useState<Evidence>("none")
   const [note, setNote] = useState("")
@@ -288,18 +329,7 @@ function PendingItem({
     }
   }, [item.id, item.photoKey, secret, onReject])
 
-  const decide = (body: Parameters<typeof postDecision>[1]) => {
-    void Effect.runPromise(
-      postDecision(secret, body).pipe(
-        Effect.match({
-          onFailure: (failure) => {
-            if (failure instanceof LaporanClientError && failure.status === 401) onReject()
-          },
-          onSuccess: () => onDone(),
-        }),
-      ),
-    )
-  }
+  const busy = busyAction != null
 
   return (
     <Card padding="md" className="flex flex-col gap-2">
@@ -319,22 +349,22 @@ function PendingItem({
           : `Pembanding PIHPS ${formatPrice(item.pihpsPrice, commodity?.unit ?? "kg")}`}
       </p>
       {photoUrl != null ? <img src={photoUrl} alt="" className="max-h-80 w-full rounded-md object-contain" /> : null}
-      <FieldSelect label="Bukti" value={evidence} onChange={(event) => setEvidence(evidenceOf(event.target.value))}>
+      <FieldSelect label="Bukti" value={evidence} disabled={busy} onChange={(event) => setEvidence(evidenceOf(event.target.value))}>
           <option value="receipt">Struk</option>
           <option value="board">Papan harga</option>
           <option value="none">Tanpa bukti</option>
       </FieldSelect>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="primary" onClick={() => decide({ id: item.id, action: "approve", evidence })}>
-          Terima
+        <Button type="button" variant="primary" disabled={busy} onClick={() => onDecide({ id: item.id, action: "approve", evidence })}>
+          {busyAction === "approve" ? "Memproses…" : "Terima"}
         </Button>
       </div>
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-slate">Catatan penolakan</span>
-        <Input value={note} onChange={(event) => setNote(event.target.value)} aria-label="Catatan penolakan" />
+        <Input value={note} disabled={busy} onChange={(event) => setNote(event.target.value)} aria-label="Catatan penolakan" />
       </label>
-      <Button type="button" disabled={note.trim() === ""} onClick={() => decide({ id: item.id, action: "reject", note: note.trim() })}>
-        Tolak
+      <Button type="button" disabled={busy || note.trim() === ""} onClick={() => onDecide({ id: item.id, action: "reject", note: note.trim() })}>
+        {busyAction === "reject" ? "Memproses…" : "Tolak"}
       </Button>
     </Card>
   )
