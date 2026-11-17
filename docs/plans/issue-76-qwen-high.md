@@ -162,11 +162,13 @@ named ✓. Proceed without another approval round.
    and adds no requests; price loading is unchanged. Disclosed rather than run.
 5. **Local worker not running.** `/api/pihps/fresh` and `/api/pihps/health` return 502, so the
    freshness status banner appears in every capture (before and after alike). Baked snapshot
-   prices render; selection, displayed date, URL ownership, and controls were fully exercised.
+   prices render; selection, displayed date, URL ownership, and controls were exercised through
+   the recorded automation. Physical native-calendar entry and true touch remain unverified.
 6. **Dependency reuse verified.** `node_modules` symlink to the original checkout's pnpm install
    (lockfiles byte-identical). Test/build output confirms first-party paths resolve in this
    worktree; only third-party modules (e.g. `effect`) load from the borrowed tree. The symlink is
-   hidden via worktree-local `.git/info/exclude` and left in place for the reviewer's gates.
+   hidden via the repository's shared Git `info/exclude` metadata and left in place for the
+   reviewer's gates. This exclusion is shared across worktrees, not worktree-local.
 
 Behavioral outcome matched the plan exactly; no scope change. Red→green confirmed:
 red log shows `expected '2026-09-14' to equal '2026-09-11'` (mirrors Sol's probe), green 4/4.
