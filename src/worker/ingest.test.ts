@@ -5,7 +5,8 @@ import { parsePihpsGrid } from "#/data/pihps-grid.ts"
 import { ingestRecent, PihpsFetchError, PihpsSource, StoreError, PriceStore, type JobRecord } from "#/worker/ingest.ts"
 import type { PihpsPriceCell } from "#/data/pihps-grid.ts"
 import { sqliteFixture } from "./sqlite-test.ts"
-import { d1PriceStoreLayer, ensureMigrated, type D1Database } from "./d1-store.ts"
+import { STATIC_LIVE_THROUGH } from "../data/fresh-prices.ts"
+import { d1PriceStoreLayer, ensureMigrated, FRESH_REVISION_SQL, type D1Database } from "./d1-store.ts"
 import { tradingDaysFromThrough } from "../lib/civil-date.ts"
 import { injectFreshScript } from "#/worker/html.ts"
 
@@ -118,6 +119,7 @@ it.effect("ingest stores the next trading day after the baked snapshot", () => {
       Effect.sync(() => {
         jobs.push(job)
       }),
+    publishFresh: () => Effect.void,
     freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
   })
   const source = Layer.succeed(PihpsSource, {
@@ -188,6 +190,7 @@ it.effect("source failures persist one sanitized terminal job and remain failed"
       coverageSince: () => Effect.succeed([]),
       upsertDay: (_date, status) => Effect.sync(() => { days.push(status); return 0 }),
       recordJob: (job) => Effect.sync(() => { jobs.push(job) }),
+      publishFresh: () => Effect.void,
       freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
     }),
   )))
@@ -234,6 +237,7 @@ it.effect("caught-up weekends record a no-op without fetching source data", () =
       coverageSince: () => Effect.succeed(tradingDaysFromThrough("2026-09-17", "2026-10-16").map((date) => ({ date, status: "live" as const }))),
       upsertDay: () => Effect.die("no-op must not write a day"),
       recordJob: (job) => Effect.sync(() => { jobs.push(job) }),
+      publishFresh: () => Effect.die("no-op must not precompute"),
       freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
     }),
   )))
@@ -268,6 +272,7 @@ it.effect("a terminal-job write failure cannot hide the original source failure"
       coverageSince: () => Effect.succeed([]),
       upsertDay: () => Effect.fail(new StoreError({ message: "marker write" })),
       recordJob: () => Effect.fail(new StoreError({ message: "job write" })),
+      publishFresh: () => Effect.void,
       freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
     }),
   )))
@@ -296,11 +301,53 @@ it.effect("live, pending, empty and no-op runs log completion only after termina
         coverageSince: () => Effect.succeed(scenario.covered ? tradingDaysFromThrough("2026-09-17", "2026-10-16").map((date) => ({ date, status: "live" as const })) : []),
         upsertDay: (_date, _status, rows) => Effect.succeed(rows.length),
         recordJob: () => Effect.sync(() => { events.push("job persisted") }),
+        publishFresh: () => Effect.void,
         freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
       }),
     )))
     assert.deepStrictEqual(events, ["job persisted", [{ event: "pihps_ingest", targetDate: scenario.targetDate, outcome: scenario.outcome, category: "complete", rowsUpserted: scenario.count, jobRecorded: true }]])
   }
+}))
+
+it.effect("a failed fresh precompute does not fail a completed ingest", () => Effect.gen(function* () {
+  yield* TestClock.setTime(CLOCK)
+  let published = 0
+  const result = yield* ingestRecent(1).pipe(Effect.provide(Layer.mergeAll(
+    Layer.succeed(PihpsSource, { fetchGrid: () => Effect.succeed({ data: [] }) }),
+    Layer.succeed(PriceStore, {
+      coverageSince: () => Effect.succeed([]),
+      upsertDay: () => Effect.succeed(0),
+      recordJob: () => Effect.void,
+      publishFresh: () => Effect.sync(() => { published += 1 }).pipe(Effect.andThen(Effect.fail(new StoreError({ message: "snapshot" })))),
+      freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
+    }),
+  )))
+  assert.deepStrictEqual(result, { dates: ["2026-09-17"], rowsUpserted: 0 })
+  assert.strictEqual(published, 1)
+}))
+
+it.effect("ingest stores the fresh snapshot for the revision it just published", () => Effect.gen(function* () {
+  yield* TestClock.setTime(CLOCK)
+  const fixture = yield* sqliteFixture
+  let heavy = 0
+  const db: D1Database = { ...fixture.db, prepare: (sql: string) => {
+    if (sql.startsWith("SELECT date, commodity_id, region_code, price FROM prices_daily")) heavy += 1
+    return fixture.db.prepare(sql)
+  } }
+  const source = Layer.succeed(PihpsSource, { fetchGrid: (date) => {
+    const [year, month, day] = date.split("-")
+    return Effect.succeed({ data: [{ name: "Beras", level: 1, no: 1, [`${day}/${month}/${year}`]: "16,950" }] })
+  } })
+  const result = yield* ingestRecent(1).pipe(Effect.provide(Layer.mergeAll(d1PriceStoreLayer(db), source)))
+  assert.ok(result.rowsUpserted > 0)
+  const state = fixture.sqlite.prepare("SELECT revision, payload_revision, payload FROM pihps_fresh_state WHERE id = 1").get()
+  assert.strictEqual(state?.payload_revision, state?.revision)
+  assert.strictEqual(state?.revision, fixture.sqlite.prepare(FRESH_REVISION_SQL).get()?.revision)
+  assert.ok(String(state?.payload).includes("16950"))
+  const scans = heavy
+  const payload = yield* Effect.flatMap(PriceStore, (store) => store.freshSince(STATIC_LIVE_THROUGH)).pipe(Effect.provide(d1PriceStoreLayer(db)))
+  assert.strictEqual(payload.prices["2026-09-17:beras:31"], 16950)
+  assert.strictEqual(heavy, scans)
 }))
 
 it.effect("failed terminal persistence emits no completion claim", () => Effect.gen(function* () {
@@ -313,6 +360,7 @@ it.effect("failed terminal persistence emits no completion claim", () => Effect.
       coverageSince: () => Effect.succeed([]),
       upsertDay: () => Effect.succeed(0),
       recordJob: () => Effect.fail(new StoreError({ message: "private failed write details" })),
+      publishFresh: () => Effect.void,
       freshSince: () => Effect.succeed({ latestDate: null, dates: [], prices: {} }),
     }),
   )))

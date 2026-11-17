@@ -291,7 +291,7 @@ it.effect('a supported import, including an older date, is visible on the next f
     assert.deepStrictEqual(afterImport.dates, ['2026-10-19', '2026-10-20'])
     assert.strictEqual(afterImport.latestDate, '2026-10-20')
     assert.strictEqual(heavy, 2)
-    // Invalidation writes nothing: no archive event, no job row, no epoch change.
+    // Invalidation is the one-row fresh revision. The import writes no archive event and no job.
     assert.strictEqual(fixture.sqlite.prepare('SELECT COUNT(*) AS n FROM pihps_archive_events').get().n, events)
     assert.strictEqual(fixture.sqlite.prepare('SELECT COUNT(*) AS n FROM job_runs').get().n, jobs)
     const settled = revision()

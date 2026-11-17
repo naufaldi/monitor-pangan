@@ -23,6 +23,39 @@ export interface D1Database {
 
 const sqlString = (value: string) => `'${value.replaceAll("'", "''")}'`
 
+const FRESH_STATE_SQL = `
+CREATE TABLE IF NOT EXISTS schema_version (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  version INTEGER NOT NULL
+);
+INSERT OR IGNORE INTO schema_version (id, version) VALUES (1, 0);
+CREATE TABLE IF NOT EXISTS pihps_fresh_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  epoch TEXT NOT NULL,
+  revision INTEGER NOT NULL,
+  payload_revision INTEGER,
+  payload TEXT
+);
+INSERT OR IGNORE INTO pihps_fresh_state (id, epoch, revision) VALUES (1, lower(hex(randomblob(16))), 0);
+CREATE TRIGGER IF NOT EXISTS pihps_fresh_revision_insert
+AFTER INSERT ON prices_daily
+WHEN NEW.source_id = 'pihps' AND NEW.level = 'eceran' AND NEW.price IS NOT NULL
+BEGIN
+  UPDATE pihps_fresh_state SET revision = revision + 1 WHERE id = 1;
+END;
+CREATE TRIGGER IF NOT EXISTS pihps_fresh_revision_delete
+AFTER DELETE ON prices_daily
+WHEN OLD.source_id = 'pihps' AND OLD.level = 'eceran' AND OLD.price IS NOT NULL
+BEGIN
+  UPDATE pihps_fresh_state SET revision = revision + 1 WHERE id = 1;
+END;
+CREATE TRIGGER IF NOT EXISTS pihps_fresh_revision_archive
+AFTER INSERT ON pihps_archive_events
+BEGIN
+  UPDATE pihps_fresh_state SET revision = revision + 1 WHERE id = 1;
+END;
+`
+
 const MIGRATE_SQL = `
 CREATE TABLE IF NOT EXISTS commodities (
   id TEXT PRIMARY KEY,
@@ -67,17 +100,57 @@ ${COMMODITY_ROWS.map(([id, name, unit]) => `(${sqlString(id)}, ${sqlString(name)
 INSERT OR IGNORE INTO regions (code, name, level) VALUES
 ${REGION_ROWS.map(([code, name]) => `(${sqlString(code)}, ${sqlString(name)}, 'province')`).join(",\n")};
 ${LAPORAN_MIGRATION_SQL};
-${ARCHIVE_OUTBOX_SQL}
+${ARCHIVE_OUTBOX_SQL};
+${FRESH_STATE_SQL}
 `
 
 const storeError = (cause: unknown) => new StoreError({ message: String(cause) })
 
-/** Split the schema script into single statements. D1 `exec` of the whole script reports incomplete input. */
-export const migrationStatements = (sql: string = MIGRATE_SQL): readonly string[] =>
-  sql
-    .split(";")
-    .map((statement) => statement.trim())
-    .filter((statement) => statement.length > 0)
+const isSqlWord = (sql: string, index: number, word: string) => {
+  if (sql.slice(index, index + word.length).toUpperCase() !== word) return false
+  const before = index === 0 ? " " : sql[index - 1] ?? " "
+  const after = sql[index + word.length] ?? " "
+  return /\W/.test(before) && /\W/.test(after)
+}
+
+/** Split the schema script into single statements. Semicolons inside a trigger body stay put. D1 `exec` of the whole script reports incomplete input. */
+export const migrationStatements = (sql: string = MIGRATE_SQL): readonly string[] => {
+  const statements: string[] = []
+  let current = ""
+  let body = 0
+  for (let i = 0; i < sql.length; i++) {
+    if (isSqlWord(sql, i, "BEGIN")) {
+      body++
+      current += sql.slice(i, i + 5)
+      i += 4
+      continue
+    }
+    if (body > 0 && isSqlWord(sql, i, "END")) {
+      body--
+      current += sql.slice(i, i + 3)
+      i += 2
+      continue
+    }
+    const char = sql[i] ?? ""
+    if (char === ";" && body === 0) {
+      const statement = current.trim()
+      if (statement.length > 0) statements.push(statement)
+      current = ""
+      continue
+    }
+    current += char
+  }
+  const tail = current.trim()
+  if (tail.length > 0) statements.push(tail)
+  return statements
+}
+
+/**
+ * Checked-in schema generation. Bump when `MIGRATE_SQL` or the receipt-column alter changes.
+ * `PRAGMA user_version` is not in D1's pragma allow-list, so the generation lives in one row.
+ */
+export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION_SQL = "SELECT version FROM schema_version WHERE id = 1"
 
 const migrated = new WeakMap<D1Database, Promise<void>>()
 
@@ -92,10 +165,29 @@ const ensureReceiptColumn = (db: D1Database): Promise<void> => {
   ))
 }
 
+/** Missing on a fresh database and on databases migrated before `schema_version` existed. */
+const readSchemaVersion = async (db: D1Database): Promise<number> => {
+  try {
+    const out = await db.prepare(SCHEMA_VERSION_SQL).all<{ version: number }>()
+    const version = out.results[0]?.version
+    return typeof version === "number" && Number.isInteger(version) && version >= 0 ? version : 0
+  } catch {
+    return 0
+  }
+}
+
+const stampSchemaVersion = (db: D1Database): Promise<void> =>
+  db.prepare(
+    "INSERT INTO schema_version (id, version) VALUES (1, ?) ON CONFLICT (id) DO UPDATE SET version = excluded.version",
+  ).bind(SCHEMA_VERSION).run().then(() => undefined)
+
 const migrate = (db: D1Database): Promise<void> => {
   const existing = migrated.get(db)
   if (existing !== undefined) return existing
-  const pending = db.batch(migrationStatements().map((statement) => db.prepare(statement))).then(() => ensureReceiptColumn(db)).then(
+  const pending = readSchemaVersion(db).then((version) => version === SCHEMA_VERSION
+    ? undefined
+    : db.batch(migrationStatements().map((statement) => db.prepare(statement))).then(() => ensureReceiptColumn(db)).then(() => stampSchemaVersion(db)),
+  ).then(
     () => undefined,
     (cause: unknown) => {
       if (migrated.get(db) === pending) migrated.delete(db)
@@ -124,29 +216,37 @@ export const defaultFreshEdgeCache = (): FreshEdgeCache | undefined =>
   (globalThis as { caches?: { default?: FreshEdgeCache } }).caches?.default
 
 /**
- * Age limit of a cached payload, counted from its store read across both tiers (an edge hit keeps
- * its original age in the isolate). Only a write that changes no revision component, such as an
- * operator UPDATE or DELETE, can stay hidden, and for at most this long.
+ * Age limit of the isolate memo and the edge entry, counted from the read that stored them (an edge
+ * hit keeps its original age). A price insert, a priced-row delete, or a published archive event
+ * bumps `pihps_fresh_state.revision` in the same transaction and invalidates both at once. After the
+ * age elapses, the next read loads that revision's snapshot row. An in-place UPDATE that publishes
+ * no archive event does not bump the revision, so it stays out of the public payload until a later
+ * bump or a missing snapshot.
  */
-export const FRESH_CACHE_MAX_AGE_MS = 5 * 60 * 1000
+export const FRESH_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000
 /** The edge tier is an optimization; a slow one must not spend the HTML freshness budget. */
 export const FRESH_EDGE_BUDGET = Duration.millis(250)
 
 /**
- * The archive epoch identifies the database. Every published price change appends an outbox event
- * (new days and older-day corrections or reconciliation), and every ingestion run, including a
- * failed one that committed some new cells, appends a job row. Supported SQL imports only insert
- * cells (existing official values win), and every insert, including INSERT OR REPLACE, takes a new
- * highest price rowid; a repeated import inserts nothing and keeps the revision. All four values
- * are single rowid seeks, not scans.
+ * One primary-key lookup. Triggers bump `revision` when a priced retail row is inserted or deleted,
+ * and when a published archive event records a change (including an in-place correction). A repeated
+ * import inserts nothing and keeps the revision. Job rows alone do not: a run that wrote no cells
+ * has nothing new to show.
  */
-export const FRESH_REVISION_SQL = `SELECT epoch, (SELECT COALESCE(MAX(seq), 0) FROM pihps_archive_events) AS seq,
-  (SELECT COALESCE(MAX(id), 0) FROM job_runs) AS job, (SELECT COALESCE(MAX(rowid), 0) FROM prices_daily) AS cell
-  FROM pihps_archive_epoch WHERE id = 1`
+export const FRESH_REVISION_SQL = "SELECT epoch, revision FROM pihps_fresh_state WHERE id = 1"
+/** Payload for the revision observed by the caller. A stale snapshot matches zero rows. */
+export const FRESH_PAYLOAD_SQL = "SELECT payload FROM pihps_fresh_state WHERE id = 1 AND revision = ? AND payload_revision = revision AND payload IS NOT NULL"
 const Count = Schema.Number.pipe(Schema.int(), Schema.nonNegative())
 const FreshRevisionRows = Schema.Struct({ results: Schema.Tuple(Schema.Struct({
-  epoch: Schema.String.pipe(Schema.pattern(/^[a-f0-9]{32}$/)), seq: Count, job: Count, cell: Count,
+  epoch: Schema.String.pipe(Schema.pattern(/^[a-f0-9]{32}$/)),
+  revision: Count,
 })) })
+const FreshReadyRows = Schema.Struct({ results: Schema.Tuple(Schema.Struct({
+  revision: Count,
+  payload_revision: Schema.NullOr(Count),
+  ready: Schema.Literal(0, 1),
+})) })
+const RunChanges = Schema.Struct({ meta: Schema.Struct({ changes: Schema.Number.pipe(Schema.int(), Schema.nonNegative()) }) })
 const RowsReadMeta = Schema.Struct({ rows_read: Schema.Number })
 
 const STORED_AT_HEADER = "x-fresh-stored-at"
@@ -267,12 +367,12 @@ export const d1PriceStoreLayer = (db: D1Database, edgeCache: FreshEdgeCache | un
   const freshRevision = ensure.pipe(
     Effect.andThen(() => Effect.tryPromise({ try: () => db.prepare(FRESH_REVISION_SQL).all<unknown>(), catch: storeError })),
     Effect.flatMap(Schema.decodeUnknown(FreshRevisionRows)),
-    Effect.map(({ results: [row] }) => `${row.epoch}/${row.seq}/${row.job}/${row.cell}`),
+    Effect.map(({ results: [row] }) => row),
     Effect.mapError(storeError),
   )
 
   // Cache failures and slow cache calls only cost a store read; they never fail or alter the response.
-  const edgeKey = (revision: string) => `https://pihps-fresh.monitor-pangan.internal/v2/${revision}?after=${STATIC_LIVE_THROUGH}`
+  const edgeKey = (revision: string) => `https://pihps-fresh.monitor-pangan.internal/v3/${revision}?after=${STATIC_LIVE_THROUGH}`
   const StoredAt = Schema.NumberFromString.pipe(Schema.int(), Schema.nonNegative())
   const edgeGet = (revision: string): Effect.Effect<Option.Option<Omit<FreshMemo, "revision">>> => edgeCache === undefined ? Effect.succeedNone : Effect.tryPromise(() =>
     edgeCache.match(edgeKey(revision)).then((response) => response === undefined ? undefined
@@ -286,30 +386,81 @@ export const d1PriceStoreLayer = (db: D1Database, edgeCache: FreshEdgeCache | un
   )
   const edgePut = (revision: string, memo: FreshMemo) => edgeCache === undefined ? Effect.void : Effect.tryPromise(() =>
     edgeCache.put(edgeKey(revision), new Response(JSON.stringify(memo.payload), { headers: {
-      "content-type": "application/json", "cache-control": `public, max-age=${FRESH_CACHE_MAX_AGE_MS / 1000}`,
+      "content-type": "application/json",
+      "cache-control": `public, max-age=${FRESH_CACHE_MAX_AGE_MS / 1000}`,
+      etag: `"${revision}"`,
       [STORED_AT_HEADER]: String(memo.storedAt),
     } }))).pipe(Effect.timeout(FRESH_EDGE_BUDGET), Effect.ignore)
 
+  const precomputed = (revision: number): Effect.Effect<Option.Option<FreshPayload>> => Effect.tryPromise({
+    try: () => db.prepare(FRESH_PAYLOAD_SQL).bind(revision).all<unknown>(),
+    catch: storeError,
+  }).pipe(
+    Effect.flatMap(Schema.decodeUnknown(Schema.Struct({ results: Schema.Array(Schema.Struct({ payload: Schema.String })) }))),
+    Effect.flatMap(({ results }) => {
+      const row = results[0]
+      if (row === undefined) return Effect.succeed(Option.none<FreshPayload>())
+      return Schema.decodeUnknown(Schema.parseJson(FreshPayloadSchema))(row.payload).pipe(Effect.map(Option.some))
+    }),
+    Effect.orElseSucceed(() => Option.none()),
+  )
+
+  /** Write the payload for the revision that was read before the scan. A newer revision is left alone. */
+  const storeSnapshot = (revision: number, payload: FreshPayload) => Effect.tryPromise({
+    try: () => db.prepare(
+      "UPDATE pihps_fresh_state SET payload = ?, payload_revision = revision WHERE id = 1 AND revision = ?",
+    ).bind(JSON.stringify(payload), revision).run(),
+    catch: storeError,
+  }).pipe(
+    Effect.flatMap(Schema.decodeUnknown(RunChanges)),
+    Effect.mapError(storeError),
+  )
+
+  const publishFresh = Effect.gen(function* () {
+    yield* ensure
+    const ready = yield* Effect.tryPromise({
+      try: () => db.prepare(
+        "SELECT revision, payload_revision, payload IS NOT NULL AS ready FROM pihps_fresh_state WHERE id = 1",
+      ).all<unknown>(),
+      catch: storeError,
+    }).pipe(Effect.flatMap(Schema.decodeUnknown(FreshReadyRows)), Effect.mapError(storeError))
+    const state = ready.results[0]
+    if (state.ready === 1 && state.payload_revision === state.revision) return
+    const payload = yield* readFresh(STATIC_LIVE_THROUGH)
+    const written = yield* storeSnapshot(state.revision, payload)
+    if (written.meta.changes < 1) return yield* Effect.fail(new StoreError({ message: "fresh snapshot was not stored" }))
+  })
+
   /**
-   * The public payload is shared by every HTML shell and the client API. The revision and the clock
-   * are both read before the rows, so a payload is never stored under a newer revision or a later
-   * time than the data it saw.
+   * The public payload is shared by every HTML shell and the client API. The revision is read
+   * before any payload, so a snapshot is never stored under a newer revision than the data it saw.
+   * A cache miss reads the precomputed row and scans `prices_daily` only when that row is absent.
    */
   const cachedFresh = Effect.gen(function* () {
     const revision = yield* Effect.option(freshRevision)
     if (Option.isNone(revision)) return yield* readFresh(STATIC_LIVE_THROUGH)
+    const key = `${revision.value.epoch}/${revision.value.revision}`
     const now = yield* Clock.currentTimeMillis
     const fresh = (memo: { readonly storedAt: number } | undefined) => memo !== undefined && now - memo.storedAt < FRESH_CACHE_MAX_AGE_MS
     const memo = freshMemo.get(db)
-    if (memo?.revision === revision.value && fresh(memo)) return memo.payload
-    const edge = yield* edgeGet(revision.value)
+    if (memo?.revision === key && fresh(memo)) return memo.payload
+    const edge = yield* edgeGet(key)
     if (Option.isSome(edge) && fresh(edge.value)) {
-      freshMemo.set(db, { revision: revision.value, storedAt: Math.min(edge.value.storedAt, now), payload: edge.value.payload })
+      freshMemo.set(db, { revision: key, storedAt: Math.min(edge.value.storedAt, now), payload: edge.value.payload })
       return edge.value.payload
     }
-    const read: FreshMemo = { revision: revision.value, storedAt: now, payload: yield* readFresh(STATIC_LIVE_THROUGH) }
+    const stored = yield* precomputed(revision.value.revision)
+    if (Option.isSome(stored)) {
+      const hit: FreshMemo = { revision: key, storedAt: now, payload: stored.value }
+      freshMemo.set(db, hit)
+      yield* edgePut(key, hit)
+      return stored.value
+    }
+    const payload = yield* readFresh(STATIC_LIVE_THROUGH)
+    yield* storeSnapshot(revision.value.revision, payload).pipe(Effect.ignore)
+    const read: FreshMemo = { revision: key, storedAt: now, payload }
     freshMemo.set(db, read)
-    yield* edgePut(revision.value, read)
+    yield* edgePut(key, read)
     return read.payload
   })
 
@@ -319,6 +470,7 @@ export const d1PriceStoreLayer = (db: D1Database, edgeCache: FreshEdgeCache | un
     coverageSince,
     upsertDay,
     recordJob,
+    publishFresh: () => publishFresh,
     freshSince,
   })
 }
