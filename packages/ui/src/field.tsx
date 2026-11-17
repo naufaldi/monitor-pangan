@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode, type SelectHTMLAttributes } from "react"
-import { Input, Select, buttonClass, cardClass, cn, focusRing, type InputProps } from "./primitives.tsx"
+import { Button, Input, Select, buttonClass, cardClass, cn, focusRing, type InputProps } from "./primitives.tsx"
 
 type FieldInputProps = InputProps & {
   label: string
@@ -113,11 +113,14 @@ type FileInputProps = {
   label: string
   accept?: string
   onFile: (file: File | null) => void
+  /** Parent-owned attachment name, including after remount. Undefined keeps local state. */
+  selectedFileName?: string | null
 }
 
 /** File picker styled as a rect button plus the chosen file name. The native input stays focusable. */
-export function FileInput({ label, accept, onFile }: FileInputProps) {
-  const [name, setName] = useState<string | null>(null)
+export function FileInput({ label, accept, onFile, selectedFileName }: FileInputProps) {
+  const [localName, setName] = useState<string | null>(null)
+  const name = selectedFileName === undefined ? localName : selectedFileName
   return (
     <div className="flex flex-col gap-1 text-sm">
       <span className="text-slate">{label}</span>
@@ -134,13 +137,20 @@ export function FileInput({ label, accept, onFile }: FileInputProps) {
           className="sr-only"
           onChange={(event) => {
             const file = event.target.files?.[0] ?? null
-            setName(file?.name ?? null)
+            if (file == null) return
+            setName(file.name)
             onFile(file)
+            // File identity lives in state. Clear the native value so the same file can be reselected.
+            event.target.value = ""
           }}
         />
         <span className={buttonClass("rect", false, "inline-flex items-center")}>Pilih foto</span>
         <span className="min-w-0 truncate text-slate">{name ?? "Belum ada foto"}</span>
       </label>
+      {name != null ? <Button variant="rect" className="self-start" onClick={() => {
+        setName(null)
+        onFile(null)
+      }}>Hapus foto</Button> : null}
     </div>
   )
 }
