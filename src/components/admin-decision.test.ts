@@ -123,43 +123,45 @@ it.effect("409 and 404 reconcile the relevant list and keep durable feedback tha
       yield* controller.decide(req)
       assert.strictEqual(calls.reload, 1)
       assert.strictEqual(calls.reject, 0)
-      assert.deepStrictEqual(controller.getSnapshot().feedback, { scope: "pending", kind })
+      assert.deepStrictEqual(controller.getSnapshot().feedback, { id: "report-a", scope: "pending", kind })
       assert.deepStrictEqual(controller.getSnapshot().inflight, {})
       // Feedback is owned above the rows: a later reload does not erase it.
       req.reload()
-      assert.deepStrictEqual(controller.getSnapshot().feedback, { scope: "pending", kind })
+      assert.deepStrictEqual(controller.getSnapshot().feedback, { id: "report-a", scope: "pending", kind })
       assert.strictEqual(DECISION_FAILURE_COPY[kind].reload, false)
     }
     assert.include(DECISION_FAILURE_COPY.conflict.body, "sudah berubah")
   }),
 )
 
-it.effect("store and other HTTP errors give retryable feedback without auto-reload, and controls recover", () =>
+it.effect("definite request rejections leave controls available without an automatic reload", () =>
   Effect.gen(function* () {
-    for (const status of [500, 400, 403]) {
+    for (const status of [400, 403, 405]) {
       const controller = createDecisionController(failingPost(status))
       const { req, calls } = makeReq()
       yield* controller.decide(req)
       assert.strictEqual(calls.reload, 0)
       assert.strictEqual(calls.reject, 0)
-      assert.deepStrictEqual(controller.getSnapshot().feedback, { scope: "pending", kind: "unavailable" })
+      assert.deepStrictEqual(controller.getSnapshot().feedback, { id: "report-a", scope: "pending", kind: "unavailable" })
       assert.deepStrictEqual(controller.getSnapshot().inflight, {})
     }
   }),
 )
 
-it.effect("network loss leaves the outcome unknown with a reconcile action, never a definite result or blind resubmit", () =>
+it.effect("network loss and server errors leave an uncertain outcome and offer reconciliation without resubmitting", () =>
   Effect.gen(function* () {
-    const controller = createDecisionController(failingPost(0))
-    const { req, calls } = makeReq()
-    yield* controller.decide(req)
-    assert.strictEqual(calls.reload, 0)
-    assert.strictEqual(calls.reject, 0)
-    assert.deepStrictEqual(controller.getSnapshot().feedback, { scope: "pending", kind: "unknown" })
-    assert.deepStrictEqual(controller.getSnapshot().inflight, {})
-    const copy = DECISION_FAILURE_COPY.unknown
-    assert.strictEqual(copy.reload, true)
-    assert.include(copy.body, "mungkin sudah tersimpan")
+    for (const status of [0, 500, 502, 503]) {
+      const controller = createDecisionController(failingPost(status))
+      const { req, calls } = makeReq()
+      yield* controller.decide(req)
+      assert.strictEqual(calls.reload, 0)
+      assert.strictEqual(calls.reject, 0)
+      assert.deepStrictEqual(controller.getSnapshot().feedback, { id: "report-a", scope: "pending", kind: "unknown" })
+      assert.deepStrictEqual(controller.getSnapshot().inflight, {})
+      const copy = DECISION_FAILURE_COPY.unknown
+      assert.strictEqual(copy.reload, true)
+      assert.include(copy.body, "mungkin sudah tersimpan")
+    }
   }),
 )
 
@@ -191,7 +193,8 @@ it.effect("failure mapping covers the worker statuses and the copy exposes no se
     assert.strictEqual(decisionFailureKind(409), "conflict")
     assert.strictEqual(decisionFailureKind(404), "missing")
     assert.strictEqual(decisionFailureKind(0), "unknown")
-    for (const status of [500, 400, 403, 405, 503]) assert.strictEqual(decisionFailureKind(status), "unavailable")
+    for (const status of [500, 502, 503, 599]) assert.strictEqual(decisionFailureKind(status), "unknown")
+    for (const status of [400, 403, 405]) assert.strictEqual(decisionFailureKind(status), "unavailable")
     for (const kind of ["conflict", "missing", "unavailable", "unknown"] as const) {
       const copy = DECISION_FAILURE_COPY[kind]
       assert.ok(copy.title.length > 0)
@@ -199,6 +202,46 @@ it.effect("failure mapping covers the worker statuses and the copy exposes no se
       assert.notInclude(copy.title, "synthetic-secret")
       assert.notInclude(copy.body, "synthetic-secret")
       assert.notInclude(copy.body, "Bearer")
+    }
+  }),
+)
+it.effect("an unresolved report warning survives another report's success and new request in the same list", () =>
+  Effect.gen(function* () {
+    for (const scope of ["pending", "reviewed"] as const) {
+      const { post, calls, deferreds } = controlledPost()
+      const controller = createDecisionController(post)
+      const a = makeReq({ scope, body: approve("report-a") })
+      const b = makeReq({ scope, body: approve("report-b") })
+      const fiberA = yield* Effect.fork(controller.decide(a.req))
+      const fiberB = yield* Effect.fork(controller.decide(b.req))
+      yield* Effect.yieldNow()
+      assert.strictEqual(calls.length, 2)
+      yield* Deferred.fail(deferreds[0]!, new LaporanClientError({ status: 0 }))
+      yield* Fiber.join(fiberA)
+      const warning = controller.getSnapshot().feedback
+      assert.strictEqual(warning?.kind, "unknown")
+
+      yield* Deferred.succeed(deferreds[1]!, undefined)
+      yield* Fiber.join(fiberB)
+      assert.strictEqual(b.calls.reload, 1)
+      assert.strictEqual(controller.getSnapshot().feedback, warning)
+
+      const anotherB = yield* Effect.fork(controller.decide(b.req))
+      yield* Effect.yieldNow()
+      assert.strictEqual(controller.getSnapshot().feedback, warning)
+      yield* Deferred.succeed(deferreds[2]!, undefined)
+      yield* Fiber.join(anotherB)
+      assert.strictEqual(controller.getSnapshot().feedback, warning)
+      assert.deepStrictEqual(warning, { id: "report-a", scope, kind: "unknown" })
+
+      // A retry can clear its own warning; B never resolves A.
+      const retryA = yield* Effect.fork(controller.decide(a.req))
+      yield* Effect.yieldNow()
+      assert.strictEqual(controller.getSnapshot().feedback, null)
+      yield* Deferred.succeed(deferreds[3]!, undefined)
+      yield* Fiber.join(retryA)
+      assert.strictEqual(a.calls.reload, 1)
+      assert.deepStrictEqual(controller.getSnapshot().inflight, {})
     }
   }),
 )

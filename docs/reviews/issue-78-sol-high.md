@@ -106,3 +106,23 @@ The original Sol review above is preserved unchanged. Qwen's implementation at `
 The parent briefly made uncommitted corrections and two regressions, then the user clarified that the evaluation should preserve Qwen's output. Those parent edits were archived outside the candidate and removed. They are not included in this PR or attributed to Qwen. Parent follow-up tests/build are excluded from Qwen's evidence. No second independent review was run.
 
 This draft PR intentionally retains Qwen's original product/test files and its original test evidence (9/9, typecheck, build). Live UI interaction remains unverified because the T3 browser was disconnected. No fallback browser was launched. This is an evaluation artifact, not a readiness claim.
+
+
+---
+
+## Subsequent Sol repair disposition (separate authorized implementation)
+
+The historical review and evaluation disposition above remain unchanged for
+Qwen head `d0e80dec1aab58d2f64e9bd94e4a30a1ec903414`: **FAIL / changes requested**.
+
+After explicit delivery authorization, GPT-6.1 Sol repaired the two P2 findings
+from clean head `cdf11ddb8d286a44f450c47125225f85407621f1`. Feedback now belongs to
+a report ID, and server errors share uncertainty-aware reconciliation with lost
+responses. These repairs belong to Sol, not Qwen. This is implementation
+verification, not a second independent review or a rewritten historical verdict.
+
+See [Sol repair plan and evidence](../plans/issue-78-sol-repair.md) for failing
+regressions before repair, passing final gates (11 tests, typecheck, build), exact
+logs, and scope. Both findings are resolved at source/test level. Runtime UI
+interaction remains unverified pending authorized T3-only proof. Parent retains
+publication, integration, and merge ownership.

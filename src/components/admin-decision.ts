@@ -4,14 +4,15 @@ import type { DecideBody } from "#/data/laporan.ts"
 
 export type DecisionScope = "pending" | "reviewed"
 export type DecisionFailureKind = "conflict" | "missing" | "unavailable" | "unknown"
-export type DecisionFeedback = { readonly scope: DecisionScope; readonly kind: DecisionFailureKind }
+export type DecisionFeedback = { readonly id: string; readonly scope: DecisionScope; readonly kind: DecisionFailureKind }
 export type DecisionSnapshot = {
   readonly inflight: Readonly<Record<string, DecideBody["action"]>>
   readonly feedback: DecisionFeedback | null
 }
 
-/** 401 is session rejection and is routed before this mapping. Status 0 means the fetch never answered. */
+/** 401 is routed separately. Neither a lost response nor a server error establishes rollback. */
 export function decisionFailureKind(status: number): DecisionFailureKind {
+  if (status >= 500 && status <= 599) return "unknown"
   switch (status) {
     case 409:
       return "conflict"
@@ -27,7 +28,7 @@ export function decisionFailureKind(status: number): DecisionFailureKind {
 /**
  * Honest moderator copy. Conflict never names a moderation outcome: the report may have been
  * decided by someone else. Unknown never claims success or failure because the server may have
- * persisted the decision before the response was lost. No token, internal error, or private field.
+ * persisted the decision before a later read failed or the response was lost. No token, internal error, or private field.
  */
 export const DECISION_FAILURE_COPY: Record<DecisionFailureKind, { title: string; body: string; reload: boolean }> = {
   conflict: {
@@ -41,13 +42,13 @@ export const DECISION_FAILURE_COPY: Record<DecisionFailureKind, { title: string;
     reload: false,
   },
   unavailable: {
-    title: "Keputusan gagal diproses.",
-    body: "Server tidak bisa menyelesaikan keputusan. Coba lagi melalui tombol pada laporan.",
+    title: "Permintaan keputusan ditolak.",
+    body: "Periksa permintaan dan akses Anda sebelum mencoba lagi melalui tombol pada laporan.",
     reload: false,
   },
   unknown: {
     title: "Hasil keputusan belum diketahui.",
-    body: "Koneksi terputus sebelum server menjawab; keputusan mungkin sudah tersimpan. Muat ulang daftar untuk memeriksa sebelum mencoba lagi.",
+    body: "Hasil permintaan tidak dapat dipastikan; keputusan mungkin sudah tersimpan. Muat ulang daftar untuk memeriksa sebelum mencoba lagi.",
     reload: true,
   },
 }
@@ -104,7 +105,8 @@ export function createDecisionController(post: DecisionPost = postDecision): Dec
       if (id in inflight) return Effect.succeed(false)
       const settled = generation
       inflight = { ...inflight, [id]: request.body.action }
-      if (feedback != null && feedback.scope === request.scope) feedback = null
+      // Only this report can resolve its warning; other reports remain independent.
+      if (feedback != null && feedback.id === id) feedback = null
       notify()
       return post(request.secret, request.body).pipe(
         Effect.match({
@@ -119,7 +121,7 @@ export function createDecisionController(post: DecisionPost = postDecision): Dec
               return true
             }
             const kind = decisionFailureKind(status)
-            feedback = { scope: request.scope, kind }
+            feedback = { id, scope: request.scope, kind }
             notify()
             if (kind === "conflict" || kind === "missing") request.reload()
             return true
@@ -127,7 +129,7 @@ export function createDecisionController(post: DecisionPost = postDecision): Dec
           onSuccess: () => {
             if (settled !== generation) return false
             release(id)
-            if (feedback != null && feedback.scope === request.scope) feedback = null
+            if (feedback != null && feedback.id === id) feedback = null
             notify()
             request.reload()
             return true
