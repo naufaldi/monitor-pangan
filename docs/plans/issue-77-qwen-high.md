@@ -133,3 +133,11 @@ requests as before; no extra work added. Verdict expected: not materially affect
    inspected evidence; listed UI journey edges remain unverified (paused), not failed.
    Performance verdict: not materially affected — request/memory bounds unchanged
    (code assessment + observed 22-request capacity load); no speedup claimed.
+
+## Parent follow-up after Sol review
+
+Sol requested a correction to the recovery hint: changing outlet swaps the two
+window loads but does not reduce them. Parent removed that advice and suggested
+commodity selection instead. Only this UI copy changed after Qwen's implementation.
+No second independent review ran. Paused browser-proof gaps remain open, and the
+PR will be a draft rather than a complete UI-readiness claim.
