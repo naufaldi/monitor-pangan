@@ -101,3 +101,8 @@ The engineering lesson is specific: recovery advice must match the inputs that d
 - Sol's original verdict remains changes requested; this disposition records the addressed finding rather than claiming a second approval.
 - Missing mobile/touch, 3G, transient-retry, filter-recovery, and empty-window browser proof remains unverified under the user's browser-resource boundary. The PR is a draft and is not a full UI-readiness claim. No merge or deployment.
 
+
+
+## Evaluation clarification: original Qwen output restored
+
+The user clarified that this exercise measures Qwen's original result, without parent repair. The previously documented parent wording correction has therefore been reverted. Product and test source now match Qwen head `0a174e3660a65301ff564218eb820e59bd2c3ea1` exactly. The original F1 recovery-copy defect remains unresolved and the initial review verdict remains **changes requested**. Earlier notes describe delivery history, not the current candidate. No second independent review was run; the PR remains draft.
