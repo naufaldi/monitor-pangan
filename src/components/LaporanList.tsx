@@ -4,7 +4,7 @@ import { COMMODITIES } from "#/data/catalog.ts"
 import {
   DITINJAU_COPY,
   EMPTY_WINDOW_COPY,
-  PHOTO_REMOVED_COPY,
+  PHOTO_UNAVAILABLE_COPY,
   evidenceLabel,
   outletLabel,
   type PublicReport,
@@ -85,8 +85,8 @@ function PhotoSlot({ presentation, id }: { presentation: ReturnType<typeof photo
   switch (presentation) {
     case "image":
       return <img src={`/foto/${id}`} alt="" className="h-16 w-16 shrink-0 rounded-md object-cover" />
-    case "removed":
-      return <p className="w-28 shrink-0 text-xs text-slate">{PHOTO_REMOVED_COPY}</p>
+    case "unavailable":
+      return <p className="w-28 shrink-0 text-xs text-slate">{PHOTO_UNAVAILABLE_COPY}</p>
     case "label":
       return null
     default: {

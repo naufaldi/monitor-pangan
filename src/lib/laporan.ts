@@ -167,11 +167,12 @@ export const provinceOutline = {
   weight: 1,
 } as const
 
-export type PhotoPresentation = "image" | "removed" | "label"
+export type PhotoPresentation = "image" | "unavailable" | "label"
 
 /**
  * What a public row shows in the photo slot.
- * `none` without a photo matches a report that never had one.
+ * `hasPhoto` is false both for a report that never had a photo and for an expired one,
+ * so an absent receipt/board photo is unavailable without claiming a deletion history.
  */
 export function photoPresentation(report: Pick<PublicReport, "hasPhoto" | "evidence">): PhotoPresentation {
   if (report.hasPhoto) return "image"
@@ -180,7 +181,7 @@ export function photoPresentation(report: Pick<PublicReport, "hasPhoto" | "evide
       return "label"
     case "receipt":
     case "board":
-      return "removed"
+      return "unavailable"
     default: {
       const _exhaustive: never = report.evidence
       return _exhaustive
