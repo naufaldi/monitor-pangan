@@ -1,4 +1,4 @@
-import { Badge, Stat, StatList, StatusMessage, cardClass, cn } from "@monitor-pangan/ui"
+import { Badge, Stat, StatList, StatusMessage, cardClass } from "@monitor-pangan/ui"
 
 import { tierChipClass, tierLabel } from "#/components/daya-beli-tier.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
@@ -15,7 +15,6 @@ type DayaBeliSummaryProps = {
   highest: AffordabilityRow | null
   lowest: AffordabilityRow | null
   stalePriceYear: number | null
-  busy: boolean
 }
 
 /** Headline purchasing-power figure for the top formal-worker province. */
@@ -29,7 +28,6 @@ export function DayaBeliSummary({
   highest,
   lowest,
   stalePriceYear,
-  busy,
 }: DayaBeliSummaryProps) {
   const showLow =
     lowest != null &&
@@ -42,8 +40,7 @@ export function DayaBeliSummary({
   return (
     <section
       aria-label="Ringkasan daya beli"
-      aria-busy={busy}
-      className={cardClass("none", cn("overflow-hidden", busy && "opacity-70"))}
+      className={cardClass("none", "overflow-hidden")}
     >
       {stalePriceYear != null ? (
         <p className="bg-ember-soft px-5 py-3 text-sm font-semibold text-ember">

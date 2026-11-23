@@ -20,6 +20,7 @@ for (const [label, price] of [
   ["NaN", Number.NaN], ["infinity", Number.POSITIVE_INFINITY],
   ["negative infinity", Number.NEGATIVE_INFINITY], ["string infinity", "Infinity"],
   ["nonnumeric string", "upstream unavailable"],
+  ["bad thousands group", "16.95"], ["multiple short groups", "1.2.3"], ["hexadecimal string", "0x100"],
 ] as const) {
   it.effect(`rejects a ${label} observation instead of completing an empty grid`, () => Effect.gen(function* () {
     const failure = yield* Effect.flip(parsePihpsGrid("2026-10-19", "31", {

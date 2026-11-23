@@ -48,5 +48,9 @@ it.effect("groups typed rupiah in id-ID and keeps an integer", () =>
     assert.strictEqual(parseRupiahInput(""), null)
     assert.strictEqual(parseRupiahInput("Rp "), null)
     assert.notStrictEqual(parseRupiahInput("10.000"), 10)
+    assert.strictEqual(parseRupiahInput("Rp 1.200,00"), null)
+    assert.strictEqual(parseRupiahInput("-1.200"), null)
+    assert.strictEqual(parseRupiahInput("1.20.0"), null)
+    assert.strictEqual(parseRupiahInput("10.000.001"), 10000001)
   }),
 )

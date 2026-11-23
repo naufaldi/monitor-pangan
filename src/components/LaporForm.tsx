@@ -22,6 +22,7 @@ const DraftSchema = SubmitBodySchema.omit("turnstileToken")
 /** The exact payload sent for one UUID. A retry resends this, never the current editable fields. */
 type LockedAttempt = { draft: ReportAttempt; file: File | null; jpeg: Blob | null }
 const KEEPS_INPUT = "Isian Anda tetap tersimpan."
+const PRICE_FORMAT_ERROR = "Masukkan rupiah tanpa desimal, misalnya 12.500."
 const FIELD_ORDER: readonly ReportField[] = ["price", "place", "alias"]
 
 type CheckNotice = { tone: "loading" | "empty" | "error"; title: string; detail?: string; retry: boolean }
@@ -73,7 +74,9 @@ function checkNotice(state: TurnstileState): CheckNotice | null {
 export function LaporForm() {
   const [commodityId, setCommodityId] = useState(COMMODITIES[0]?.id ?? "beras")
   const [outlet, setOutlet] = useState<Outlet>("pasar")
-  const [price, setPrice] = useState<number | null>(null)
+  const [priceText, setPriceText] = useState("")
+  const price = parseRupiahInput(priceText)
+  const malformedPrice = price == null && priceText.trim() !== ""
   const [placeCode, setPlaceCode] = useState("")
   const [alias, setAlias] = useState("")
   const [file, setFile] = useState<File | null>(null)
@@ -188,6 +191,7 @@ export function LaporForm() {
     const aliasValue = alias.trim() === "" ? null : alias.trim()
     // Field mistakes are answered here, before a check token can be spent on a request.
     const errors = reportFieldErrors({ price, placeCode, alias: aliasValue ?? "" })
+    if (malformedPrice) errors.price = PRICE_FORMAT_ERROR
     setFieldErrors(errors)
     const firstInvalid = FIELD_ORDER.find((field) => errors[field] != null)
     if (firstInvalid != null) {
@@ -256,7 +260,7 @@ export function LaporForm() {
   const reportAnother = () => {
     submissionId.current = null
     busy.current = false
-    setPrice(null)
+    setPriceText("")
     setFile(null)
     setPhotoFailed(false)
     setReceiptUrl(null)
@@ -333,10 +337,14 @@ export function LaporForm() {
         leading="Rp"
         inputMode="numeric"
         autoComplete="off"
-        value={price == null ? "" : formatRupiahAmount(price)}
+        value={priceText}
         onChange={(event) => {
-          setPrice(parseRupiahInput(event.target.value))
+          setPriceText(event.target.value)
           clearFieldError("price")
+        }}
+        onBlur={() => {
+          if (price != null) setPriceText(formatRupiahAmount(price))
+          else if (malformedPrice) setFieldErrors((current) => ({ ...current, price: PRICE_FORMAT_ERROR }))
         }}
         error={fieldErrors.price}
         className="tabular-nums"

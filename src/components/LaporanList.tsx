@@ -1,9 +1,7 @@
-import { Link } from "@tanstack/react-router"
-import { Badge, Button, Card, SectionHeader, StatusMessage, buttonClass } from "@monitor-pangan/ui"
+import { Badge, Button, Card, SectionHeader } from "@monitor-pangan/ui"
 import { COMMODITIES } from "#/data/catalog.ts"
 import {
   DITINJAU_COPY,
-  EMPTY_WINDOW_COPY,
   PHOTO_UNAVAILABLE_COPY,
   evidenceLabel,
   outletLabel,
@@ -16,7 +14,6 @@ import { photoPresentation } from "#/lib/laporan.ts"
 
 type LaporanListProps = {
   rows: readonly PublicReport[]
-  windowEmpty: boolean
   canLoadOlder: boolean
   onLoadOlder: () => void
 }
@@ -24,19 +21,13 @@ type LaporanListProps = {
 const provinces = new Map(loadProvinces().map((province) => [province.code, province.name]))
 
 /** Text list of reviewed citizen reports. This is the alternative to the map. */
-export function LaporanList({ rows, windowEmpty, canLoadOlder, onLoadOlder }: LaporanListProps) {
+export function LaporanList({ rows, canLoadOlder, onLoadOlder }: LaporanListProps) {
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <SectionHeader
-          title="Laporan yang ditinjau"
-          description={<span id="ditinjau-arti">{DITINJAU_COPY}</span>}
-        />
-        <Link to="/lapor" className={buttonClass("primary", false, "inline-flex items-center")}>
-          Lapor harga
-        </Link>
-      </div>
-      {windowEmpty ? <StatusMessage tone="empty" title={EMPTY_WINDOW_COPY} /> : null}
+      <SectionHeader
+        title="Laporan yang ditinjau"
+        description={<span id="ditinjau-arti">{DITINJAU_COPY}</span>}
+      />
       <ul className="flex flex-col gap-3">
         {rows.map((row) => (
           <li key={row.id}>
@@ -84,7 +75,7 @@ export function ReportRow({ row }: { row: PublicReport }) {
 function PhotoSlot({ presentation, id }: { presentation: ReturnType<typeof photoPresentation>; id: string }) {
   switch (presentation) {
     case "image":
-      return <img src={`/foto/${id}`} alt="" className="h-16 w-16 shrink-0 rounded-md object-cover" />
+      return <img src={`/foto/${id}`} alt="" loading="lazy" width={64} height={64} className="h-16 w-16 shrink-0 rounded-md object-cover" />
     case "unavailable":
       return <p className="w-28 shrink-0 text-xs text-slate">{PHOTO_UNAVAILABLE_COPY}</p>
     case "label":

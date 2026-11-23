@@ -23,6 +23,7 @@ export function CommoditySelect({
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const searchRef = useRef<HTMLInputElement | null>(null)
   const listId = useId()
   const labelId = useId()
@@ -37,16 +38,9 @@ export function CommoditySelect({
         setOpen(false)
       }
     }
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false)
-    }
     document.addEventListener("pointerdown", onPointerDown)
-    document.addEventListener("keydown", onKeyDown)
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown)
-      document.removeEventListener("keydown", onKeyDown)
-    }
-  }, [open ])
+    return () => document.removeEventListener("pointerdown", onPointerDown)
+  }, [open])
 
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -68,18 +62,24 @@ export function CommoditySelect({
     onChange(id)
     setOpen(false)
     setQuery("")
+    triggerRef.current?.focus()
   }
 
   return (
-    <div ref={rootRef} className="relative flex w-full flex-col gap-1">
+    <div ref={rootRef} className="relative flex w-full flex-col gap-1" onKeyDown={(event) => {
+      if (!open || event.key !== "Escape") return
+      setOpen(false)
+      triggerRef.current?.focus()
+    }}>
       <span id={labelId} className="text-sm text-slate">
         Komoditas
       </span>
       <button
+        ref={triggerRef}
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-controls={listId}
+        aria-controls={open ? listId : undefined}
         aria-labelledby={`${labelId} ${valueId}`}
         onClick={() => setOpen((v) => !v)}
         className={fieldTriggerClass()}

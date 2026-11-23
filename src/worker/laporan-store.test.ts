@@ -418,6 +418,30 @@ it.effect("approve moves the object, a repeat is a no-op, and a bad transition i
   }),
 )
 
+it.effect("a failed decision write leaves the pending photo available for retry", () =>
+  Effect.gen(function* () {
+    const origin = harness(true)
+    yield* TestClock.setTime(DateTime.unsafeMake("2026-10-08T03:00:00.000Z"))
+    const id = "77777777-7777-4777-8777-777777777777"
+    yield* post(origin, id, { photo: true })
+    origin.photos.objects.set(`pending/${id}.jpg`, Uint8Array.from([1, 2, 3]))
+    const approve = () => origin.call(new Request("https://monitor.naufaldi.com/api/admin/decide", {
+      method: "POST", headers: auth(), body: JSON.stringify({ id, action: "approve", evidence: "receipt" }),
+    }))
+
+    origin.raw.exec("CREATE TRIGGER fail_review BEFORE UPDATE OF reviewed_at ON laporan_warga BEGIN SELECT RAISE(ABORT, 'write failed'); END;")
+    assert.strictEqual((yield* approve()).status, 500)
+    assert.strictEqual(origin.cell("SELECT status FROM laporan_warga WHERE id = ?", id).status, "pending")
+    assert.deepStrictEqual([...(origin.photos.objects.get(`pending/${id}.jpg`) ?? [])], [1, 2, 3])
+
+    origin.raw.exec("DROP TRIGGER fail_review;")
+    assert.strictEqual((yield* approve()).status, 200)
+    const photo = yield* origin.call(new Request(`https://monitor.naufaldi.com/foto/${id}`))
+    assert.strictEqual(photo.status, 200)
+    assert.deepStrictEqual([...(yield* Effect.promise(() => photo.bytes()))], [1, 2, 3])
+  }),
+)
+
 it.effect("a missing pending object still decides and clears the photo key", () =>
   Effect.gen(function* () {
     const origin = harness(true)

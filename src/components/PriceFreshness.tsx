@@ -1,4 +1,4 @@
-import { Button, StatusMessage } from "@monitor-pangan/ui"
+import { Button, Card, cn, focusRing } from "@monitor-pangan/ui"
 import { usePriceFreshness, type FreshnessState } from "#/data/vintage.tsx"
 import { formatDateLong } from "#/lib/format.ts"
 import { formatHealthTime } from "#/data/health-copy.ts"
@@ -22,20 +22,24 @@ export function PriceFreshness() {
   const loading = freshness.status === "loading" || freshness.status === "idle"
   const needsRetry = freshness.refreshFailed || freshness.healthFailed || health?.status === "degraded" || health?.status === "unavailable"
   return (
-    <StatusMessage
-      tone={loading ? "loading" : needsRetry ? "error" : "empty"}
-      title={healthStatusCopy(freshness)}
-      action={!loading || needsRetry ? <Button onClick={retry} disabled={loading}>{needsRetry ? "Coba lagi" : "Periksa lagi"}</Button> : undefined}
-    >
-      <p>Pemeriksaan otomatis dijadwalkan Senin–Jumat pukul 14.15 dan 17.15 WIB. Tidak ada pemeriksaan terjadwal pada akhir pekan.</p>
-      <p>Tombol periksa memuat ulang harga dan status layanan; tidak menjalankan pengambilan harga dari PIHPS.</p>
-      {freshness.refreshFailed ? <p>Harga yang sudah tersedia tetap ditampilkan. Pembaruan harga gagal; data belum dapat dipastikan mutakhir.</p> : null}
-      {health != null ? <>
-        <p>Observasi harga terakhir dalam layanan: {health.latestPricedDate == null ? "belum tersedia" : formatDateLong(health.latestPricedDate)}.</p>
-        <p>Pemeriksaan status layanan: {formatHealthTime(health.checkedAt)}. Proses berhasil terakhir: {formatHealthTime(health.lastSuccessfulRunAt)}.</p>
-        {freshness.healthFailed ? <p>Waktu di atas berasal dari pemeriksaan sebelumnya.</p> : null}
-      </> : null}
-    </StatusMessage>
+    <Card className="px-4 py-2 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-x-3">
+        <div role={needsRetry && !loading ? "alert" : "status"} className="py-1">
+          <p className={cn("font-semibold", needsRetry && !loading && "text-ember")}>{healthStatusCopy(freshness)}</p>
+          {freshness.refreshFailed ? <p>Harga yang sudah tersedia tetap ditampilkan. Pembaruan harga gagal; data belum dapat dipastikan mutakhir.</p> : null}
+          {health != null ? <p className="text-slate">Observasi terakhir{freshness.healthFailed ? " (pemeriksaan sebelumnya)" : ""}: {health.latestPricedDate == null ? "belum tersedia" : formatDateLong(health.latestPricedDate)}.</p> : null}
+        </div>
+        {!loading || needsRetry ? <Button onClick={retry} disabled={loading}>{needsRetry ? "Coba lagi" : "Periksa lagi"}</Button> : null}
+      </div>
+      <details className="text-slate">
+        <summary className={cn("w-fit cursor-pointer py-3 font-medium", focusRing)}>Jadwal dan riwayat pemeriksaan</summary>
+        <div className="space-y-1 pb-2">
+          <p>Pemeriksaan otomatis dijadwalkan Senin–Jumat pukul 14.15 dan 17.15 WIB. Tidak ada pemeriksaan terjadwal pada akhir pekan.</p>
+          <p>Tombol periksa memuat ulang harga dan status layanan; tidak menjalankan pengambilan harga dari PIHPS.</p>
+          {health != null ? <p>Pemeriksaan status layanan: {formatHealthTime(health.checkedAt)}. Proses berhasil terakhir: {formatHealthTime(health.lastSuccessfulRunAt)}.</p> : null}
+        </div>
+      </details>
+    </Card>
   )
 }
 

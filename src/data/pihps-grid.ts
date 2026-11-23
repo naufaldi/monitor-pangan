@@ -28,16 +28,13 @@ export type PihpsPriceCell = {
   readonly price: number
 }
 
-/** PIHPS prints thousands with a comma: "16,950" → 16950. "-" and blanks are missing. */
-export function parsePihpsNumber(raw: unknown): number | null {
+/** Accept digits or consistently grouped thousands (e.g. 16,950 or 16.950). */
+function parsePihpsNumber(raw: unknown): number | null {
   if (typeof raw === "number" && Number.isFinite(raw)) return Math.round(raw)
   if (typeof raw !== "string") return null
   const trimmed = raw.trim()
-  if (trimmed === "" || trimmed === "-") return null
-  const stripped = trimmed.replaceAll(".", "")
-  const normalized = /,(\d{3})$/.test(stripped) ? stripped.replace(",", "") : stripped.replace(",", ".")
-  const value = Number(normalized)
-  return Number.isFinite(value) ? Math.round(value) : null
+  if (!/^(?:\d+|\d{1,3}(?:,\d{3})+|\d{1,3}(?:\.\d{3})+)$/.test(trimmed)) return null
+  return Number(trimmed.replace(/[,.]/g, ""))
 }
 
 function columnKey(date: string): string {

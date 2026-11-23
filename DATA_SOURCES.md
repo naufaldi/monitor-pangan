@@ -74,12 +74,11 @@ serving official PIHPS data or evidence that the daily Worker is merely proposed
 
 1. Register at https://webapi.badanpangan.go.id/register (needs
    Nama/Email/No.Telp/Lembaga/Dokumen), wait for Pusdatin approval, copy the
-   `X-Authorization` key. Daily cron filters `level=eceran` for consumer prices.
-2. Or download the monthly "Rata-rata Harga Pangan Bulanan Tingkat Konsumen
-   Provinsi" CSV from Open Data (survey form + SAPA gated) into
-   `data/raw/manual-*.csv`, then `pnpm run normalize`.
-3. Validate and label any imported Panel Harga observations with their own
-   provenance. Never relabel samples or PIHPS observations as Panel Harga data.
+   `X-Authorization` key if developing a separate Panel Harga importer.
+2. The monthly Open Data CSV is available through a survey form and SAPA.
+   `pnpm run normalize` does not import this CSV, and the daily Worker does not
+   ingest Panel Harga prices. Any future importer must validate and label
+   Panel Harga observations separately from PIHPS and sample data.
 
 ## Semantics (PIHPS FAQ)
 

@@ -19,7 +19,7 @@ export function Navbar() {
   const raw = useSearch({ strict: false })
   const search = parseProvinceSearch(raw as Record<string, unknown>)
   // The report form and its private status page belong to Laporan Warga, though they are separate routes.
-  const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const pathname = useRouterState({ select: (state) => state.location.pathname.replace(/\/$/, "") })
   const inReports = pathname === "/lapor" || pathname === "/laporan-status"
   const navRef = useRef<HTMLElement>(null)
   // On phones the pills scroll sideways; bring the current one into view on each route without moving the page.

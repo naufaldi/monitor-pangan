@@ -2,8 +2,8 @@ import { Clock, DateTime, Data, Effect, Option, Schema } from 'effect'
 import { mkdir, readFile, rename, writeFile, rm } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { randomUUID } from 'node:crypto'
-import { BI_TO_KEMENDAGRI, COMMODITY_ROWS, GRUP_BY_PIHPS_NAME } from '../src/data/pihps-catalog.ts'
-import { parsePihpsNumber } from '../src/data/pihps-grid.ts'
+import { BI_TO_KEMENDAGRI, COMMODITY_ROWS } from '../src/data/pihps-catalog.ts'
+import { parsePihpsGrid } from '../src/data/pihps-grid.ts'
 import { addIsoDays } from '../src/lib/civil-date.ts'
 
 export class ArchiveError extends Data.TaggedError('ArchiveError') {}
@@ -25,7 +25,6 @@ const ScopeSchema = Schema.Struct({ province_id: Schema.String, region_code: Sch
   status: Schema.optional(Schema.Literal('ok', 'source-empty', 'http-error')), preserved: Schema.optional(Schema.Boolean), error: Schema.optional(Schema.String), attempts: Schema.optional(Schema.Number) })
 export const RawSchema = Schema.Struct({ date: DateSchema, source: Schema.Literal('pihps'), fetchedAt: SourceCheckTimestampSchema, rows: Schema.Array(ScopeSchema) }).pipe(Schema.filter((raw) =>
   new Set(raw.rows.map((r) => r.province_id)).size === raw.rows.length && raw.rows.every((r) => r.province_id === 'nasional' ? r.region_code === null : BI_TO_KEMENDAGRI[r.province_id] === r.region_code)))
-const GridSchema = Schema.Struct({ data: Schema.Array(Schema.Struct({ name: Schema.String, level: Schema.Number }, Schema.Record({ key: Schema.String, value: Schema.Union(Schema.String, Schema.Number, Schema.Null) }))) })
 export const SCOPES = [{ province_id: 'nasional', region_code: null }, ...Object.entries(BI_TO_KEMENDAGRI).map(([province_id, region_code]) => ({ province_id, region_code }))]
 export const requestScope = (date, scope, options = {}) => Effect.gen(function* () {
   const fetcher = options.fetch ?? fetch
@@ -38,17 +37,9 @@ export const requestScope = (date, scope, options = {}) => Effect.gen(function* 
   for (let attempt = 1; attempt <= 3; attempt++) {
     const result = yield* io(() => fetcher(url, { headers: { Accept: 'application/json', Referer: 'https://www.bi.go.id/hargapangan/TabelHarga/PasarTradisionalDaerah', 'User-Agent': 'monitor-pangan/0.1.0' } })).pipe(
       Effect.flatMap((res) => res.ok ? io(() => res.json()) : Effect.fail(new ArchiveError({ message: `HTTP ${res.status}` }))),
-      Effect.flatMap(Schema.decodeUnknown(GridSchema)), Effect.either)
+      Effect.flatMap((grid) => parsePihpsGrid(date, scope.region_code ?? 'nasional', grid)), Effect.either)
     if (result._tag === 'Right') {
-      const prices = {}
-      const [y, m, d] = date.split('-')
-      for (const row of result.right.data) {
-        const id = GRUP_BY_PIHPS_NAME[row.name]
-        if (row.level === 1 && id) {
-          const price = parsePihpsNumber(row[`${d}/${m}/${y}`])
-          if (price != null && price > 0) prices[id] = price
-        }
-      }
+      const prices = Object.fromEntries(result.right.map((cell) => [cell.commodityId, cell.price]))
       return { ...scope, status: Object.keys(prices).length > 0 ? 'ok' : 'source-empty', prices, attempts: attempt }
     }
     error = String(result.left)

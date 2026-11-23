@@ -47,7 +47,6 @@ type DayaBeliTableProps = {
   wageYear: number
   priceDate: string
   rows: AffordabilityRow[]
-  busy?: boolean
 }
 
 /** Ranked formal-worker purchasing-power table. Gap provinces stay unranked at the bottom. */
@@ -57,7 +56,6 @@ export function DayaBeliTable({
   wageYear,
   priceDate,
   rows,
-  busy = false,
 }: DayaBeliTableProps) {
   const [query, setQuery] = useState("")
   const [sort, setSort] = useState<AffordabilitySort>("amount-desc")
@@ -73,7 +71,6 @@ export function DayaBeliTable({
   return (
     <Panel
       title="Per provinsi"
-      busy={busy}
       description={
         <span className="tabular-nums">
           {commodityName} · {formatDateShort(priceDate)} · {visible.length} dari {rows.length} · {ranked} ada datanya

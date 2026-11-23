@@ -17,6 +17,7 @@ it.effect('exhausted HTTP retries remain errors and invalid JSON is retried', ()
     () => Promise.reject(new Error('connection reset')),
     () => Promise.resolve({ ok: true, json: () => Promise.reject(new SyntaxError('invalid json')) }),
     () => Promise.resolve({ ok: true, json: () => Promise.resolve({ wrong: [] }) }),
+    () => Promise.resolve({ ok: true, json: () => Promise.resolve({ data: [{ name: 'Beras', level: 1, '30/10/2025': '16.95' }] }) }),
   ]) {
     const sleeps = []
     const result = yield* requestScope(date, scopes[0], { fetch: fetcher, sleep: (ms) => Effect.sync(() => sleeps.push(ms)) })

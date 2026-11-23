@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { Badge, PageHeader, PageShell, StickyToolbar } from "@monitor-pangan/ui"
 
@@ -53,28 +53,10 @@ function DayaBeliPage() {
   const navigate = Route.useNavigate()
   const commodityId = search.komoditas ?? COMMODITIES[0]?.id ?? ""
   const commodity = COMMODITIES.find((item) => item.id === commodityId) ?? COMMODITIES[0]!
-  const [switching, setSwitching] = useState(false)
-  const switchTimer = useRef<number | null>(null)
-
   const setCommodityId = (id: string) => {
     if (id === commodity.id) return
-    setSwitching(true)
-    if (switchTimer.current != null) window.clearTimeout(switchTimer.current)
-    switchTimer.current = window.setTimeout(() => {
-      switchTimer.current = null
-      void navigate({ search: (prev) => ({ ...prev, komoditas: id }) })
-    }, 200)
+    void navigate({ search: (prev) => ({ ...prev, komoditas: id }) })
   }
-
-  useEffect(() => {
-    setSwitching(false)
-  }, [commodity.id])
-
-  useEffect(() => {
-    return () => {
-      if (switchTimer.current != null) window.clearTimeout(switchTimer.current)
-    }
-  }, [])
 
   const rev = useVintage()
   const priceDate = useMemo(() => pinnedPriceDate(commodity.id), [commodity.id, rev])
@@ -130,14 +112,7 @@ function DayaBeliPage() {
               hintFor={(item) => hints.get(item.id)}
             />
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {switching ? (
-              <span role="status" className="text-sm font-semibold text-slate">
-                Memuat…
-              </span>
-            ) : null}
-            <Badge tone="neutral">UMP {UMP_YEAR} pekerja formal</Badge>
-          </div>
+          <Badge tone="neutral" className="self-start sm:self-center">UMP {UMP_YEAR} pekerja formal</Badge>
         </div>
       </StickyToolbar>
 
@@ -158,7 +133,6 @@ function DayaBeliPage() {
             highest={ends.highest}
             lowest={ends.lowest}
             stalePriceYear={priceYear !== UMP_YEAR ? priceYear : null}
-            busy={switching}
           />
 
           <DayaBeliTable
@@ -167,7 +141,6 @@ function DayaBeliPage() {
             wageYear={UMP_YEAR}
             priceDate={priceDate}
             rows={rows}
-            busy={switching}
           />
 
           <section className="flex flex-col gap-2 text-sm">

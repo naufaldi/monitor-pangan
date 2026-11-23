@@ -1,7 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react"
-import { Button, ChevronBadge, Listbox, ListboxEmpty, ListboxOption, ListboxSearch, StatusMessage, fieldMenuClass, fieldTriggerClass } from "@monitor-pangan/ui"
+import { Button, ChevronBadge, Listbox, ListboxEmpty, ListboxOption, ListboxSearch, StatusMessage, cn, fieldMenuClass, fieldTriggerClass } from "@monitor-pangan/ui"
 import { PLACES, nearestPlace } from "#/data/places.ts"
-import { cn } from "#/lib/utils.ts"
 
 type PlaceSelectProps = {
   value: string
@@ -20,7 +19,9 @@ export function PlaceSelect({ value, onChange, error, id }: PlaceSelectProps) {
   const [query, setQuery] = useState("")
   const [locating, setLocating] = useState(false)
   const [locationNote, setLocationNote] = useState<string | null>(null)
+  const locationRequest = useRef(0)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const searchRef = useRef<HTMLInputElement | null>(null)
   const listId = useId()
   const labelId = useId()
@@ -34,15 +35,8 @@ export function PlaceSelect({ value, onChange, error, id }: PlaceSelectProps) {
     const onPointerDown = (event: PointerEvent) => {
       if (rootRef.current != null && !rootRef.current.contains(event.target as Node)) setOpen(false)
     }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false)
-    }
     document.addEventListener("pointerdown", onPointerDown)
-    document.addEventListener("keydown", onKeyDown)
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown)
-      document.removeEventListener("keydown", onKeyDown)
-    }
+    return () => document.removeEventListener("pointerdown", onPointerDown)
   }, [open])
 
   const matches = useMemo(() => {
@@ -59,12 +53,13 @@ export function PlaceSelect({ value, onChange, error, id }: PlaceSelectProps) {
     }
     setLocating(true)
     setLocationNote(null)
+    const request = ++locationRequest.current
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (request !== locationRequest.current) return
         setLocating(false)
         const place = nearestPlace(position.coords.latitude, position.coords.longitude)
         if (place == null) {
-          onChange("")
           setLocationNote("Tidak ada kota terdekat di daftar.")
           return
         }
@@ -72,9 +67,9 @@ export function PlaceSelect({ value, onChange, error, id }: PlaceSelectProps) {
         setLocationNote(null)
       },
       (error) => {
+        if (request !== locationRequest.current) return
         setLocating(false)
         if (error.code === error.PERMISSION_DENIED) {
-          onChange("")
           setLocationNote(DENIED_COPY)
           return
         }
@@ -86,18 +81,23 @@ export function PlaceSelect({ value, onChange, error, id }: PlaceSelectProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div ref={rootRef} className="relative flex flex-col gap-1">
+      <div ref={rootRef} className="relative flex flex-col gap-1" onKeyDown={(event) => {
+        if (!open || event.key !== "Escape") return
+        setOpen(false)
+        triggerRef.current?.focus()
+      }}>
         <span id={labelId} className="text-sm text-slate">
           Kota atau kabupaten
         </span>
         <button
+          ref={triggerRef}
           id={id}
           type="button"
           aria-invalid={error != null ? true : undefined}
           aria-describedby={error != null ? errorId : undefined}
           aria-haspopup="listbox"
           aria-expanded={open}
-          aria-controls={listId}
+          aria-controls={open ? listId : undefined}
           aria-labelledby={`${labelId} ${valueId}`}
           onClick={() => setOpen((current) => !current)}
           className={fieldTriggerClass()}
@@ -123,9 +123,13 @@ export function PlaceSelect({ value, onChange, error, id }: PlaceSelectProps) {
                   key={place.code}
                   selected={place.code === value}
                   onSelect={() => {
+                    locationRequest.current++
+                    setLocating(false)
+                    setLocationNote(null)
                     onChange(place.code)
                     setOpen(false)
                     setQuery("")
+                    triggerRef.current?.focus()
                   }}
                 >
                   {place.name}

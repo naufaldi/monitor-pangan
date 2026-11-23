@@ -347,7 +347,6 @@ export const laporanStoreLayer = (db: D1Database, bucket: PhotoBucket) => {
           try: () => bucket.put(decided, object.body, { httpMetadata: { contentType: "image/jpeg" } }),
           catch: storeError,
         })
-        yield* Effect.tryPromise({ try: () => bucket.delete(pending), catch: storeError })
         return decided
       }
       const decided = `decided/${id}.jpg`
@@ -543,6 +542,13 @@ export const laporanStoreLayer = (db: D1Database, bucket: PhotoBucket) => {
         status,
       )
       if (changesOf(written) === 0) return yield* Effect.fail(new DecisionConflict())
+      if (plan.photo === "move" && current.photo_key != null && photoKey != null) {
+        // Until the decision commits, the pending row must still point to a readable photo.
+        const pending = current.photo_key
+        yield* Effect.tryPromise({ try: () => bucket.delete(pending), catch: storeError }).pipe(
+          Effect.catchAll(() => Effect.logWarning("laporan_pending_photo_cleanup_failed", { reportId: current.id })),
+        )
+      }
       const next = yield* load(current.id)
       if (next == null) return yield* Effect.fail(new LaporanStoreError({ message: "missing row" }))
       const row = toAdmin(next, nowMs, null)

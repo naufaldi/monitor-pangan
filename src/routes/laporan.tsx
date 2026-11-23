@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { Effect } from "effect"
-import { Button, PageHeader, PageShell, SegmentedControl, StatusMessage } from "@monitor-pangan/ui"
+import { Button, PageHeader, PageShell, SegmentedControl, StatusMessage, buttonClass } from "@monitor-pangan/ui"
 import { CommoditySelect } from "#/components/CommoditySelect.tsx"
 import { LaporanList } from "#/components/LaporanList.tsx"
 import { LaporanMap } from "#/components/LaporanMap.tsx"
@@ -150,7 +150,11 @@ function LaporanPage() {
 
   return (
     <PageShell>
-      <PageHeader title="Laporan Warga" description="Harga yang dilaporkan warga. Bukan data PIHPS." />
+      <PageHeader
+        title="Laporan Warga"
+        description="Harga yang dilaporkan warga. Bukan data PIHPS."
+        actions={<Link to="/lapor" className={buttonClass("primary", false, "inline-flex items-center")}>Lapor harga</Link>}
+      />
       <SegmentedControl
         label="Jenis tempat"
         options={[
@@ -205,7 +209,7 @@ function LaporanPage() {
             provinceCode={search.provinsi ?? null}
             onProvince={(code) => void navigate({ search: (prev) => ({ ...prev, provinsi: code === "" ? undefined : code }) })}
           />
-          <LaporanList rows={listRows} windowEmpty={windowEmpty} canLoadOlder={more != null && olderStatus === "ready"} onLoadOlder={loadOlder} />
+          <LaporanList rows={listRows} canLoadOlder={more != null && olderStatus === "ready"} onLoadOlder={loadOlder} />
           {olderStatus === "loading" ? <StatusMessage tone="loading" title="Memuat laporan lebih lama…" /> : null}
           {olderStatus === "error" ? (
             <StatusMessage tone="error" title="Laporan lebih lama tidak bisa dimuat." action={<Button onClick={loadOlder}>Coba lagi</Button>} />
