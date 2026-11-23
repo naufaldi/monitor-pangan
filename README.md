@@ -100,6 +100,7 @@ personal yang tidak dikelola untuk operasi yang dilarang kebijakan BYOD.
 - `src/`: aplikasi TanStack Start/Router + React; `src/data/provider.ts` adalah
   kontrak harga yang dibaca UI.
 - `packages/ui/`: komponen dan token UI bersama, diimpor dari `@monitor-pangan/ui`.
+- [DESIGN.md](DESIGN.md): panduan pemilihan komponen, varian, dan token UI.
 - `src/worker/`, `db/schema.sql`: Worker, penyimpanan, dan schema.
 - [CONTEXT.md](CONTEXT.md): istilah domain dan batas makna harga.
 - [DATA_SOURCES.md](DATA_SOURCES.md): asal data, keterbatasan, dan privasi laporan.
