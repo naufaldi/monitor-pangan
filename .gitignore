@@ -2,6 +2,7 @@ node_modules/
 dist/
 .output/
 .wrangler/
+.amp/portals/*
 *.local
 .dev.vars
 .DS_Store

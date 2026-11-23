@@ -47,6 +47,10 @@ pnpm build
 `pnpm typecheck`, tes yang terdampak, dan `pnpm build` adalah pemeriksaan perubahan
 kode. CI menjalankan seluruh suite. Jangan menjalankan suite dalam watch mode.
 
+Di Amp orb, `.agents/setup` menyiapkan Node 24, dependensi dari lockfile, dan
+seed awal D1 lokal. Orb baru dapat memakai kembali snapshot setup. Setup tidak
+menjalankan server, mengisi kredensial, atau mengubah database produksi.
+
 Vite menjalankan antarmuka dan menyediakan bundel snapshot/riwayat yang masuk
 repo. Vite meneruskan `/api/` dan `/foto/` ke Worker lokal di `127.0.0.1:8787`.
 Jalankan Worker di terminal terpisah dengan langkah di bawah. Proxy ini hanya

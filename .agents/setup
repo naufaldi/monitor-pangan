@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+repo=$PWD
+node_version=24.22.3
+package_manager=$(node -p 'require("./package.json").packageManager')
+toolchain="$HOME/.local/share/monitor-pangan/toolchain"
+export PATH="$toolchain/node_modules/.bin:$PATH"
+
+if [[ $(node --version) != "v$node_version" || $(pnpm --version) != "${package_manager#pnpm@}" ]]; then
+  echo "Installing Node $node_version and $package_manager"
+  time npm install --prefix "$toolchain" --no-save --no-package-lock --no-audit --no-fund \
+    "node@$node_version" "$package_manager"
+fi
+echo "Using Node $(node --version) and pnpm $(pnpm --version)"
+
+echo "Installing frozen workspace dependencies"
+time CI=true pnpm install --frozen-lockfile --prefer-offline
+
+echo "Applying the local D1 schema"
+time pnpm db:apply
+if [[ ! -f .wrangler/state/.monitor-pangan-seeded ]]; then
+  echo "Seeding local D1 with the bundled snapshot"
+  time pnpm db:seed
+  touch .wrangler/state/.monitor-pangan-seeded
+fi
+
+marker="# Monitor Pangan orb toolchain: $repo"
+if ! grep -Fqx -- "$marker" "$HOME/.bash_profile" 2>/dev/null; then
+  printf '\n%s\nif [[ $PWD == %q || $PWD == %q/* ]]; then\n  export PATH=%q:$PATH\nfi\n' \
+    "$marker" "$repo" "$repo" "$toolchain/node_modules/.bin" >> "$HOME/.bash_profile"
+fi
