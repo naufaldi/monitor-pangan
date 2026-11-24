@@ -44,8 +44,8 @@ pnpm test src/data/health-client.test.ts  # tes dengan target eksplisit
 pnpm build
 ```
 
-`pnpm typecheck`, tes yang terdampak, dan `pnpm build` adalah pemeriksaan perubahan
-kode. CI menjalankan seluruh suite. Jangan menjalankan suite dalam watch mode.
+Ikuti [panduan verifikasi sesuai risiko](.agents/AGENTS.md#proof-scaled-to-risk)
+untuk memilih tes, menyiapkan bukti perubahan UI, dan menjalankan suite lokal sebelum merge.
 
 Di Amp orb, `.agents/setup` menyiapkan Node 24, dependensi dari lockfile, dan
 seed awal D1 lokal. Orb baru dapat memakai kembali snapshot setup. Setup tidak

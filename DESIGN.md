@@ -6,8 +6,10 @@ Monitor Pangan uses a light canvas, white surfaces, and dark text. Controls use 
 
 1. Check the [public exports](packages/ui/src/index.ts) and choose the existing component, helper, and documented variant. Import shared UI from `@monitor-pangan/ui`.
 2. Use `className` for layout such as spacing, width, and grid. Keep colors, borders, radii, and typography in the shared implementation. Use semantic tokens for app chrome and keep raw colors in the token source.
-3. Treat each variant list as closed. If a use case genuinely needs a new appearance, define it in the shared component, cover any changed class helper with its colocated test, and update the guide in the same change. A call site cannot create a variant with a string or a styling override.
+3. Treat each variant list as closed. If a use case genuinely needs a new appearance, define it in the shared component and update the guide in the same change. A call site cannot create a variant with a string or a styling override.
 4. Keep domain behavior in `src/components` and reusable UI in `packages/ui`. When an unshared pattern appears a second time, export the shared implementation and migrate both call sites.
+
+Follow [the repo's proof policy](.agents/AGENTS.md#proof-scaled-to-risk), including before and after screenshots for UI changes.
 
 ## Choose a pattern
 

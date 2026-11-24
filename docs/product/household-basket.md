@@ -102,14 +102,9 @@ That behavior can mix survey dates within a basket.
 The `/keranjang` page supports the rules above through shared UI, verified calculations, and inspected browser behavior.
 Delivery includes a checked PR merged into `main`. It excludes application deployment.
 
-1. Prove quantity parsing, limits, rounding, and exact summation with focused behavioral tests.
-2. Prove complete, empty, invalid, and incomplete baskets. Cover missing current and comparison observations independently.
-3. Prove that national prices, different dates, unknown commodity IDs, and mock data cannot fill missing provincial prices.
-4. Validate stored input at the external boundary. Cover malformed data, unknown versions, unavailable dates, and denied storage.
-5. Inspect the actual desktop and 390px browser flow, including labels, keyboard entry, Save, Clear, reload, retry, and rapid selection changes.
-6. Count snapshot requests. Permit at most twenty missing snapshot reads for two dates, with at most three in flight.
-7. Quantity edits and province switches reuse loaded snapshots without additional price requests. Load no historical series for this calculation.
-8. Run typecheck, explicit affected test files, and the production build. Inspect the final diff and final-head CI before merging.
+Follow [the repo's proof policy](../../.agents/AGENTS.md#proof-scaled-to-risk). Pick checks for the behavior that changed, such as exact totals, missing observations on either date, invalid saved input, or rapid selection changes. For UI changes, inspect the affected flow on desktop and at 390px.
+
+For two dates, allow at most twenty missing snapshot reads and at most three in flight. Quantity edits and province switches reuse loaded snapshots without additional price requests. Load no historical series for this calculation.
 
 The implementation must follow the Effect conventions and shared UI rules in the repository instructions.
 Application deployment stays manual. Turnstile and photo proof in #44 and #46 remain separate.
