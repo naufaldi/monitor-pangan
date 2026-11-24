@@ -13,10 +13,14 @@
   --z-toolbar: 40;
   --z-menu: 50;
   --radius: 0.625rem;
+  --duration-reveal: 180ms;
+  --duration-dismiss: 120ms;
 }
 
 @theme inline {
   --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --ease-control: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --ease-reveal: cubic-bezier(0.23, 1, 0.32, 1);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

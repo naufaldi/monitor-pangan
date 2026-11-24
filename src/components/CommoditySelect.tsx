@@ -1,13 +1,11 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react"
-import { ChevronBadge, Listbox, ListboxEmpty, ListboxGroup, ListboxOption, ListboxSearch, fieldMenuClass, fieldTriggerClass } from "@monitor-pangan/ui"
+import { useId, useMemo } from "react"
+import { ChevronBadge, Listbox, ListboxDisclosure, ListboxEmpty, ListboxGroup, ListboxOption, ListboxSearch, fieldTriggerClass, useListboxDisclosure } from "@monitor-pangan/ui"
 import type { Commodity } from "#/data/catalog.ts"
 
 type CommoditySelectProps = {
   commodities: Commodity[]
   value: string
   onChange: (id: string) => void
-  /** Trailing preview text per commodity, e.g. the national average. */
-  hintFor?: (commodity: Commodity) => string | undefined
   /** Empty value means every commodity. Existing callers keep a selected commodity. */
   allowEmpty?: boolean
 }
@@ -17,30 +15,13 @@ export function CommoditySelect({
   commodities,
   value,
   onChange,
-  hintFor,
   allowEmpty = false,
 }: CommoditySelectProps) {
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState("")
-  const rootRef = useRef<HTMLDivElement | null>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const searchRef = useRef<HTMLInputElement | null>(null)
+  const { open, query, setQuery, rootRef, triggerRef, searchRef, toggle, close } = useListboxDisclosure()
   const listId = useId()
   const labelId = useId()
   const valueId = useId()
   const active = commodities.find((c) => c.id === value) ?? (allowEmpty ? undefined : commodities[0])
-
-  useEffect(() => {
-    if (!open) return
-    searchRef.current?.focus()
-    const onPointerDown = (e: PointerEvent) => {
-      if (rootRef.current != null && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener("pointerdown", onPointerDown)
-    return () => document.removeEventListener("pointerdown", onPointerDown)
-  }, [open])
 
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -59,18 +40,12 @@ export function CommoditySelect({
   const valueLabel = active?.name ?? (allowEmpty ? "Semua komoditas" : "Pilih")
 
   const pick = (id: string) => {
+    close()
     onChange(id)
-    setOpen(false)
-    setQuery("")
-    triggerRef.current?.focus()
   }
 
   return (
-    <div ref={rootRef} className="relative flex w-full flex-col gap-1" onKeyDown={(event) => {
-      if (!open || event.key !== "Escape") return
-      setOpen(false)
-      triggerRef.current?.focus()
-    }}>
+    <div ref={rootRef} className="relative flex w-full flex-col gap-1">
       <span id={labelId} className="text-sm text-slate">
         Komoditas
       </span>
@@ -79,48 +54,43 @@ export function CommoditySelect({
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-controls={open ? listId : undefined}
+        aria-controls={listId}
         aria-labelledby={`${labelId} ${valueId}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         className={fieldTriggerClass()}
       >
         <span id={valueId} className="min-w-0 flex-1 truncate">
           {valueLabel}
         </span>
-        {active != null && hintFor != null ? (
-          <span className="tabular-nums shrink-0 text-sm font-semibold text-slate">{hintFor(active)}</span>
-        ) : null}
         <ChevronBadge flipped={open} />
       </button>
 
-      {open ? (
-        <div className={fieldMenuClass()}>
-          <ListboxSearch
-            ref={searchRef}
-            label="Cari komoditas"
-            value={query}
-            onValueChange={setQuery}
-            placeholder="Cari komoditas…"
-          />
-          <Listbox id={listId} label="Komoditas">
-            {allowEmpty ? (
-              <ListboxOption selected={value === ""} onSelect={() => pick("")}>
-                Semua komoditas
-              </ListboxOption>
-            ) : null}
-            {matchCount === 0 ? <ListboxEmpty>Tidak ada komoditas yang cocok.</ListboxEmpty> : null}
-            {groups.map(([group, items]) => (
-              <ListboxGroup key={group} label={group}>
-                {items.map((c) => (
-                  <ListboxOption key={c.id} selected={c.id === value} onSelect={() => pick(c.id)} trailing={hintFor?.(c)}>
-                    {c.name}
-                  </ListboxOption>
-                ))}
-              </ListboxGroup>
-            ))}
-          </Listbox>
-        </div>
-      ) : null}
+      <ListboxDisclosure open={open}>
+        <ListboxSearch
+          ref={searchRef}
+          label="Cari komoditas"
+          value={query}
+          onValueChange={setQuery}
+          placeholder="Cari komoditas…"
+        />
+        <Listbox id={listId} label="Komoditas">
+          {allowEmpty ? (
+            <ListboxOption selected={value === ""} onSelect={() => pick("")}>
+              Semua komoditas
+            </ListboxOption>
+          ) : null}
+          {matchCount === 0 ? <ListboxEmpty>Tidak ada komoditas yang cocok.</ListboxEmpty> : null}
+          {groups.map(([group, items]) => (
+            <ListboxGroup key={group} label={group}>
+              {items.map((c) => (
+                <ListboxOption key={c.id} selected={c.id === active?.id} onSelect={() => pick(c.id)}>
+                  {c.name}
+                </ListboxOption>
+              ))}
+            </ListboxGroup>
+          ))}
+        </Listbox>
+      </ListboxDisclosure>
     </div>
   )
 }

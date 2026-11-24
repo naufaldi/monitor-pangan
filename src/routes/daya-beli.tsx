@@ -76,25 +76,6 @@ function DayaBeliPage() {
     })
   }, [provinces, wages, snapshot, commodity.unit])
   const ends = useMemo(() => affordabilityEnds(rows), [rows])
-  const hints = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const item of COMMODITIES) {
-      const date = pinnedPriceDate(item.id)
-      const snap = provider.snapshot(date, item.id)
-      const prices = new Map(snap.rows.map((row) => [row.regionCode, row.price]))
-      const top = affordabilityEnds(
-        buildAffordabilityRows({
-          provinces,
-          wages,
-          prices,
-          unit: item.unit,
-        }),
-      ).highest
-      if (top?.amount != null) map.set(item.id, `${top.amount} ${item.unit}`)
-    }
-    return map
-  }, [provinces, wages, rev])
-
   const priceYear = Number(priceDate.slice(0, 4))
   const ranked = rows.filter((row) => row.amount != null).length
   const isSample = dataBadge(latestLiveDate()) === "Data contoh"
@@ -109,7 +90,6 @@ function DayaBeliPage() {
               commodities={COMMODITIES}
               value={commodity.id}
               onChange={setCommodityId}
-              hintFor={(item) => hints.get(item.id)}
             />
           </div>
           <Badge tone="neutral" className="self-start sm:self-center">UMP {UMP_YEAR} pekerja formal</Badge>

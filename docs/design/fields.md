@@ -58,16 +58,17 @@ Use `SearchInput` for an always-visible filter such as the [price table search](
 <Input type="search" placeholder="Cari provinsi…" />
 ```
 
-Reuse [CommoditySelect](../../src/components/CommoditySelect.tsx) for commodities and [PlaceSelect](../../src/components/PlaceSelect.tsx) for cities or districts. Use native `FieldSelect` if searching adds no value. For a new searchable domain picker, follow an existing composition. The app picker owns query, selection, keyboard interaction, and focus. The [shared listbox pieces](../../packages/ui/src/listbox.tsx) provide presentation.
+Reuse [CommoditySelect](../../src/components/CommoditySelect.tsx) for commodities and [PlaceSelect](../../src/components/PlaceSelect.tsx) for cities or districts. Use native `FieldSelect` if searching adds no value. The app picker owns filtering, grouping, and selection. Use [the shared listbox pieces](../../packages/ui/src/listbox.tsx) for open state, focus, keyboard interaction, and presentation.
 
 | Piece | Use |
 | --- | --- |
+| `useListboxDisclosure()` | Manage open state, search text, and focus |
 | `fieldTriggerClass()` | Apply to the picker trigger, with `ChevronBadge flipped={open}` for the open state |
-| `fieldMenuClass()` | Anchor the menu below the trigger |
+| `ListboxDisclosure` | Anchor the menu below the trigger and handle its open and closed states |
 | `ListboxSearch` | Filter options from inside the menu |
 | `Listbox` | Hold the labeled option list |
 | `ListboxGroup` | Group related options under a heading, as in the commodity picker |
-| `ListboxOption` | Set `selected` and `onSelect`. Use `trailing` for a secondary value, such as a price |
+| `ListboxOption` | Set `selected` and `onSelect`. Keep the label to the option name |
 | `ListboxEmpty` | Show the no-match message inside the list |
 
 The pieces have no variants. Option selection is a boolean state. The correct example is from [CommoditySelect.tsx](../../src/components/CommoditySelect.tsx).

@@ -1,4 +1,4 @@
-import { Delta, Panel, StatusMessage, cn, eyebrowClass, focusRing, selectedRowClass } from "@monitor-pangan/ui"
+import { Delta, Panel, StatusMessage, cn, eyebrowClass, rowActionClass, selectedRowClass } from "@monitor-pangan/ui"
 import { formatPct, formatPrice, formatSeriesDate } from "#/lib/format.ts"
 import type { MoverItem } from "#/lib/movers.ts"
 
@@ -55,9 +55,8 @@ export function MoversList({ items, activeId, onSelect, rangeLabel, scopeLabel, 
                       onClick={() => onSelect(item.commodityId)}
                       aria-pressed={active}
                       className={cn(
-                        "flex min-h-11 w-full items-center justify-between gap-2 px-4 py-2 text-left tabular-nums hover:bg-muted",
-                        focusRing,
-                        "focus-visible:outline-offset-[-2px]",
+                        "flex min-h-11 w-full items-center justify-between gap-2 px-4 py-2 text-left tabular-nums",
+                        rowActionClass,
                         active && selectedRowClass,
                       )}
                     >

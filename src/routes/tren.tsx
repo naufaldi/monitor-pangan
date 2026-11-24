@@ -10,7 +10,7 @@ import { TrendChart } from "#/components/TrendChart.tsx"
 import { COMMODITIES } from "#/data/catalog.ts"
 import { fetchTrend } from "#/data/api-client.ts"
 import { usePriceRequest } from "#/data/price-request.ts"
-import { isSnapshotLoaded, latestLiveDate, liveSurveyDates, provider, type TrendDirection } from "#/data/provider.ts"
+import { isSnapshotLoaded, latestLiveDate, liveSurveyDates, provider } from "#/data/provider.ts"
 import { usePageSourceNote, useVintage } from "#/data/vintage.tsx"
 import {
   chartHighlights,
@@ -22,9 +22,9 @@ import { DEFAULT_TIMEFRAME, TIMEFRAMES, timeframeById, windowRange } from "#/lib
 import { parseTrendSearch } from "#/lib/commodity-search.ts"
 import { commodityMovers, resolutionLabel } from "#/lib/movers.ts"
 import { trendCsv } from "#/lib/price-csv.ts"
-import { formatDateShort, formatPct, formatPrice, formatSeriesDate } from "#/lib/format.ts"
+import { formatDateShort, formatPrice, formatSeriesDate } from "#/lib/format.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
-import { Button, FieldSelect, PageHeader, PageShell, SegmentedControl, StickyToolbar, StatusMessage, tableClass, tdClass, thClass } from "@monitor-pangan/ui"
+import { Button, FieldSelect, PageHeader, PageShell, SegmentedControl, StickyToolbar, StatusMessage, cn, controlFeedback, focusRing, tableClass, tdClass, thClass } from "@monitor-pangan/ui"
 
 export const Route = createFileRoute("/tren")({
   ssr: false,
@@ -81,7 +81,6 @@ function TrenPage() {
   const moverRange = `${formatDateShort(from)} – ${formatDateShort(to)}`
   const movers = useMemo(() => commodityMovers(COMMODITIES, regionCode,
     { from, to, resolution: chip.resolution }, provider.trend), [regionCode, from, to, chip.resolution, rev])
-  const moverById = useMemo(() => new Map(movers.map((m) => [m.commodityId, m])), [movers])
   const tableRows = useMemo(() => {
     if (series == null) return []
     const selectedByDate = new Map((series.selected ?? []).map((p) => [p.date, p.price]))
@@ -102,10 +101,6 @@ function TrenPage() {
             commodities={COMMODITIES}
             value={commodityId}
             onChange={setCommodityId}
-            hintFor={(c) => {
-              const m = moverById.get(c.id)
-              return m == null ? undefined : `${formatPrice(m.lastPrice, m.unit)} · ${directionLabel(m.direction)} ${formatPct(m.changePct)}`
-            }}
           />
         </div>
         <FieldSelect
@@ -157,7 +152,7 @@ function TrenPage() {
 
       {series != null && tableRows.length > 0 ? (
         <details className="text-sm">
-          <summary className="cursor-pointer text-sm font-semibold text-slate">Lihat semua</summary>
+          <summary className={cn("min-h-11 w-fit content-center rounded-lg px-2 font-semibold text-slate hover:bg-muted active:bg-selected", controlFeedback, focusRing)}>Lihat semua</summary>
           <div className="mt-2 overflow-x-auto">
             <table className={tableClass}>
               <thead>
@@ -197,16 +192,4 @@ function TrenPage() {
       </footer>
     </PageShell>
   )
-}
-
-function directionLabel(direction: TrendDirection): string {
-  switch (direction) {
-    case "up": return "naik"
-    case "down": return "turun"
-    case "flat": return "stabil"
-    default: {
-      const exhaustive: never = direction
-      return exhaustive
-    }
-  }
 }

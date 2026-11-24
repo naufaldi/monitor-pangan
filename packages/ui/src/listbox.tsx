@@ -1,6 +1,76 @@
-import type { ReactNode, Ref } from "react"
-import { selectedRowClass } from "./layout.tsx"
-import { Input, cn } from "./primitives.tsx"
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode, type Ref } from "react"
+import { rowActionClass, selectedRowClass } from "./layout.tsx"
+import { Input, cardClass, cn } from "./primitives.tsx"
+
+/** Open state owns search and focus; outside dismissal leaves focus at its destination. */
+export function useListboxDisclosure() {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    if (!window.matchMedia("(pointer: coarse)").matches) searchRef.current?.focus({ preventScroll: true })
+    const dismissOutside = (event: Event) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    const dismissOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return
+      event.preventDefault()
+      triggerRef.current?.focus({ preventScroll: true })
+      setOpen(false)
+    }
+    document.addEventListener("pointerdown", dismissOutside)
+    document.addEventListener("focusin", dismissOutside)
+    document.addEventListener("keydown", dismissOnEscape)
+    return () => {
+      document.removeEventListener("pointerdown", dismissOutside)
+      document.removeEventListener("focusin", dismissOutside)
+      document.removeEventListener("keydown", dismissOnEscape)
+    }
+  }, [open])
+
+  const toggle = () => {
+    if (!open) setQuery("")
+    setOpen(!open)
+  }
+  const close = () => {
+    triggerRef.current?.focus({ preventScroll: true })
+    setOpen(false)
+  }
+
+  return { open, query, setQuery, rootRef, triggerRef, searchRef, toggle, close }
+}
+
+export function ListboxDisclosure({ open, children }: { open: boolean; children: ReactNode }) {
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return
+    const options = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="option"]'))
+    if (options.length === 0) return
+    const index = options.findIndex((option) => option === event.target)
+    const next = event.key === "ArrowDown" ? (index + 1) % options.length : (index <= 0 ? options.length - 1 : index - 1)
+    event.preventDefault()
+    options[next]?.focus()
+  }
+
+  return (
+    <div
+      data-closed={open ? undefined : ""}
+      inert={!open}
+      onKeyDown={onKeyDown}
+      className={cardClass("none", cn(
+        "absolute inset-x-0 top-full z-(--z-menu) mt-1 overflow-hidden shadow-lg",
+        "data-closed:hidden data-closed:-translate-y-1 data-closed:opacity-0 starting:-translate-y-1 starting:opacity-0",
+        "transition-[opacity,translate,display] transition-discrete duration-(--duration-reveal) ease-reveal data-closed:duration-(--duration-dismiss) data-closed:ease-control",
+        "motion-reduce:transition-none",
+      ))}
+    >
+      {children}
+    </div>
+  )
+}
 
 type SearchInputProps = {
   label: string
@@ -30,7 +100,7 @@ export function SearchInput({ label, value, onValueChange, placeholder, classNam
 export function ListboxSearch(props: SearchInputProps) {
   return (
     <div className="border-b border-hairline p-2">
-      <SearchInput {...props} />
+      <SearchInput {...props} className={cn("text-base md:text-sm", props.className)} />
     </div>
   )
 }
@@ -43,7 +113,7 @@ type ListboxProps = {
 
 export function Listbox({ id, label, children }: ListboxProps) {
   return (
-    <ul id={id} role="listbox" aria-label={label} className="max-h-72 overflow-auto py-1">
+    <ul id={id} role="listbox" aria-label={label} className="max-h-[min(18rem,42dvh)] overflow-auto py-1">
       {children}
     </ul>
   )
@@ -52,23 +122,21 @@ export function Listbox({ id, label, children }: ListboxProps) {
 export function listboxOptionClass(selected: boolean): string {
   return cn(
     "flex h-11 w-full items-center gap-2 px-3 text-left text-sm font-medium",
-    "transition-[background-color] duration-150 ease-out",
-    selected ? selectedRowClass : "hover:bg-muted",
+    rowActionClass,
+    selected && selectedRowClass,
   )
 }
 
 type ListboxOptionProps = {
   selected: boolean
   onSelect: () => void
-  /** Right-aligned secondary text, e.g. a price hint. */
-  trailing?: ReactNode
   children: ReactNode
 }
 
 /** One row in a field menu. Renders its own <li>. */
-export function ListboxOption({ selected, onSelect, trailing, children }: ListboxOptionProps) {
+export function ListboxOption({ selected, onSelect, children }: ListboxOptionProps) {
   return (
-    <li>
+    <li role="presentation">
       <button type="button" role="option" aria-selected={selected} onClick={onSelect} className={listboxOptionClass(selected)}>
         <svg
           aria-hidden="true"
@@ -83,7 +151,6 @@ export function ListboxOption({ selected, onSelect, trailing, children }: Listbo
           <path d="m3 8.5 3.5 3.5L13 4.5" />
         </svg>
         <span className="min-w-0 flex-1 truncate">{children}</span>
-        {trailing != null ? <span className="tabular-nums shrink-0 font-normal text-slate">{trailing}</span> : null}
       </button>
     </li>
   )
@@ -91,14 +158,15 @@ export function ListboxOption({ selected, onSelect, trailing, children }: Listbo
 
 /** Group heading inside a Listbox. Wrap the group's options in the returned <li>'s <ul>. */
 export function ListboxGroup({ label, children }: { label: string; children: ReactNode }) {
+  const labelId = useId()
   return (
-    <li>
-      <p className="px-4 pt-2 pb-1 text-xs font-semibold text-slate">{label}</p>
-      <ul>{children}</ul>
+    <li role="presentation">
+      <p id={labelId} className="px-4 pt-2 pb-1 text-xs font-semibold text-slate">{label}</p>
+      <ul role="group" aria-labelledby={labelId}>{children}</ul>
     </li>
   )
 }
 
 export function ListboxEmpty({ children }: { children: ReactNode }) {
-  return <li className="px-4 py-3 text-sm text-slate">{children}</li>
+  return <li role="presentation" className="px-4 py-3 text-sm text-slate">{children}</li>
 }

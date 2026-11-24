@@ -1,5 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react"
-import { Button, ChevronBadge, Listbox, ListboxEmpty, ListboxOption, ListboxSearch, StatusMessage, cn, fieldMenuClass, fieldTriggerClass } from "@monitor-pangan/ui"
+import { useId, useMemo, useRef, useState } from "react"
+import { Button, ChevronBadge, Listbox, ListboxDisclosure, ListboxEmpty, ListboxOption, ListboxSearch, StatusMessage, cn, fieldTriggerClass, useListboxDisclosure } from "@monitor-pangan/ui"
 import { PLACES, nearestPlace } from "#/data/places.ts"
 
 type PlaceSelectProps = {
@@ -15,29 +15,15 @@ const DENIED_COPY = "Izin lokasi ditolak. Pilih kota atau kabupaten."
 
 /** Searchable kab/kota picker. Uses the shared input, not a second select primitive. */
 export function PlaceSelect({ value, onChange, error, id }: PlaceSelectProps) {
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState("")
+  const { open, query, setQuery, rootRef, triggerRef, searchRef, toggle, close } = useListboxDisclosure()
   const [locating, setLocating] = useState(false)
   const [locationNote, setLocationNote] = useState<string | null>(null)
   const locationRequest = useRef(0)
-  const rootRef = useRef<HTMLDivElement | null>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const searchRef = useRef<HTMLInputElement | null>(null)
   const listId = useId()
   const labelId = useId()
   const valueId = useId()
   const errorId = useId()
   const selected = PLACES.find((place) => place.code === value)
-
-  useEffect(() => {
-    if (!open) return
-    searchRef.current?.focus()
-    const onPointerDown = (event: PointerEvent) => {
-      if (rootRef.current != null && !rootRef.current.contains(event.target as Node)) setOpen(false)
-    }
-    document.addEventListener("pointerdown", onPointerDown)
-    return () => document.removeEventListener("pointerdown", onPointerDown)
-  }, [open])
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -81,11 +67,7 @@ export function PlaceSelect({ value, onChange, error, id }: PlaceSelectProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div ref={rootRef} className="relative flex flex-col gap-1" onKeyDown={(event) => {
-        if (!open || event.key !== "Escape") return
-        setOpen(false)
-        triggerRef.current?.focus()
-      }}>
+      <div ref={rootRef} className="relative flex flex-col gap-1">
         <span id={labelId} className="text-sm text-slate">
           Kota atau kabupaten
         </span>
@@ -97,9 +79,9 @@ export function PlaceSelect({ value, onChange, error, id }: PlaceSelectProps) {
           aria-describedby={error != null ? errorId : undefined}
           aria-haspopup="listbox"
           aria-expanded={open}
-          aria-controls={open ? listId : undefined}
+          aria-controls={listId}
           aria-labelledby={`${labelId} ${valueId}`}
-          onClick={() => setOpen((current) => !current)}
+          onClick={toggle}
           className={fieldTriggerClass()}
         >
           <span id={valueId} className={cn("min-w-0 flex-1 truncate", selected == null && "font-medium text-slate")}>
@@ -107,37 +89,33 @@ export function PlaceSelect({ value, onChange, error, id }: PlaceSelectProps) {
           </span>
           <ChevronBadge flipped={open} />
         </button>
-        {open ? (
-          <div className={fieldMenuClass()}>
-            <ListboxSearch
-              ref={searchRef}
-              label="Cari kota atau kabupaten"
-              value={query}
-              onValueChange={setQuery}
-              placeholder="Cari kota atau kabupaten…"
-            />
-            <Listbox id={listId} label="Kota atau kabupaten">
-              {matches.length === 0 ? <ListboxEmpty>Tidak ada tempat yang cocok.</ListboxEmpty> : null}
-              {matches.map((place) => (
-                <ListboxOption
-                  key={place.code}
-                  selected={place.code === value}
-                  onSelect={() => {
-                    locationRequest.current++
-                    setLocating(false)
-                    setLocationNote(null)
-                    onChange(place.code)
-                    setOpen(false)
-                    setQuery("")
-                    triggerRef.current?.focus()
-                  }}
-                >
-                  {place.name}
-                </ListboxOption>
-              ))}
-            </Listbox>
-          </div>
-        ) : null}
+        <ListboxDisclosure open={open}>
+          <ListboxSearch
+            ref={searchRef}
+            label="Cari kota atau kabupaten"
+            value={query}
+            onValueChange={setQuery}
+            placeholder="Cari kota atau kabupaten…"
+          />
+          <Listbox id={listId} label="Kota atau kabupaten">
+            {matches.length === 0 ? <ListboxEmpty>Tidak ada tempat yang cocok.</ListboxEmpty> : null}
+            {matches.map((place) => (
+              <ListboxOption
+                key={place.code}
+                selected={place.code === value}
+                onSelect={() => {
+                  locationRequest.current++
+                  setLocating(false)
+                  setLocationNote(null)
+                  close()
+                  onChange(place.code)
+                }}
+              >
+                {place.name}
+              </ListboxOption>
+            ))}
+          </Listbox>
+        </ListboxDisclosure>
         {error != null ? <p id={errorId} className="text-xs text-ember">{error}</p> : null}
       </div>
       <Button

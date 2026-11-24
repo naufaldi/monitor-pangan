@@ -4,10 +4,14 @@ import { buttonClass, cn, focusRing, inputClass, selectClass } from "./primitive
 
 const has = (classes: string, token: string): boolean => classes.split(" ").includes(token)
 
-it.effect("every button variant has a focus ring and a visible disabled state", () =>
+it.effect("every button variant shows feedback without animating when disabled or with reduced motion enabled", () =>
   Effect.sync(() => {
     for (const variant of ["pill", "rect", "primary"] as const) {
       const classes = buttonClass(variant)
+      assert.isTrue(has(classes, "cursor-pointer"), variant)
+      assert.isTrue(classes.split(" ").some((token) => token.startsWith("not-disabled:hover:bg-")), variant)
+      assert.isTrue(has(classes, "motion-reduce:transition-none"), variant)
+      assert.isTrue(has(classes, "motion-reduce:active:scale-100"), variant)
       assert.isTrue(has(classes, "focus-visible:outline-2"), variant)
       assert.isTrue(has(classes, "focus-visible:outline-solid"), variant)
       assert.isTrue(has(classes, "focus-visible:outline-ring"), variant)

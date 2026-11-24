@@ -15,7 +15,7 @@ import { usePriceRequest } from "#/data/price-request.ts"
 import { isSnapshotLoaded, latestLiveDate, provider, type Snapshot } from "#/data/provider.ts"
 import { usePageSourceNote, useVintage } from "#/data/vintage.tsx"
 import { homeSelectedDate, parseHomeSearch } from "#/lib/commodity-search.ts"
-import { formatDateLong, formatPrice } from "#/lib/format.ts"
+import { formatDateLong } from "#/lib/format.ts"
 import { snapshotCsv } from "#/lib/price-csv.ts"
 import { seoLinks, seoMeta, seoScripts } from "#/seo.ts"
 
@@ -61,18 +61,6 @@ function HomePage() {
   )
   const load = useCallback(() => fetchSnapshot(date, commodityId), [date, commodityId])
   const { request, retry } = usePriceRequest(`${date}:${commodityId}:${rev}`, cached, load)
-  const hints = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const c of COMMODITIES) {
-      if (!isSnapshotLoaded(date, c.id)) continue
-      const average = provider.snapshot(date, c.id).nationalAvg
-      if (average != null) map.set(c.id, formatPrice(average, c.unit))
-    }
-    if (request.status === "ready" && request.data.nationalAvg != null) {
-      map.set(commodityId, formatPrice(request.data.nationalAvg, request.data.commodity.unit))
-    }
-    return map
-  }, [date, rev, request, commodityId])
 
   return (
     <PageShell>
@@ -83,7 +71,6 @@ function HomePage() {
             commodities={COMMODITIES}
             value={commodityId}
             onChange={setCommodityId}
-            hintFor={(c) => hints.get(c.id)}
           />
         </div>
         <DatePicker
@@ -142,7 +129,7 @@ function HomeSnapshot({ snapshotKey, snapshot, provinces, selectedCode, onSelect
             />
           </div>
           <ProvincePanel
-            action={<Link to="/tren" search={{ komoditas: snapshot.commodity.id, ...(selectedCode == null ? {} : { provinsi: selectedCode }) }} className={buttonClass("rect", false, "mt-4 self-start")}>Lihat tren {selected?.name ?? "nasional"}</Link>}
+            action={<Link to="/tren" search={{ komoditas: snapshot.commodity.id, ...(selectedCode == null ? {} : { provinsi: selectedCode }) }} className={buttonClass("rect", false, "mt-4 self-center")}>Lihat tren {selected?.name ?? "nasional"}</Link>}
             commodityName={snapshot.commodity.name}
             provinceName={selected?.name ?? null}
             price={selectedPrice}

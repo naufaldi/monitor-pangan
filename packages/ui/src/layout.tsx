@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { buttonClass, cn } from "./primitives.tsx"
+import { buttonClass, cn, focusRing } from "./primitives.tsx"
 
 /** Main column for every route. */
 export const pageShellClass = "mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4"
@@ -12,7 +12,13 @@ export const stickyToolbarClass =
 export const eyebrowClass = "text-xs font-semibold text-slate"
 
 /** Selected list or table row. Neutral, never a data color. */
-export const selectedRowClass = "bg-selected shadow-[inset_3px_0_0_var(--color-ink)] hover:bg-selected"
+export const selectedRowClass = "bg-selected shadow-[inset_3px_0_0_var(--color-ink)] hover:bg-hairline active:bg-ink/15"
+
+export const rowActionClass = cn(
+  "cursor-pointer hover:bg-muted active:bg-selected transition-[background-color] duration-120 ease-control motion-reduce:transition-none",
+  focusRing,
+  "focus-visible:outline-offset-[-2px]",
+)
 
 type PageHeaderProps = {
   title: string

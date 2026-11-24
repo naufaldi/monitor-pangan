@@ -1,5 +1,5 @@
 import { useId } from "react"
-import { Button, Input, cn } from "@monitor-pangan/ui"
+import { Button, Input, cn, controlFeedback } from "@monitor-pangan/ui"
 import { resolveSurveyDate } from "#/lib/survey-date.ts"
 
 type DatePickerProps = {
@@ -98,7 +98,7 @@ export function DatePicker({ dates, value, onChange }: DatePickerProps) {
                 openDatePicker(e.currentTarget)
               }
             }}
-            className="tabular-nums h-11 w-[9.25rem] shrink-0 cursor-pointer px-2 py-0"
+            className={cn("tabular-nums h-11 w-[9.25rem] shrink-0 px-2 py-0 hover:bg-muted active:bg-selected", controlFeedback)}
           />
           <Button
             variant="rect"

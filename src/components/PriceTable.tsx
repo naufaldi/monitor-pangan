@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Delta, Panel, SearchInput, SegmentedControl, StatusMessage, cn, focusRing, selectedRowClass, tableClass, tdClass, thClass } from "@monitor-pangan/ui"
+import { Delta, Panel, SearchInput, SegmentedControl, StatusMessage, cn, rowActionClass, selectedRowClass, tableClass, tdClass, thClass } from "@monitor-pangan/ui"
 import { formatDateShort, formatPct, formatPrice, trendDirection } from "#/lib/format.ts"
 import type { PriceUnit } from "#/data/catalog.ts"
 
@@ -104,9 +104,7 @@ export function PriceTable({
                     }
                   }}
                   className={cn(
-                    "cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-muted",
-                    focusRing,
-                    "focus-visible:outline-offset-[-2px]",
+                    rowActionClass,
                     r.regionCode === selectedCode && selectedRowClass,
                   )}
                 >

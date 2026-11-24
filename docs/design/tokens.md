@@ -45,7 +45,7 @@ Use [province-fill.ts](../../src/lib/province-fill.ts) for price-map bands, [cha
 
 - `font-sans` uses `ui-sans-serif, system-ui, sans-serif`. `PageHeader` owns route title styling (`text-lg font-bold`). `SectionHeader` owns section title styling (`text-base font-bold`). `eyebrowClass` owns small labels (`text-xs font-semibold text-slate`). Use tabular numbers for changing values and numeric columns.
 - `rounded-sm`, `rounded-md`, `rounded-lg`, and `rounded-xl` use 0.6×, 0.8×, 1×, and 1.4× the base radius of `0.625rem`. Use the radius already set by the primitive. Pills and badges use `rounded-full`.
-- Field menus use `--z-menu` (50). Sticky filters use `--z-toolbar` (40). Use `fieldMenuClass` and `StickyToolbar` to preserve that ordering.
+- Field menus use `--z-menu` (50). Sticky filters use `--z-toolbar` (40). Use `ListboxDisclosure` and `StickyToolbar` to preserve that ordering.
 
 The correct example is from [styles.css](../../src/styles.css).
 

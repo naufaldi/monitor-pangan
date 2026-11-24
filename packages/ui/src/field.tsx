@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode, type SelectHTMLAttributes } from "react"
-import { Button, Input, Select, buttonClass, cardClass, cn, focusRing, type InputProps } from "./primitives.tsx"
+import { Button, Input, Select, buttonClass, cn, selectClass, type InputProps } from "./primitives.tsx"
 
 type FieldInputProps = InputProps & {
   label: string
@@ -29,9 +29,6 @@ export function FieldInput({ label, hideLabel = false, hint, error, leading, wra
   </div>
 }
 
-const press =
-  "transition-[scale,background-color,border-color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100"
-
 /** Padded chevron badge used as a select affordance. */
 export function ChevronBadge({ flipped }: { flipped?: boolean }) {
   return (
@@ -47,8 +44,8 @@ export function ChevronBadge({ flipped }: { flipped?: boolean }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         className={cn(
-          "h-4 w-4 translate-y-px transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none",
-          flipped && "rotate-180",
+          "h-4 w-4 translate-y-px transition-[rotate] motion-reduce:transition-none",
+          flipped ? "rotate-180 duration-(--duration-reveal) ease-reveal" : "duration-(--duration-dismiss) ease-control",
         )}
       >
         <path d="m4 6 4 4 4-4" />
@@ -59,25 +56,10 @@ export function ChevronBadge({ flipped }: { flipped?: boolean }) {
 
 /** Single-line combobox trigger. Same height, radius and border as Input and Select. */
 export function fieldTriggerClass(className?: string): string {
-  return cn(
-    "flex h-11 w-full items-center gap-2 rounded-lg border border-hairline bg-paper pr-1.5 pl-3 text-left text-sm font-semibold text-ink aria-invalid:border-ember",
-    focusRing,
-    press,
+  return selectClass(cn(
+    "flex h-11 w-full items-center gap-2 py-0 pr-1.5 pl-3 text-left text-ink aria-expanded:border-slate/40 aria-invalid:border-ember",
     className,
-  )
-}
-
-/** Menu under a field trigger. It scales from the trigger, not from the center of the screen. */
-export function fieldMenuClass(className?: string): string {
-  return cardClass(
-    "none",
-    cn(
-      "absolute inset-x-0 top-full z-(--z-menu) mt-1 origin-top overflow-hidden shadow-lg",
-      "transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] starting:scale-95 starting:opacity-0",
-      "motion-reduce:transition-none motion-reduce:starting:scale-100",
-      className,
-    ),
-  )
+  ))
 }
 
 type FieldSelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
