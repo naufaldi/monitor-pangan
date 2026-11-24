@@ -258,9 +258,10 @@ change. Do not substitute a local baseline or report.
 
 ## Deployment trigger verification
 
-For a separately authorized rollout, deploy the existing custom Worker from
-the repository root after the required typecheck/tests/build. No new scheduler
-or paid service is needed. **Production mutation, not executed here:**
+For a separately authorized rollout, complete [the repo's verification checks](../../.agents/AGENTS.md#proof-scaled-to-risk)
+for the change and build the Worker with `pnpm build`. Deploy the existing custom
+Worker from the repository root. No new scheduler or paid service is needed.
+**Production mutation, not executed here:**
 `rtk pnpm exec wrangler deploy`.
 
 Afterward, **remote read-only** deployment inspection is
